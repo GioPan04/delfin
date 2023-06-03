@@ -14,6 +14,7 @@ use super::{
 };
 
 pub struct ServerList {
+    config: RwLock<Config>,
     servers: FactoryVecDeque<ServerListItem>,
     add_server_dialog: Option<Controller<AddServerDialog>>,
 }
@@ -71,6 +72,7 @@ impl Component for ServerList {
         }
 
         let model = ServerList {
+            config,
             servers,
             add_server_dialog: None,
         };
@@ -99,7 +101,10 @@ impl Component for ServerList {
                 );
             }
             ServerListInput::ServerAdded(server) => {
-                self.servers.guard().push_back(server);
+                self.servers.guard().push_back(server.clone());
+                let mut config = self.config.write().unwrap();
+                config.servers.push(server);
+                config.save().unwrap();
             }
             ServerListInput::ServerSelected(index) => {
                 let server = &self.servers.guard()[index.current_index()];
