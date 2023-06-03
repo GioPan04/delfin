@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.71"
+dirs = "5.0.1"
 gst = { package = "gstreamer", version = "0.20.5" }
 gstgtk4 = { package = "gst-plugin-gtk4", version = "0.10.7" }
 relm4 = { version = "0.6.0", features = ["libadwaita"] }
@@ -14,3 +15,4 @@ relm4-icons = { version = "0.6.0", features = ["check-round-outline"] }
 reqwest = { version = "0.11.18", features = ["json"] }
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.96"
+toml = "0.7.4"

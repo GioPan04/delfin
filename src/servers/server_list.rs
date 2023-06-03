@@ -1,8 +1,12 @@
+use std::sync::RwLock;
+
 use adw::prelude::*;
 use relm4::{
     adw, factory::FactoryVecDeque, gtk, prelude::DynamicIndex, Component, ComponentParts,
     Controller,
 };
+
+use crate::config::Config;
 
 use super::{
     add_server::{AddServerDialog, AddServerOutput},
@@ -28,7 +32,7 @@ pub enum ServerListOutput {
 
 #[relm4::component(pub)]
 impl Component for ServerList {
-    type Init = ();
+    type Init = RwLock<Config>;
     type Input = ServerListInput;
     type Output = ServerListOutput;
     type CommandOutput = ();
@@ -57,18 +61,21 @@ impl Component for ServerList {
     }
 
     fn init(
-        _init: Self::Init,
+        config: Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let mut model = ServerList {
-            servers: FactoryVecDeque::new(gtk::ListBox::default(), sender.input_sender()),
+        let mut servers = FactoryVecDeque::new(gtk::ListBox::default(), sender.input_sender());
+        for server in &config.read().unwrap().servers {
+            servers
+                .guard()
+                .push_back((server.name.clone(), server.url.clone()));
+        }
+
+        let model = ServerList {
+            servers,
             add_server_dialog: None,
         };
-        model
-            .servers
-            .guard()
-            .push_back(("Example".into(), "jelly.example.com".into()));
 
         let servers_box = model.servers.widget();
 

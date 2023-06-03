@@ -1,9 +1,10 @@
-use core::fmt;
-
 use adw::prelude::*;
+use core::fmt;
 use relm4::prelude::*;
+use std::sync::RwLock;
 
 use crate::{
+    config::Config,
     servers::server_list::{ServerList, ServerListOutput},
     video_player::video_player_component::VideoPlayer,
 };
@@ -38,7 +39,7 @@ pub enum AppInput {
 
 #[relm4::component(pub)]
 impl SimpleComponent for App {
-    type Init = ();
+    type Init = RwLock<Config>;
     type Input = AppInput;
     type Output = ();
 
@@ -93,12 +94,12 @@ impl SimpleComponent for App {
     }
 
     fn init(
-        _init: Self::Init,
+        config: Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let servers = ServerList::builder()
-            .launch(())
+            .launch(config)
             .forward(sender.input_sender(), convert_server_list_output);
 
         let video_player = VideoPlayer::builder().launch(()).detach();
