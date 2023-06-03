@@ -7,30 +7,30 @@ use relm4::{
     Component, ComponentParts, Controller,
 };
 
-use crate::add_server::{AddServerDialog, AddServerOutput};
+use super::add_server::{AddServerDialog, AddServerOutput};
 
-pub struct ServersModel {
-    servers: FactoryVecDeque<ServerModel>,
+pub struct ServerList {
+    servers: FactoryVecDeque<ServerListItem>,
     add_server_dialog: Option<Controller<AddServerDialog>>,
 }
 
 #[derive(Debug)]
-pub enum ServersInput {
+pub enum ServerListInput {
     AddServer,
     ServerAdded(String, String),
     ServerSelected(DynamicIndex),
 }
 
 #[derive(Debug)]
-pub enum ServersOutput {
+pub enum ServerListOutput {
     ServerSelected(String),
 }
 
 #[relm4::component(pub)]
-impl Component for ServersModel {
+impl Component for ServerList {
     type Init = ();
-    type Input = ServersInput;
-    type Output = ServersOutput;
+    type Input = ServerListInput;
+    type Output = ServerListOutput;
     type CommandOutput = ();
 
     view! {
@@ -43,7 +43,7 @@ impl Component for ServersModel {
                     set_tooltip_text: Some("Add a server"),
                     set_icon_name: "list-add-symbolic",
                     connect_clicked[sender] => move |_| {
-                        sender.input(ServersInput::AddServer);
+                        sender.input(ServerListInput::AddServer);
                     },
                 },
 
@@ -61,7 +61,7 @@ impl Component for ServersModel {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let mut model = ServersModel {
+        let mut model = ServerList {
             servers: FactoryVecDeque::new(gtk::ListBox::default(), sender.input_sender()),
             add_server_dialog: None,
         };
@@ -85,7 +85,7 @@ impl Component for ServersModel {
         root: &Self::Root,
     ) {
         match message {
-            ServersInput::AddServer => {
+            ServerListInput::AddServer => {
                 self.add_server_dialog = Some(
                     AddServerDialog::builder()
                         .transient_for(&root)
@@ -93,10 +93,10 @@ impl Component for ServersModel {
                         .forward(sender.input_sender(), convert_add_server_output),
                 );
             }
-            ServersInput::ServerAdded(url, server_name) => {
+            ServerListInput::ServerAdded(url, server_name) => {
                 self.servers.guard().push_back((url, server_name));
             }
-            ServersInput::ServerSelected(index) => {
+            ServerListInput::ServerSelected(index) => {
                 let server = &self.servers.guard()[index.current_index()];
                 println!("Server selected: {}", server.url);
             }
@@ -104,31 +104,31 @@ impl Component for ServersModel {
     }
 }
 
-fn convert_add_server_output(output: AddServerOutput) -> ServersInput {
+fn convert_add_server_output(output: AddServerOutput) -> ServerListInput {
     match output {
         AddServerOutput::ServerAdded(url, server_name) => {
-            ServersInput::ServerAdded(url, server_name)
+            ServerListInput::ServerAdded(url, server_name)
         }
     }
 }
 
-struct ServerModel {
+struct ServerListItem {
     url: String,
     name: String,
 }
 
 #[derive(Debug)]
-enum ServerOutput {
+enum ServerListItemOutput {
     ServerSelected(DynamicIndex),
 }
 
 #[relm4::factory]
-impl FactoryComponent for ServerModel {
+impl FactoryComponent for ServerListItem {
     type Init = (String, String);
     type Input = ();
-    type Output = ServerOutput;
+    type Output = ServerListItemOutput;
     type CommandOutput = ();
-    type ParentInput = ServersInput;
+    type ParentInput = ServerListInput;
     type ParentWidget = gtk::ListBox;
 
     view! {
@@ -143,14 +143,14 @@ impl FactoryComponent for ServerModel {
             set_activatable: true,
 
             connect_activated[sender, index] => move |_| {
-                sender.output(ServerOutput::ServerSelected(index.clone()));
+                sender.output(ServerListItemOutput::ServerSelected(index.clone()));
             },
         }
     }
 
     fn forward_to_parent(output: Self::Output) -> Option<Self::ParentInput> {
         Some(match output {
-            ServerOutput::ServerSelected(index) => ServersInput::ServerSelected(index),
+            ServerListItemOutput::ServerSelected(index) => ServerListInput::ServerSelected(index),
         })
     }
 

@@ -3,7 +3,7 @@ use core::fmt;
 use adw::prelude::*;
 use relm4::prelude::*;
 
-use crate::servers::ServersModel;
+use crate::servers::server_list::ServerList;
 
 #[derive(Debug)]
 pub enum AppPage {
@@ -20,20 +20,20 @@ impl fmt::Display for AppPage {
     }
 }
 
-pub struct AppModel {
+pub struct App {
     page: AppPage,
-    servers: Controller<ServersModel>,
+    servers: Controller<ServerList>,
 }
 
 #[derive(Debug)]
-pub enum AppMsg {
+pub enum AppInput {
     SetPage(AppPage),
 }
 
 #[relm4::component(pub)]
-impl SimpleComponent for AppModel {
+impl SimpleComponent for App {
     type Init = ();
-    type Input = AppMsg;
+    type Input = AppInput;
     type Output = ();
 
     view! {
@@ -68,7 +68,7 @@ impl SimpleComponent for AppModel {
                         gtk::Button {
                             set_label: "thingy",
                             connect_clicked[sender] => move |_| {
-                                sender.input(AppMsg::SetPage(AppPage::Servers));
+                                sender.input(AppInput::SetPage(AppPage::Servers));
                             }
                         }
                     } -> {
@@ -87,9 +87,9 @@ impl SimpleComponent for AppModel {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let model = AppModel {
+        let model = App {
             page: AppPage::Servers,
-            servers: ServersModel::builder().launch(()).detach(),
+            servers: ServerList::builder().launch(()).detach(),
         };
 
         let widgets = view_output!();
@@ -99,7 +99,7 @@ impl SimpleComponent for AppModel {
 
     fn update(&mut self, message: Self::Input, _sender: relm4::ComponentSender<Self>) {
         match message {
-            AppMsg::SetPage(page) => self.page = page,
+            AppInput::SetPage(page) => self.page = page,
         }
     }
 }
