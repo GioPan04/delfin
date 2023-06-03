@@ -3,12 +3,16 @@ use core::fmt;
 use adw::prelude::*;
 use relm4::prelude::*;
 
-use crate::servers::server_list::ServerList;
+use crate::{
+    servers::server_list::{ServerList, ServerListOutput},
+    video_player::video_player_component::VideoPlayer,
+};
 
 #[derive(Debug)]
 pub enum AppPage {
     Servers,
     Accounts,
+    VideoPlayer,
 }
 
 impl fmt::Display for AppPage {
@@ -16,6 +20,7 @@ impl fmt::Display for AppPage {
         match self {
             AppPage::Servers => write!(f, "servers"),
             AppPage::Accounts => write!(f, "accounts"),
+            AppPage::VideoPlayer => write!(f, "video_player"),
         }
     }
 }
@@ -23,6 +28,7 @@ impl fmt::Display for AppPage {
 pub struct App {
     page: AppPage,
     servers: Controller<ServerList>,
+    video_player: Controller<VideoPlayer>,
 }
 
 #[derive(Debug)]
@@ -61,6 +67,10 @@ impl SimpleComponent for App {
                         set_name: &AppPage::Servers.to_string(),
                     },
 
+                    add_child = model.video_player.widget() {} -> {
+                        set_name: &AppPage::VideoPlayer.to_string(),
+                    },
+
                     add_child = &gtk::Box {
                         gtk::Label {
                             set_label: "Accounts",
@@ -87,9 +97,16 @@ impl SimpleComponent for App {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+        let servers = ServerList::builder()
+            .launch(())
+            .forward(sender.input_sender(), convert_server_list_output);
+
+        let video_player = VideoPlayer::builder().launch(()).detach();
+
         let model = App {
             page: AppPage::Servers,
-            servers: ServerList::builder().launch(()).detach(),
+            servers,
+            video_player,
         };
 
         let widgets = view_output!();
@@ -101,5 +118,11 @@ impl SimpleComponent for App {
         match message {
             AppInput::SetPage(page) => self.page = page,
         }
+    }
+}
+
+fn convert_server_list_output(output: ServerListOutput) -> AppInput {
+    match output {
+        ServerListOutput::ServerSelected(_) => AppInput::SetPage(AppPage::VideoPlayer),
     }
 }
