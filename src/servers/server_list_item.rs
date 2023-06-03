@@ -4,9 +4,12 @@ use relm4::{
     prelude::{DynamicIndex, FactoryComponent},
 };
 
+use crate::config;
+
 use super::server_list::ServerListInput;
 
 pub struct ServerListItem {
+    pub id: String,
     pub url: String,
     pub name: String,
 }
@@ -18,7 +21,7 @@ pub enum ServerListItemOutput {
 
 #[relm4::factory(pub)]
 impl FactoryComponent for ServerListItem {
-    type Init = (String, String);
+    type Init = config::Server;
     type Input = ();
     type Output = ServerListItemOutput;
     type CommandOutput = ();
@@ -54,8 +57,9 @@ impl FactoryComponent for ServerListItem {
         _sender: relm4::FactorySender<Self>,
     ) -> Self {
         Self {
-            url: init.0,
-            name: init.1,
+            id: init.id,
+            url: init.url,
+            name: init.name,
         }
     }
 }

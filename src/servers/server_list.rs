@@ -6,7 +6,7 @@ use relm4::{
     Controller,
 };
 
-use crate::config::Config;
+use crate::config::{self, Config};
 
 use super::{
     add_server::{AddServerDialog, AddServerOutput},
@@ -21,7 +21,7 @@ pub struct ServerList {
 #[derive(Debug)]
 pub enum ServerListInput {
     AddServer,
-    ServerAdded(String, String),
+    ServerAdded(config::Server),
     ServerSelected(DynamicIndex),
 }
 
@@ -67,9 +67,7 @@ impl Component for ServerList {
     ) -> relm4::ComponentParts<Self> {
         let mut servers = FactoryVecDeque::new(gtk::ListBox::default(), sender.input_sender());
         for server in &config.read().unwrap().servers {
-            servers
-                .guard()
-                .push_back((server.name.clone(), server.url.clone()));
+            servers.guard().push_back(server.clone());
         }
 
         let model = ServerList {
@@ -100,8 +98,8 @@ impl Component for ServerList {
                         .forward(sender.input_sender(), convert_add_server_output),
                 );
             }
-            ServerListInput::ServerAdded(url, server_name) => {
-                self.servers.guard().push_back((url, server_name));
+            ServerListInput::ServerAdded(server) => {
+                self.servers.guard().push_back(server);
             }
             ServerListInput::ServerSelected(index) => {
                 let server = &self.servers.guard()[index.current_index()];
@@ -113,8 +111,6 @@ impl Component for ServerList {
 
 fn convert_add_server_output(output: AddServerOutput) -> ServerListInput {
     match output {
-        AddServerOutput::ServerAdded(url, server_name) => {
-            ServerListInput::ServerAdded(url, server_name)
-        }
+        AddServerOutput::ServerAdded(server) => ServerListInput::ServerAdded(server),
     }
 }

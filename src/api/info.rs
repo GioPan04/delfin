@@ -4,6 +4,8 @@ use super::url::httpify;
 
 #[derive(Debug, Deserialize)]
 pub struct PublicServerInfo {
+    #[serde(rename = "Id")]
+    pub id: String,
     #[serde(rename = "ServerName")]
     pub server_name: String,
 }

@@ -1,13 +1,13 @@
 use adw::prelude::*;
 use relm4::prelude::*;
 
-use crate::api::info::get_public_server_info;
+use crate::{api::info::get_public_server_info, config};
 
 #[derive(Clone, Debug)]
 pub enum ValidationState {
     Invalid,
     Loading,
-    Valid(String),
+    Valid(config::Server),
     Error,
 }
 
@@ -20,12 +20,12 @@ pub struct AddServerDialog {
 pub enum AddServerInput {
     ValidateServer(String),
     Invalidate,
-    AddServer(String),
+    AddServer,
 }
 
 #[derive(Debug)]
 pub enum AddServerOutput {
-    ServerAdded(String, String),
+    ServerAdded(config::Server),
 }
 
 #[derive(Debug)]
@@ -81,8 +81,8 @@ impl Component for AddServerDialog {
                             adw::ActionRow {
                                 set_title: "Server name",
                                 #[watch]
-                                set_subtitle: if let ValidationState::Valid(server_name) = &model.valid {
-                                    server_name
+                                set_subtitle: if let ValidationState::Valid(server) = &model.valid {
+                                    &server.name
                                 } else {
                                     "..."
                                 },
@@ -105,9 +105,8 @@ impl Component for AddServerDialog {
                             add_css_class: "suggested-action",
                             #[watch]
                             set_sensitive: matches!(model.valid, ValidationState::Valid(_)),
-                            connect_clicked[sender, url_entry] => move |_| {
-                                let url: String = url_entry.text().into();
-                                sender.input(AddServerInput::AddServer(url));
+                            connect_clicked[sender] => move |_| {
+                                sender.input(AddServerInput::AddServer);
                             },
                         },
                     },
@@ -137,7 +136,11 @@ impl Component for AddServerDialog {
                     let public_server_info = get_public_server_info(&url).await;
                     if let Ok(public_server_info) = public_server_info {
                         return AddServerCommandOutput::ServerValidated(ValidationState::Valid(
-                            public_server_info.server_name,
+                            config::Server {
+                                id: public_server_info.id,
+                                url,
+                                name: public_server_info.server_name,
+                            },
                         ));
                     }
                     println!("Error getting server info: {:#?}", public_server_info);
@@ -145,10 +148,10 @@ impl Component for AddServerDialog {
                 });
             }
             AddServerInput::Invalidate => self.valid = ValidationState::Invalid,
-            AddServerInput::AddServer(url) => {
-                if let ValidationState::Valid(server_name) = &self.valid {
+            AddServerInput::AddServer => {
+                if let ValidationState::Valid(server) = &self.valid {
                     sender
-                        .output(AddServerOutput::ServerAdded(url, server_name.into()))
+                        .output(AddServerOutput::ServerAdded(server.clone()))
                         .unwrap();
                     root.close();
                 }

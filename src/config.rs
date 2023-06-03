@@ -33,10 +33,11 @@ impl Config {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Server {
-    pub name: String,
+    pub id: String,
     pub url: String,
+    pub name: String,
 }
 
 fn get_config_file() -> Option<PathBuf> {
