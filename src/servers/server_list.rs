@@ -1,13 +1,13 @@
 use adw::prelude::*;
 use relm4::{
-    adw,
-    factory::FactoryVecDeque,
-    gtk,
-    prelude::{DynamicIndex, FactoryComponent},
-    Component, ComponentParts, Controller,
+    adw, factory::FactoryVecDeque, gtk, prelude::DynamicIndex, Component, ComponentParts,
+    Controller,
 };
 
-use super::add_server::{AddServerDialog, AddServerOutput};
+use super::{
+    add_server::{AddServerDialog, AddServerOutput},
+    server_list_item::ServerListItem,
+};
 
 pub struct ServerList {
     servers: FactoryVecDeque<ServerListItem>,
@@ -108,60 +108,6 @@ fn convert_add_server_output(output: AddServerOutput) -> ServerListInput {
     match output {
         AddServerOutput::ServerAdded(url, server_name) => {
             ServerListInput::ServerAdded(url, server_name)
-        }
-    }
-}
-
-struct ServerListItem {
-    url: String,
-    name: String,
-}
-
-#[derive(Debug)]
-enum ServerListItemOutput {
-    ServerSelected(DynamicIndex),
-}
-
-#[relm4::factory]
-impl FactoryComponent for ServerListItem {
-    type Init = (String, String);
-    type Input = ();
-    type Output = ServerListItemOutput;
-    type CommandOutput = ();
-    type ParentInput = ServerListInput;
-    type ParentWidget = gtk::ListBox;
-
-    view! {
-        adw::ActionRow {
-            #[watch]
-            set_title: &self.name,
-            #[watch]
-            set_subtitle: &self.url,
-            add_suffix = &gtk::Image {
-                set_icon_name: Some("go-next-symbolic"),
-            },
-            set_activatable: true,
-
-            connect_activated[sender, index] => move |_| {
-                sender.output(ServerListItemOutput::ServerSelected(index.clone()));
-            },
-        }
-    }
-
-    fn forward_to_parent(output: Self::Output) -> Option<Self::ParentInput> {
-        Some(match output {
-            ServerListItemOutput::ServerSelected(index) => ServerListInput::ServerSelected(index),
-        })
-    }
-
-    fn init_model(
-        init: Self::Init,
-        _index: &Self::Index,
-        _sender: relm4::FactorySender<Self>,
-    ) -> Self {
-        Self {
-            url: init.0,
-            name: init.1,
         }
     }
 }
