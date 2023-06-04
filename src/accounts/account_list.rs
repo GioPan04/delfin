@@ -1,7 +1,10 @@
 use std::sync::{Arc, RwLock};
 
 use adw::prelude::*;
-use relm4::{adw, factory::FactoryVecDeque, gtk, Component, ComponentParts, Controller};
+use relm4::{
+    adw, factory::FactoryVecDeque, gtk, prelude::DynamicIndex, Component, ComponentParts,
+    Controller,
+};
 
 use crate::{
     api::user::AuthenticateByNameRes,
@@ -25,13 +28,19 @@ pub enum AccountListInput {
     SetServer(Server),
     AddAccount,
     AccountAdded(AuthenticateByNameRes),
+    AcountSelected(DynamicIndex),
+}
+
+#[derive(Debug)]
+pub enum AccountListOutput {
+    AccountSelected(Server, Account),
 }
 
 #[relm4::component(pub)]
 impl Component for AccountList {
     type Init = Arc<RwLock<Config>>;
     type Input = AccountListInput;
-    type Output = ();
+    type Output = AccountListOutput;
     type CommandOutput = ();
 
     view! {
@@ -123,8 +132,25 @@ impl Component for AccountList {
                 let mut config = self.config.write().unwrap();
                 let server = config.servers.iter_mut().find(|s| s.id == self.server.id);
                 if let Some(server) = server {
-                    server.accounts.insert(0, account);
-                    config.save().unwrap();
+                    server.accounts.insert(0, account.clone());
+                    sender
+                        .output(AccountListOutput::AccountSelected(server.clone(), account))
+                        .unwrap();
+                }
+                config.save().unwrap();
+            }
+            AccountListInput::AcountSelected(index) => {
+                let index = index.current_index();
+                let config = self.config.read().unwrap();
+                let server = config.servers.iter().find(|s| s.id == self.server.id);
+                if let Some(server) = server {
+                    let account = &server.accounts[index];
+                    sender
+                        .output(AccountListOutput::AccountSelected(
+                            server.clone(),
+                            account.clone(),
+                        ))
+                        .unwrap();
                 }
             }
         }

@@ -38,7 +38,6 @@ impl FactoryComponent for ServerListItem {
                 set_icon_name: Some("go-next-symbolic"),
             },
             set_activatable: true,
-
             connect_activated[sender, index] => move |_| {
                 sender.output(ServerListItemOutput::ServerSelected(index.clone()));
             },

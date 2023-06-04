@@ -3,10 +3,9 @@ use serde::Deserialize;
 use super::url::httpify;
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct PublicServerInfo {
-    #[serde(rename = "Id")]
     pub id: String,
-    #[serde(rename = "ServerName")]
     pub server_name: String,
 }
 

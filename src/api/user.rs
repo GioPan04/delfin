@@ -5,28 +5,25 @@ use serde::{Deserialize, Serialize};
 use super::{auth_header::get_auth_header, url::httpify};
 
 #[derive(Serialize)]
+#[serde(rename_all = "PascalCase")]
 struct AuthenticateByNameReqBody {
-    #[serde(rename = "Username")]
     username: String,
     #[serde(rename = "Pw")]
     password: String,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct AuthenticateByNameRes {
-    #[serde(rename = "User")]
     pub user: AuthenticateByNameResUser,
-    #[serde(rename = "AccessToken")]
     pub access_token: String,
-    #[serde(rename = "ServerId")]
     pub server_id: String,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct AuthenticateByNameResUser {
-    #[serde(rename = "Id")]
     pub id: String,
-    #[serde(rename = "Name")]
     pub name: String,
 }
 
@@ -48,6 +45,7 @@ pub async fn authenticate_by_name(
         })
         .send()
         .await?;
+
     match res.status() {
         StatusCode::OK => {
             let res = res.json().await?;

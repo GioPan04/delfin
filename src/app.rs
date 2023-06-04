@@ -4,8 +4,9 @@ use relm4::prelude::*;
 use std::sync::{Arc, RwLock};
 
 use crate::{
-    accounts::account_list::{AccountList, AccountListInput},
+    accounts::account_list::{AccountList, AccountListInput, AccountListOutput},
     config::{self, Config},
+    library::library_component::{Library, LibraryOutput},
     servers::server_list::{ServerList, ServerListOutput},
     video_player::video_player_component::VideoPlayer,
 };
@@ -14,6 +15,7 @@ use crate::{
 pub enum AppPage {
     Servers,
     Accounts,
+    Library,
     VideoPlayer,
 }
 
@@ -22,7 +24,8 @@ impl AppPage {
         match self {
             AppPage::Servers => AppPage::Servers,
             AppPage::Accounts => AppPage::Servers,
-            AppPage::VideoPlayer => AppPage::Accounts,
+            AppPage::Library => AppPage::Accounts,
+            AppPage::VideoPlayer => AppPage::Library,
         }
     }
 }
@@ -32,15 +35,18 @@ impl fmt::Display for AppPage {
         match self {
             AppPage::Servers => write!(f, "servers"),
             AppPage::Accounts => write!(f, "accounts"),
+            AppPage::Library => write!(f, "library"),
             AppPage::VideoPlayer => write!(f, "video_player"),
         }
     }
 }
 
 pub struct App {
+    config: Arc<RwLock<Config>>,
     page: AppPage,
     servers: Controller<ServerList>,
     account_list: Controller<AccountList>,
+    library: Option<Controller<Library>>,
     video_player: Controller<VideoPlayer>,
 }
 
@@ -49,6 +55,7 @@ pub enum AppInput {
     SetPage(AppPage),
     NavigateBack,
     ServerSelected(config::Server),
+    AccountSelected(config::Server, config::Account),
 }
 
 #[relm4::component(pub)]
@@ -70,6 +77,8 @@ impl Component for App {
                 set_spacing: 20,
 
                 adw::HeaderBar {
+                    #[watch]
+                    set_visible: matches!(model.page, AppPage::Servers) || matches!(model.page, AppPage::Accounts),
                     #[wrap(Some)]
                     set_title_widget = &adw::WindowTitle {
                         set_title: "Jellything",
@@ -114,13 +123,19 @@ impl Component for App {
         let servers = ServerList::builder()
             .launch(Arc::clone(&config))
             .forward(sender.input_sender(), convert_server_list_output);
-        let account_list = AccountList::builder().launch(Arc::clone(&config)).detach();
+
+        let account_list = AccountList::builder()
+            .launch(Arc::clone(&config))
+            .forward(sender.input_sender(), convert_account_list_output);
+
         let video_player = VideoPlayer::builder().launch(()).detach();
 
         let model = App {
+            config,
             page: AppPage::Servers,
             servers,
             account_list,
+            library: None,
             video_player,
         };
 
@@ -162,6 +177,20 @@ impl Component for App {
                 self.account_list.emit(AccountListInput::SetServer(server));
                 sender.input(AppInput::SetPage(AppPage::Accounts));
             }
+            AppInput::AccountSelected(server, account) => {
+                let stack = &widgets.stack;
+
+                if let Some(previous) = &self.library {
+                    stack.remove(previous.widget());
+                }
+
+                let library = Library::builder()
+                    .launch((Arc::clone(&self.config), server, account))
+                    .forward(sender.input_sender(), convert_library_output);
+                stack.add_named(library.widget(), Some(&AppPage::Library.to_string()));
+                self.library = Some(library);
+                sender.input(AppInput::SetPage(AppPage::Library));
+            }
         }
 
         self.update_view(widgets, sender);
@@ -171,5 +200,19 @@ impl Component for App {
 fn convert_server_list_output(output: ServerListOutput) -> AppInput {
     match output {
         ServerListOutput::ServerSelected(server) => AppInput::ServerSelected(server),
+    }
+}
+
+fn convert_account_list_output(output: AccountListOutput) -> AppInput {
+    match output {
+        AccountListOutput::AccountSelected(server, account) => {
+            AppInput::AccountSelected(server, account)
+        }
+    }
+}
+
+fn convert_library_output(output: LibraryOutput) -> AppInput {
+    match output {
+        LibraryOutput::NavigateBack => AppInput::NavigateBack,
     }
 }
