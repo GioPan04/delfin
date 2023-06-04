@@ -17,6 +17,16 @@ pub enum AppPage {
     VideoPlayer,
 }
 
+impl AppPage {
+    fn back(&self) -> Self {
+        match self {
+            AppPage::Servers => AppPage::Servers,
+            AppPage::Accounts => AppPage::Servers,
+            AppPage::VideoPlayer => AppPage::Accounts,
+        }
+    }
+}
+
 impl fmt::Display for AppPage {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -42,10 +52,11 @@ pub enum AppInput {
 }
 
 #[relm4::component(pub)]
-impl SimpleComponent for App {
+impl Component for App {
     type Init = Arc<RwLock<Config>>;
     type Input = AppInput;
     type Output = ();
+    type CommandOutput = ();
 
     view! {
         adw::ApplicationWindow {
@@ -73,9 +84,8 @@ impl SimpleComponent for App {
                     },
                 },
 
+                #[name = "stack"]
                 gtk::Stack {
-                    set_transition_type: gtk::StackTransitionType::SlideLeft,
-
                     add_child = model.servers.widget() {} -> {
                         set_name: &AppPage::Servers.to_string(),
                     },
@@ -119,22 +129,42 @@ impl SimpleComponent for App {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, sender: relm4::ComponentSender<Self>) {
+    fn update_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        message: Self::Input,
+        sender: ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         match message {
-            AppInput::SetPage(page) => self.page = page,
-            AppInput::NavigateBack => {
-                // TODO: need to handle stack transition, right now it always
-                // slides right, even when we go back
-                self.page = match self.page {
-                    AppPage::Accounts => AppPage::Servers,
-                    _ => self.page,
+            AppInput::SetPage(page) => {
+                let stack = &widgets.stack;
+
+                let cur = self.page as u8;
+                let next = page as u8;
+
+                match cur.partial_cmp(&next) {
+                    Some(std::cmp::Ordering::Less) => {
+                        stack.set_transition_type(gtk::StackTransitionType::SlideLeft)
+                    }
+                    Some(std::cmp::Ordering::Greater) => {
+                        stack.set_transition_type(gtk::StackTransitionType::SlideRight)
+                    }
+                    _ => return,
                 }
+
+                self.page = page;
+            }
+            AppInput::NavigateBack => {
+                sender.input(AppInput::SetPage(self.page.back()));
             }
             AppInput::ServerSelected(server) => {
                 self.account_list.emit(AccountListInput::SetServer(server));
                 sender.input(AppInput::SetPage(AppPage::Accounts));
             }
         }
+
+        self.update_view(widgets, sender);
     }
 }
 
