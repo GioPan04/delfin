@@ -98,6 +98,7 @@ impl Component for AddServerDialog {
                             },
                         },
 
+                        #[name = "submit_btn"]
                         gtk::Button {
                             set_halign: gtk::Align::Center,
                             set_label: "Add Server",
@@ -117,7 +118,7 @@ impl Component for AddServerDialog {
 
     fn init(
         _init: Self::Init,
-        _root: &Self::Root,
+        root: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let model = AddServerDialog {
@@ -125,6 +126,7 @@ impl Component for AddServerDialog {
         };
         let widgets = view_output!();
         widgets.url_entry.grab_focus();
+        root.set_default_widget(Some(&widgets.submit_btn));
         ComponentParts { model, widgets }
     }
 
@@ -140,6 +142,7 @@ impl Component for AddServerDialog {
                                 id: public_server_info.id,
                                 url,
                                 name: public_server_info.server_name,
+                                accounts: Vec::new(),
                             },
                         ));
                     }

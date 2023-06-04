@@ -1,15 +1,16 @@
 use adw::prelude::*;
 use core::fmt;
 use relm4::prelude::*;
-use std::sync::RwLock;
+use std::sync::{Arc, RwLock};
 
 use crate::{
-    config::Config,
+    accounts::account_list::{AccountList, AccountListInput},
+    config::{self, Config},
     servers::server_list::{ServerList, ServerListOutput},
     video_player::video_player_component::VideoPlayer,
 };
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum AppPage {
     Servers,
     Accounts,
@@ -29,17 +30,20 @@ impl fmt::Display for AppPage {
 pub struct App {
     page: AppPage,
     servers: Controller<ServerList>,
+    account_list: Controller<AccountList>,
     video_player: Controller<VideoPlayer>,
 }
 
 #[derive(Debug)]
 pub enum AppInput {
     SetPage(AppPage),
+    NavigateBack,
+    ServerSelected(config::Server),
 }
 
 #[relm4::component(pub)]
 impl SimpleComponent for App {
-    type Init = RwLock<Config>;
+    type Init = Arc<RwLock<Config>>;
     type Input = AppInput;
     type Output = ();
 
@@ -58,7 +62,15 @@ impl SimpleComponent for App {
                     #[wrap(Some)]
                     set_title_widget = &adw::WindowTitle {
                         set_title: "Jellything",
-                    }
+                    },
+                    pack_start = &gtk::Button {
+                        set_icon_name: "go-previous",
+                        #[watch]
+                        set_visible: !matches!(model.page, AppPage::Servers),
+                        connect_clicked[sender] => move |_| {
+                            sender.input(AppInput::NavigateBack);
+                        },
+                    },
                 },
 
                 gtk::Stack {
@@ -68,23 +80,14 @@ impl SimpleComponent for App {
                         set_name: &AppPage::Servers.to_string(),
                     },
 
+                    add_child = model.account_list.widget() {} -> {
+                        set_name: &AppPage::Accounts.to_string(),
+                    },
+
                     add_child = model.video_player.widget() {} -> {
                         set_name: &AppPage::VideoPlayer.to_string(),
                     },
 
-                    add_child = &gtk::Box {
-                        gtk::Label {
-                            set_label: "Accounts",
-                        },
-                        gtk::Button {
-                            set_label: "thingy",
-                            connect_clicked[sender] => move |_| {
-                                sender.input(AppInput::SetPage(AppPage::Servers));
-                            }
-                        }
-                    } -> {
-                        set_name: &AppPage::Accounts.to_string(),
-                    },
 
                     #[watch]
                     set_visible_child_name: &model.page.to_string(),
@@ -99,14 +102,15 @@ impl SimpleComponent for App {
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let servers = ServerList::builder()
-            .launch(config)
+            .launch(Arc::clone(&config))
             .forward(sender.input_sender(), convert_server_list_output);
-
+        let account_list = AccountList::builder().launch(Arc::clone(&config)).detach();
         let video_player = VideoPlayer::builder().launch(()).detach();
 
         let model = App {
             page: AppPage::Servers,
             servers,
+            account_list,
             video_player,
         };
 
@@ -115,15 +119,27 @@ impl SimpleComponent for App {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: relm4::ComponentSender<Self>) {
+    fn update(&mut self, message: Self::Input, sender: relm4::ComponentSender<Self>) {
         match message {
             AppInput::SetPage(page) => self.page = page,
+            AppInput::NavigateBack => {
+                // TODO: need to handle stack transition, right now it always
+                // slides right, even when we go back
+                self.page = match self.page {
+                    AppPage::Accounts => AppPage::Servers,
+                    _ => self.page,
+                }
+            }
+            AppInput::ServerSelected(server) => {
+                self.account_list.emit(AccountListInput::SetServer(server));
+                sender.input(AppInput::SetPage(AppPage::Accounts));
+            }
         }
     }
 }
 
 fn convert_server_list_output(output: ServerListOutput) -> AppInput {
     match output {
-        ServerListOutput::ServerSelected(_) => AppInput::SetPage(AppPage::VideoPlayer),
+        ServerListOutput::ServerSelected(server) => AppInput::ServerSelected(server),
     }
 }

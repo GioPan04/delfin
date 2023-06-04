@@ -25,8 +25,8 @@ impl FactoryComponent for ServerListItem {
     type Input = ();
     type Output = ServerListItemOutput;
     type CommandOutput = ();
-    type ParentInput = ServerListInput;
     type ParentWidget = gtk::ListBox;
+    type ParentInput = ServerListInput;
 
     view! {
         adw::ActionRow {
@@ -45,12 +45,6 @@ impl FactoryComponent for ServerListItem {
         }
     }
 
-    fn forward_to_parent(output: Self::Output) -> Option<Self::ParentInput> {
-        Some(match output {
-            ServerListItemOutput::ServerSelected(index) => ServerListInput::ServerSelected(index),
-        })
-    }
-
     fn init_model(
         init: Self::Init,
         _index: &Self::Index,
@@ -61,5 +55,11 @@ impl FactoryComponent for ServerListItem {
             url: init.url,
             name: init.name,
         }
+    }
+
+    fn forward_to_parent(output: Self::Output) -> Option<Self::ParentInput> {
+        Some(match output {
+            ServerListItemOutput::ServerSelected(index) => ServerListInput::ServerSelected(index),
+        })
     }
 }

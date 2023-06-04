@@ -1,4 +1,4 @@
-use std::sync::RwLock;
+use std::sync::{Arc, RwLock};
 
 use adw::prelude::*;
 use relm4::{
@@ -14,7 +14,7 @@ use super::{
 };
 
 pub struct ServerList {
-    config: RwLock<Config>,
+    config: Arc<RwLock<Config>>,
     servers: FactoryVecDeque<ServerListItem>,
     add_server_dialog: Option<Controller<AddServerDialog>>,
 }
@@ -28,12 +28,12 @@ pub enum ServerListInput {
 
 #[derive(Debug)]
 pub enum ServerListOutput {
-    ServerSelected(String),
+    ServerSelected(config::Server),
 }
 
 #[relm4::component(pub)]
 impl Component for ServerList {
-    type Init = RwLock<Config>;
+    type Init = Arc<RwLock<Config>>;
     type Input = ServerListInput;
     type Output = ServerListOutput;
     type CommandOutput = ();
@@ -56,6 +56,18 @@ impl Component for ServerList {
                 servers_box -> gtk::ListBox {
                     add_css_class: "boxed-list",
                     set_selection_mode: gtk::SelectionMode::None,
+                },
+
+                #[name = "empty_state"]
+                gtk::ListBox {
+                    add_css_class: "boxed-list",
+                    set_selection_mode: gtk::SelectionMode::None,
+                    #[watch]
+                    set_visible: model.servers.is_empty(),
+                    adw::ActionRow {
+                        set_title: "No Servers Available",
+                        set_subtitle: "Add a server to start watching",
+                    },
                 },
             },
         }
@@ -86,7 +98,7 @@ impl Component for ServerList {
 
     fn update_with_view(
         &mut self,
-        _widgets: &mut Self::Widgets,
+        widgets: &mut Self::Widgets,
         message: Self::Input,
         sender: relm4::ComponentSender<Self>,
         root: &Self::Root,
@@ -102,13 +114,17 @@ impl Component for ServerList {
             }
             ServerListInput::ServerAdded(server) => {
                 self.servers.guard().push_back(server.clone());
+                widgets.empty_state.set_visible(false);
                 let mut config = self.config.write().unwrap();
                 config.servers.push(server);
                 config.save().unwrap();
             }
             ServerListInput::ServerSelected(index) => {
-                let server = &self.servers.guard()[index.current_index()];
-                println!("Server selected: {}", server.url);
+                let index: usize = index.current_index();
+                let server = &self.config.read().unwrap().servers[index];
+                sender
+                    .output(ServerListOutput::ServerSelected(server.clone()))
+                    .unwrap();
             }
         }
     }

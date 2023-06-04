@@ -2,15 +2,26 @@ use std::{fs, path::PathBuf};
 
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
+    pub device_id: String,
     pub servers: Vec<Server>,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            device_id: Uuid::new_v4().to_string(),
+            servers: Vec::default(),
+        }
+    }
 }
 
 impl Config {
     pub fn new() -> Result<Self> {
-        let config_file = match get_config_file() {
+        let config_file = match get_config_file_exists() {
             Some(f) => f,
             None => return Ok(Self::default()),
         };
@@ -33,19 +44,21 @@ impl Config {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Server {
-    pub id: String,
-    pub url: String,
-    pub name: String,
-}
-
 fn get_config_file() -> Option<PathBuf> {
     let config_dir = match dirs::config_dir() {
         Some(d) => d,
         None => return None,
     };
     let config_file = config_dir.join("jellything/config.toml");
+
+    Some(config_file)
+}
+
+fn get_config_file_exists() -> Option<PathBuf> {
+    let config_file = match get_config_file() {
+        Some(f) => f,
+        None => return None,
+    };
 
     if !config_file
         .try_exists()
@@ -55,4 +68,20 @@ fn get_config_file() -> Option<PathBuf> {
     }
 
     Some(config_file)
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct Server {
+    pub id: String,
+    pub url: String,
+    pub name: String,
+    pub accounts: Vec<Account>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Account {
+    pub id: String,
+    pub username: String,
+    // TODO: move to keyring
+    pub access_token: String,
 }
