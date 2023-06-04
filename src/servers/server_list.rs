@@ -58,7 +58,6 @@ impl Component for ServerList {
                     set_selection_mode: gtk::SelectionMode::None,
                 },
 
-                #[name = "empty_state"]
                 gtk::ListBox {
                     add_css_class: "boxed-list",
                     set_selection_mode: gtk::SelectionMode::None,
@@ -96,9 +95,8 @@ impl Component for ServerList {
         ComponentParts { model, widgets }
     }
 
-    fn update_with_view(
+    fn update(
         &mut self,
-        widgets: &mut Self::Widgets,
         message: Self::Input,
         sender: relm4::ComponentSender<Self>,
         root: &Self::Root,
@@ -114,7 +112,6 @@ impl Component for ServerList {
             }
             ServerListInput::ServerAdded(server) => {
                 self.servers.guard().push_back(server.clone());
-                widgets.empty_state.set_visible(false);
                 let mut config = self.config.write().unwrap();
                 config.servers.push(server);
                 config.save().unwrap();
@@ -126,7 +123,7 @@ impl Component for ServerList {
                     .output(ServerListOutput::ServerSelected(server.clone()))
                     .unwrap();
             }
-        }
+        };
     }
 }
 
