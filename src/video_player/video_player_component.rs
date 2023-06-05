@@ -1,6 +1,7 @@
+use std::cell::RefCell;
 use std::time::Duration;
 
-use gst::prelude::{ElementExtManual, TimeFormatConstructor};
+use gst::prelude::ElementExtManual;
 use gst::traits::ElementExt;
 use gtk::prelude::*;
 use relm4::gtk::glib;
@@ -15,17 +16,20 @@ use crate::video_player::pipeline::create_pipeline;
 
 pub struct VideoPlayer {
     media: LatestMedia,
+    pipeline: Option<gst::Pipeline>,
+    playback_timeout_id: RefCell<Option<glib::SourceId>>,
     show_controls: bool,
-}
-
-#[derive(Debug)]
-pub enum VideoPlayerOutput {
-    NavigateBack,
 }
 
 #[derive(Debug)]
 pub enum VideoPlayerInput {
     ToggleControls,
+    ExitPlayer,
+}
+
+#[derive(Debug)]
+pub enum VideoPlayerOutput {
+    NavigateBack,
 }
 
 #[relm4::component(pub)]
@@ -64,7 +68,7 @@ impl SimpleComponent for VideoPlayer {
                     pack_start = &gtk::Button {
                         set_icon_name: "go-previous",
                         connect_clicked[sender] => move |_| {
-                            sender.output(VideoPlayerOutput::NavigateBack).unwrap();
+                            sender.input(VideoPlayerInput::ExitPlayer);
                         },
                     },
                 },
@@ -106,8 +110,10 @@ impl SimpleComponent for VideoPlayer {
         let server = init.0;
         let media = init.1;
 
-        let model = VideoPlayer {
+        let mut model = VideoPlayer {
             media,
+            pipeline: None,
+            playback_timeout_id: RefCell::new(None),
             show_controls: false,
         };
 
@@ -131,41 +137,58 @@ impl SimpleComponent for VideoPlayer {
             let pipeline = pipeline.downgrade();
             let scrubber = scrubber.downgrade();
             let timestamp = timestamp.downgrade();
-            let _ = glib::timeout_add_local(Duration::from_millis(500), move || {
-                let pipeline = match pipeline.upgrade() {
-                    Some(pipeline) => pipeline,
-                    None => return glib::Continue(true),
-                };
+            model.playback_timeout_id = RefCell::new(Some(glib::timeout_add_local(
+                Duration::from_millis(500),
+                move || {
+                    let pipeline = match pipeline.upgrade() {
+                        Some(pipeline) => pipeline,
+                        None => return glib::Continue(true),
+                    };
 
-                let (scrubber, timestamp) = match (scrubber.upgrade(), timestamp.upgrade()) {
-                    (Some(scrubber), Some(timestamp)) => (scrubber, timestamp),
-                    _ => return glib::Continue(true),
-                };
+                    let (scrubber, timestamp) = match (scrubber.upgrade(), timestamp.upgrade()) {
+                        (Some(scrubber), Some(timestamp)) => (scrubber, timestamp),
+                        _ => return glib::Continue(true),
+                    };
 
-                let position = pipeline.query_position::<gst::ClockTime>();
-                // TODO: some formats don't have duration, maybe we can default
-                // to the one that Jellyfin gives us in RunTimeTicks
-                let duration = pipeline.query_duration::<gst::ClockTime>();
-                if let (Some(position), Some(duration)) = (position, duration) {
-                    scrubber.set_range(0.0, duration.seconds() as f64);
-                    scrubber.set_value(position.seconds() as f64);
-                    timestamp.set_label(&format!(
-                        "{} / {}",
-                        position.to_timestamp(),
-                        duration.to_timestamp()
-                    ));
-                }
+                    let position = pipeline.query_position::<gst::ClockTime>();
+                    // TODO: some formats don't have duration, maybe we can default
+                    // to the one that Jellyfin gives us in RunTimeTicks
+                    let duration = pipeline.query_duration::<gst::ClockTime>();
+                    if let (Some(position), Some(duration)) = (position, duration) {
+                        scrubber.set_range(0.0, duration.seconds() as f64);
+                        scrubber.set_value(position.seconds() as f64);
+                        timestamp.set_label(&format!(
+                            "{} / {}",
+                            position.to_timestamp(),
+                            duration.to_timestamp()
+                        ));
+                        println!("{} / {}", position.to_timestamp(), duration.to_timestamp());
+                    }
 
-                glib::Continue(true)
-            });
+                    glib::Continue(true)
+                },
+            )));
         }
+
+        model.pipeline = Some(pipeline);
 
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
             VideoPlayerInput::ToggleControls => self.show_controls = !self.show_controls,
+            VideoPlayerInput::ExitPlayer => {
+                if let Some(playback_timeout_id) = self.playback_timeout_id.borrow_mut().take() {
+                    playback_timeout_id.remove();
+                }
+                if let Some(pipeline) = &self.pipeline {
+                    pipeline.set_state(gst::State::Paused).unwrap();
+                    pipeline.set_state(gst::State::Ready).unwrap();
+                    pipeline.set_state(gst::State::Null).unwrap();
+                }
+                sender.output(VideoPlayerOutput::NavigateBack).unwrap();
+            }
         }
     }
 }
