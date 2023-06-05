@@ -12,6 +12,7 @@ env_logger = "0.10.0"
 grass = { version = "0.12.4", default-features = false }
 gst = { package = "gstreamer", version = "0.20.5" }
 gstgtk4 = { package = "gst-plugin-gtk4", version = "0.10.7" }
+gstplay = { package = "gstreamer-play", version = "0.20.2" }
 relm4 = { version = "0.6.0", features = ["libadwaita"] }
 relm4-components = { version = "0.6.0", features = ["web"] }
 relm4-icons = { version = "0.6.0", features = [

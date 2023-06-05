@@ -1,12 +1,8 @@
-use std::cell::RefCell;
 use std::sync::{Arc, RwLock};
 use std::thread::sleep;
 use std::time::Duration;
 
-use gst::prelude::ElementExtManual;
-use gst::traits::{ElementExt, GstBinExt};
 use gtk::prelude::*;
-use relm4::gtk::glib;
 use relm4::prelude::*;
 use relm4::{gtk, ComponentParts};
 
@@ -14,12 +10,10 @@ use crate::api::item::get_stream_url;
 use crate::api::latest::LatestMedia;
 use crate::config::Server;
 use crate::video_player::gtksink::create_gtk_sink;
-use crate::video_player::pipeline::create_pipeline;
 
 pub struct VideoPlayer {
     media: LatestMedia,
-    pipeline: Option<gst::Pipeline>,
-    playback_timeout_id: RefCell<Option<glib::SourceId>>,
+    player: gstplay::Play,
     show_controls: bool,
     playing: bool,
     scrubber_being_moved: Arc<RwLock<bool>>,
@@ -158,10 +152,12 @@ impl Component for VideoPlayer {
         let server = init.0;
         let media = init.1;
 
-        let mut model = VideoPlayer {
+        let (gtksink, paintable) = create_gtk_sink();
+        let renderer = gstplay::PlayVideoOverlayVideoRenderer::with_sink(&gtksink);
+
+        let model = VideoPlayer {
             media,
-            pipeline: None,
-            playback_timeout_id: RefCell::new(None),
+            player: gstplay::Play::new(Some(renderer)),
             show_controls: false,
             playing: true,
             scrubber_being_moved: Arc::new(RwLock::new(false)),
@@ -170,13 +166,13 @@ impl Component for VideoPlayer {
 
         let widgets = view_output!();
         let video_out = &widgets.video_out;
-        let scrubber = &widgets.scrubber;
-        let timestamp = &widgets.timestamp;
 
-        let (sink, paintable) = create_gtk_sink();
         video_out.set_paintable(Some(&paintable));
 
-        setup_pipeline(&mut model, &server, Box::new(sink), scrubber, timestamp);
+        let url = get_stream_url(&server, &model.media.id);
+
+        model.player.set_uri(Some(&url));
+        model.player.play();
 
         ComponentParts { model, widgets }
     }
@@ -184,27 +180,16 @@ impl Component for VideoPlayer {
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match message {
             VideoPlayerInput::ToggleControls => self.show_controls = !self.show_controls,
-            VideoPlayerInput::TogglePlaying => {
-                if let Some(pipeline) = &self.pipeline {
-                    // TODO: using a valve cause just pausing the pipeline
-                    // wasn't working
-                    // (this sucks)
-                    let valve = pipeline.by_name("valve").unwrap();
-
-                    match self.playing {
-                        true => {
-                            valve.set_property("drop", true);
-                            pipeline.set_state(gst::State::Paused).unwrap();
-                            self.playing = false;
-                        }
-                        false => {
-                            valve.set_property("drop", false);
-                            pipeline.set_state(gst::State::Playing).unwrap();
-                            self.playing = true;
-                        }
-                    }
+            VideoPlayerInput::TogglePlaying => match self.playing {
+                true => {
+                    self.player.pause();
+                    self.playing = false;
                 }
-            }
+                false => {
+                    self.player.play();
+                    self.playing = true;
+                }
+            },
             VideoPlayerInput::ScrubberBeingMoved(scrubber_being_moved) => {
                 *self.scrubber_being_moved.write().unwrap() = scrubber_being_moved;
             }
@@ -218,14 +203,7 @@ impl Component for VideoPlayer {
             }
             VideoPlayerInput::Seek(timestamp) => println!("Seek to {}", timestamp),
             VideoPlayerInput::ExitPlayer => {
-                if let Some(playback_timeout_id) = self.playback_timeout_id.borrow_mut().take() {
-                    playback_timeout_id.remove();
-                }
-                if let Some(pipeline) = &self.pipeline {
-                    pipeline.set_state(gst::State::Paused).unwrap();
-                    pipeline.set_state(gst::State::Ready).unwrap();
-                    pipeline.set_state(gst::State::Null).unwrap();
-                }
+                self.player.stop();
                 sender.output(VideoPlayerOutput::NavigateBack).unwrap();
             }
         }
@@ -246,69 +224,6 @@ impl Component for VideoPlayer {
             }
         }
     }
-}
-
-fn setup_pipeline(
-    model: &mut VideoPlayer,
-    server: &Server,
-    sink: Box<gst::Element>,
-    scrubber: &gtk::Scale,
-    timestamp: &gtk::Label,
-) {
-    let url = get_stream_url(server, &model.media.id);
-
-    let pipeline = create_pipeline(&url, sink);
-    pipeline
-        .set_state(gst::State::Playing)
-        .expect("Unable to set pipeline to Playing state");
-
-    {
-        let scrubber_being_moved = Arc::clone(&model.scrubber_being_moved);
-        let pipeline = pipeline.downgrade();
-        let scrubber = scrubber.downgrade();
-        let timestamp = timestamp.downgrade();
-        model.playback_timeout_id = RefCell::new(Some(glib::timeout_add_local(
-            Duration::from_millis(500),
-            move || {
-                let pipeline = match pipeline.upgrade() {
-                    Some(pipeline) => pipeline,
-                    None => return glib::Continue(true),
-                };
-
-                let (scrubber, timestamp) = match (scrubber.upgrade(), timestamp.upgrade()) {
-                    (Some(scrubber), Some(timestamp)) => (scrubber, timestamp),
-                    _ => return glib::Continue(true),
-                };
-
-                let position = pipeline.query_position::<gst::ClockTime>();
-                // TODO: some formats don't have duration, maybe we can default
-                // to the one that Jellyfin gives us in RunTimeTicks
-                let duration = pipeline.query_duration::<gst::ClockTime>();
-                if let (Some(position), Some(duration)) = (position, duration) {
-                    if !*scrubber_being_moved.read().unwrap() {
-                        scrubber.set_range(0.0, duration.seconds() as f64);
-                        scrubber.set_value(position.seconds() as f64);
-                        timestamp.set_label(&format!(
-                            "{} / {}",
-                            position.to_timestamp(),
-                            duration.to_timestamp()
-                        ));
-                    } else {
-                        let position = gst::ClockTime::from_seconds(scrubber.value() as u64);
-                        timestamp.set_label(&format!(
-                            "{} / {}",
-                            position.to_timestamp(),
-                            duration.to_timestamp()
-                        ));
-                    }
-                }
-
-                glib::Continue(true)
-            },
-        )));
-    }
-
-    model.pipeline = Some(pipeline);
 }
 
 trait ToTimestamp {
