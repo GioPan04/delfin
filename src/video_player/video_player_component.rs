@@ -3,10 +3,14 @@ use gtk::prelude::*;
 use relm4::prelude::*;
 use relm4::{gtk, ComponentParts, SimpleComponent};
 
+use crate::api::item::get_stream_url;
+use crate::api::latest::LatestMedia;
+use crate::config::Server;
 use crate::video_player::gtksink::create_gtk_sink;
 use crate::video_player::pipeline::create_pipeline;
 
 pub struct VideoPlayer {
+    media: LatestMedia,
     show_controls: bool,
 }
 
@@ -22,7 +26,7 @@ pub enum VideoPlayerInput {
 
 #[relm4::component(pub)]
 impl SimpleComponent for VideoPlayer {
-    type Init = String;
+    type Init = (Server, LatestMedia);
     type Input = VideoPlayerInput;
     type Output = VideoPlayerOutput;
 
@@ -50,7 +54,8 @@ impl SimpleComponent for VideoPlayer {
                     add_css_class: "video-player-header",
                     #[wrap(Some)]
                     set_title_widget = &adw::WindowTitle {
-                        set_title: "Jellything",
+                        #[watch]
+                        set_title: &model.media.name,
                     },
                     pack_start = &gtk::Button {
                         set_icon_name: "go-previous",
@@ -92,7 +97,11 @@ impl SimpleComponent for VideoPlayer {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+        let server = init.0;
+        let media = init.1;
+
         let model = VideoPlayer {
+            media,
             show_controls: false,
         };
 
@@ -102,7 +111,9 @@ impl SimpleComponent for VideoPlayer {
         let (sink, paintable) = create_gtk_sink();
         video_out.set_paintable(Some(&paintable));
 
-        let pipeline = create_pipeline(&init, Box::new(sink));
+        let url = get_stream_url(&server, &model.media.id);
+
+        let pipeline = create_pipeline(&url, Box::new(sink));
         pipeline
             .set_state(gst::State::Playing)
             .expect("Unable to set pipeline to Playing state");

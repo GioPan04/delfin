@@ -5,7 +5,7 @@ use std::sync::{Arc, RwLock};
 
 use crate::{
     accounts::account_list::{AccountList, AccountListInput, AccountListOutput},
-    api::item::get_stream_url,
+    api::latest::LatestMedia,
     config::{self, Config},
     library::library_component::{Library, LibraryOutput},
     servers::server_list::{ServerList, ServerListOutput},
@@ -58,7 +58,7 @@ pub enum AppInput {
     NavigateBack,
     ServerSelected(config::Server),
     AccountSelected(config::Server, config::Account),
-    PlayVideo(String),
+    PlayVideo(LatestMedia),
 }
 
 #[relm4::component(pub)]
@@ -189,7 +189,7 @@ impl Component for App {
                 self.library = Some(library);
                 sender.input(AppInput::SetPage(AppPage::Library));
             }
-            AppInput::PlayVideo(id) => {
+            AppInput::PlayVideo(media) => {
                 if let Some(server) = &self.server {
                     let stack = &widgets.stack;
 
@@ -197,12 +197,8 @@ impl Component for App {
                         stack.remove(previous.widget());
                     }
 
-                    // TODO: clean up
-                    let url = get_stream_url(server, &id);
-                    println!("Stream url {}", url);
-
                     let video_player = VideoPlayer::builder()
-                        .launch(url)
+                        .launch((server.clone(), media))
                         .forward(sender.input_sender(), convert_video_player_output);
                     stack.add_named(
                         video_player.widget(),
@@ -241,6 +237,6 @@ fn convert_video_player_output(output: VideoPlayerOutput) -> AppInput {
 fn convert_library_output(output: LibraryOutput) -> AppInput {
     match output {
         LibraryOutput::NavigateBack => AppInput::NavigateBack,
-        LibraryOutput::PlayVideo(id) => AppInput::PlayVideo(id),
+        LibraryOutput::PlayVideo(media) => AppInput::PlayVideo(media),
     }
 }
