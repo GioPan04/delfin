@@ -1,5 +1,9 @@
+use std::time::Duration;
+
+use gst::prelude::{ElementExtManual, TimeFormatConstructor};
 use gst::traits::ElementExt;
 use gtk::prelude::*;
+use relm4::gtk::glib;
 use relm4::prelude::*;
 use relm4::{gtk, ComponentParts, SimpleComponent};
 
@@ -77,15 +81,17 @@ impl SimpleComponent for VideoPlayer {
                         add_css_class: "play-pause",
                     },
 
+                    #[name = "scrubber"]
                     gtk::Scale {
                         set_range: (0.0, 100.0),
-                        set_value: 25.0,
+                        set_value: 0.0,
                         set_hexpand: true,
                     },
 
+                    #[name = "timestamp"]
                     gtk::Label {
                         set_label: "4:20/69:42",
-                        add_css_class: "duration",
+                        add_css_class: "timestamp",
                     },
                 },
             },
@@ -107,6 +113,8 @@ impl SimpleComponent for VideoPlayer {
 
         let widgets = view_output!();
         let video_out = &widgets.video_out;
+        let scrubber = &widgets.scrubber;
+        let timestamp = &widgets.timestamp;
 
         let (sink, paintable) = create_gtk_sink();
         video_out.set_paintable(Some(&paintable));
@@ -114,9 +122,43 @@ impl SimpleComponent for VideoPlayer {
         let url = get_stream_url(&server, &model.media.id);
 
         let pipeline = create_pipeline(&url, Box::new(sink));
+        // TODO: stop pipeline and timeouts when leaving video player
         pipeline
             .set_state(gst::State::Playing)
             .expect("Unable to set pipeline to Playing state");
+
+        {
+            let pipeline = pipeline.downgrade();
+            let scrubber = scrubber.downgrade();
+            let timestamp = timestamp.downgrade();
+            let _ = glib::timeout_add_local(Duration::from_millis(500), move || {
+                let pipeline = match pipeline.upgrade() {
+                    Some(pipeline) => pipeline,
+                    None => return glib::Continue(true),
+                };
+
+                let (scrubber, timestamp) = match (scrubber.upgrade(), timestamp.upgrade()) {
+                    (Some(scrubber), Some(timestamp)) => (scrubber, timestamp),
+                    _ => return glib::Continue(true),
+                };
+
+                let position = pipeline.query_position::<gst::ClockTime>();
+                // TODO: some formats don't have duration, maybe we can default
+                // to the one that Jellyfin gives us in RunTimeTicks
+                let duration = pipeline.query_duration::<gst::ClockTime>();
+                if let (Some(position), Some(duration)) = (position, duration) {
+                    scrubber.set_range(0.0, duration.seconds() as f64);
+                    scrubber.set_value(position.seconds() as f64);
+                    timestamp.set_label(&format!(
+                        "{} / {}",
+                        position.to_timestamp(),
+                        duration.to_timestamp()
+                    ));
+                }
+
+                glib::Continue(true)
+            });
+        }
 
         ComponentParts { model, widgets }
     }
@@ -125,5 +167,17 @@ impl SimpleComponent for VideoPlayer {
         match message {
             VideoPlayerInput::ToggleControls => self.show_controls = !self.show_controls,
         }
+    }
+}
+
+trait ToTimestamp {
+    fn to_timestamp(self) -> String;
+}
+
+impl ToTimestamp for gst::ClockTime {
+    fn to_timestamp(self) -> String {
+        let minutes = self.seconds() / 60;
+        let seconds = self.seconds() % 60;
+        format!("{:0>2}:{:0>2}", minutes, seconds)
     }
 }
