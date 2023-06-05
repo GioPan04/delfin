@@ -29,11 +29,13 @@ impl SimpleComponent for VideoPlayer {
     view! {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
+            add_css_class: "video-player",
 
             gtk::Overlay {
                 #[name = "video_out"]
                 gtk::Picture {
                     set_vexpand: true,
+                    add_css_class: "video-out",
                     add_controller = gtk::GestureClick {
                         connect_pressed[sender] => move |_, _, _, _| {
                             sender.input(VideoPlayerInput::ToggleControls);
@@ -67,6 +69,7 @@ impl SimpleComponent for VideoPlayer {
                     gtk::Button {
                         set_icon_name: "media-playback-start",
                         add_css_class: "flat",
+                        add_css_class: "play-pause",
                     },
 
                     gtk::Scale {
@@ -76,7 +79,8 @@ impl SimpleComponent for VideoPlayer {
                     },
 
                     gtk::Label {
-                        set_label: "4:20/69:42"
+                        set_label: "4:20/69:42",
+                        add_css_class: "duration",
                     },
                 },
             },

@@ -1,0 +1,33 @@
+.media-tile {
+  padding: 8px;
+  padding-bottom: 12px;
+  padding-top: 0;
+
+  &.hover {
+    background-color: rgba(white, 0.1);
+    border-radius: 8px;
+  }
+}
+
+.video-player {
+  .video-out {
+    background: black;
+  }
+
+  .video-player-controls, .video-player-header {
+    background: rgba(black, 0.75);
+  }
+
+  .video-player-controls {
+    padding: 0 20px;
+
+    .play-pause {
+      padding: 0;
+    }
+
+    .duration {
+      padding-left: 5px;
+    }
+  }
+}
+

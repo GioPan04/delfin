@@ -9,6 +9,7 @@ edition = "2021"
 anyhow = "1.0.71"
 dirs = "5.0.1"
 env_logger = "0.10.0"
+grass = { version = "0.12.4", default-features = false }
 gst = { package = "gstreamer", version = "0.20.5" }
 gstgtk4 = { package = "gst-plugin-gtk4", version = "0.10.7" }
 relm4 = { version = "0.6.0", features = ["libadwaita"] }

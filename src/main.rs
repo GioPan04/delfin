@@ -14,7 +14,12 @@ fn main() {
 
     let app = RelmApp::new("cafe.avery.jellything");
     relm4_icons::initialize_icons();
-    // TODO
-    relm4::set_global_css_from_file("src/app.css");
+    load_css();
     app.run::<App>(Arc::new(RwLock::new(config)));
+}
+
+fn load_css() {
+    // TODO: compile sass in build.rs
+    let css = grass::from_path("src/app.scss", &grass::Options::default()).unwrap();
+    relm4::set_global_css(&css);
 }
