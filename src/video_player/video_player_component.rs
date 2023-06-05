@@ -125,52 +125,7 @@ impl SimpleComponent for VideoPlayer {
         let (sink, paintable) = create_gtk_sink();
         video_out.set_paintable(Some(&paintable));
 
-        let url = get_stream_url(&server, &model.media.id);
-
-        let pipeline = create_pipeline(&url, Box::new(sink));
-        // TODO: stop pipeline and timeouts when leaving video player
-        pipeline
-            .set_state(gst::State::Playing)
-            .expect("Unable to set pipeline to Playing state");
-
-        {
-            let pipeline = pipeline.downgrade();
-            let scrubber = scrubber.downgrade();
-            let timestamp = timestamp.downgrade();
-            model.playback_timeout_id = RefCell::new(Some(glib::timeout_add_local(
-                Duration::from_millis(500),
-                move || {
-                    let pipeline = match pipeline.upgrade() {
-                        Some(pipeline) => pipeline,
-                        None => return glib::Continue(true),
-                    };
-
-                    let (scrubber, timestamp) = match (scrubber.upgrade(), timestamp.upgrade()) {
-                        (Some(scrubber), Some(timestamp)) => (scrubber, timestamp),
-                        _ => return glib::Continue(true),
-                    };
-
-                    let position = pipeline.query_position::<gst::ClockTime>();
-                    // TODO: some formats don't have duration, maybe we can default
-                    // to the one that Jellyfin gives us in RunTimeTicks
-                    let duration = pipeline.query_duration::<gst::ClockTime>();
-                    if let (Some(position), Some(duration)) = (position, duration) {
-                        scrubber.set_range(0.0, duration.seconds() as f64);
-                        scrubber.set_value(position.seconds() as f64);
-                        timestamp.set_label(&format!(
-                            "{} / {}",
-                            position.to_timestamp(),
-                            duration.to_timestamp()
-                        ));
-                        println!("{} / {}", position.to_timestamp(), duration.to_timestamp());
-                    }
-
-                    glib::Continue(true)
-                },
-            )));
-        }
-
-        model.pipeline = Some(pipeline);
+        setup_pipeline(&mut model, &server, Box::new(sink), scrubber, timestamp);
 
         ComponentParts { model, widgets }
     }
@@ -191,6 +146,59 @@ impl SimpleComponent for VideoPlayer {
             }
         }
     }
+}
+
+fn setup_pipeline(
+    model: &mut VideoPlayer,
+    server: &Server,
+    sink: Box<gst::Element>,
+    scrubber: &gtk::Scale,
+    timestamp: &gtk::Label,
+) {
+    let url = get_stream_url(server, &model.media.id);
+
+    let pipeline = create_pipeline(&url, sink);
+    pipeline
+        .set_state(gst::State::Playing)
+        .expect("Unable to set pipeline to Playing state");
+
+    {
+        let pipeline = pipeline.downgrade();
+        let scrubber = scrubber.downgrade();
+        let timestamp = timestamp.downgrade();
+        model.playback_timeout_id = RefCell::new(Some(glib::timeout_add_local(
+            Duration::from_millis(500),
+            move || {
+                let pipeline = match pipeline.upgrade() {
+                    Some(pipeline) => pipeline,
+                    None => return glib::Continue(true),
+                };
+
+                let (scrubber, timestamp) = match (scrubber.upgrade(), timestamp.upgrade()) {
+                    (Some(scrubber), Some(timestamp)) => (scrubber, timestamp),
+                    _ => return glib::Continue(true),
+                };
+
+                let position = pipeline.query_position::<gst::ClockTime>();
+                // TODO: some formats don't have duration, maybe we can default
+                // to the one that Jellyfin gives us in RunTimeTicks
+                let duration = pipeline.query_duration::<gst::ClockTime>();
+                if let (Some(position), Some(duration)) = (position, duration) {
+                    scrubber.set_range(0.0, duration.seconds() as f64);
+                    scrubber.set_value(position.seconds() as f64);
+                    timestamp.set_label(&format!(
+                        "{} / {}",
+                        position.to_timestamp(),
+                        duration.to_timestamp()
+                    ));
+                }
+
+                glib::Continue(true)
+            },
+        )));
+    }
+
+    model.pipeline = Some(pipeline);
 }
 
 trait ToTimestamp {
