@@ -34,7 +34,7 @@ pub enum LibraryInput {
 #[derive(Debug)]
 pub enum LibraryOutput {
     NavigateBack,
-    PlayVideo,
+    PlayVideo(String),
 }
 
 #[derive(Debug)]
@@ -160,8 +160,7 @@ impl Component for Library {
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match message {
             LibraryInput::MediaSelected(media) => {
-                sender.output(LibraryOutput::PlayVideo).unwrap();
-                println!("library media {:#?}", media);
+                sender.output(LibraryOutput::PlayVideo(media.id)).unwrap();
             }
         }
     }

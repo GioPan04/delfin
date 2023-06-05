@@ -37,7 +37,9 @@ impl SimpleComponent for VideoPlayer {
             },
 
             #[name = "video_out"]
-            gtk::Picture {},
+            gtk::Picture {
+                set_vexpand: true,
+            },
         }
     }
 

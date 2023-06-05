@@ -5,6 +5,7 @@ use std::sync::{Arc, RwLock};
 
 use crate::{
     accounts::account_list::{AccountList, AccountListInput, AccountListOutput},
+    api::item::get_stream_url,
     config::{self, Config},
     library::library_component::{Library, LibraryOutput},
     servers::server_list::{ServerList, ServerListOutput},
@@ -48,6 +49,7 @@ pub struct App {
     account_list: Controller<AccountList>,
     library: Option<Controller<Library>>,
     video_player: Option<Controller<VideoPlayer>>,
+    server: Option<config::Server>,
 }
 
 #[derive(Debug)]
@@ -56,7 +58,7 @@ pub enum AppInput {
     NavigateBack,
     ServerSelected(config::Server),
     AccountSelected(config::Server, config::Account),
-    PlayVideo,
+    PlayVideo(String),
 }
 
 #[relm4::component(pub)]
@@ -131,6 +133,7 @@ impl Component for App {
             account_list,
             library: None,
             video_player: None,
+            server: None,
         };
 
         let widgets = view_output!();
@@ -168,6 +171,7 @@ impl Component for App {
                 sender.input(AppInput::SetPage(self.page.back()));
             }
             AppInput::ServerSelected(server) => {
+                self.server = Some(server.clone());
                 self.account_list.emit(AccountListInput::SetServer(server));
                 sender.input(AppInput::SetPage(AppPage::Accounts));
             }
@@ -185,24 +189,28 @@ impl Component for App {
                 self.library = Some(library);
                 sender.input(AppInput::SetPage(AppPage::Library));
             }
-            AppInput::PlayVideo => {
-                let stack = &widgets.stack;
+            AppInput::PlayVideo(id) => {
+                if let Some(server) = &self.server {
+                    let stack = &widgets.stack;
 
-                if let Some(previous) = &self.video_player {
-                    stack.remove(previous.widget());
+                    if let Some(previous) = &self.video_player {
+                        stack.remove(previous.widget());
+                    }
+
+                    // TODO: clean up
+                    let url = get_stream_url(server, &id);
+                    println!("Stream url {}", url);
+
+                    let video_player = VideoPlayer::builder()
+                        .launch(url)
+                        .forward(sender.input_sender(), convert_video_player_output);
+                    stack.add_named(
+                        video_player.widget(),
+                        Some(&AppPage::VideoPlayer.to_string()),
+                    );
+                    self.video_player = Some(video_player);
+                    sender.input(AppInput::SetPage(AppPage::VideoPlayer));
                 }
-
-                let video_player = VideoPlayer::builder()
-                    .launch(String::from(
-                        "https://gstreamer.freedesktop.org/data/media/sintel_trailer-480p.webm",
-                    ))
-                    .forward(sender.input_sender(), convert_video_player_output);
-                stack.add_named(
-                    video_player.widget(),
-                    Some(&AppPage::VideoPlayer.to_string()),
-                );
-                self.video_player = Some(video_player);
-                sender.input(AppInput::SetPage(AppPage::VideoPlayer));
             }
         }
 
@@ -233,6 +241,6 @@ fn convert_video_player_output(output: VideoPlayerOutput) -> AppInput {
 fn convert_library_output(output: LibraryOutput) -> AppInput {
     match output {
         LibraryOutput::NavigateBack => AppInput::NavigateBack,
-        LibraryOutput::PlayVideo => AppInput::PlayVideo,
+        LibraryOutput::PlayVideo(id) => AppInput::PlayVideo(id),
     }
 }
