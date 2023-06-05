@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
 use gst::prelude::ElementExtManual;
@@ -20,12 +21,15 @@ pub struct VideoPlayer {
     playback_timeout_id: RefCell<Option<glib::SourceId>>,
     show_controls: bool,
     playing: bool,
+    scrubber_being_moved: Arc<RwLock<bool>>,
 }
 
 #[derive(Debug)]
 pub enum VideoPlayerInput {
     ToggleControls,
     TogglePlaying,
+    ScrubberBeingMoved(bool),
+    Seek(f64),
     ExitPlayer,
 }
 
@@ -100,6 +104,28 @@ impl SimpleComponent for VideoPlayer {
                         set_range: (0.0, 100.0),
                         set_value: 0.0,
                         set_hexpand: true,
+                        connect_value_changed[sender] => move |scrubber| {
+                            let value = scrubber.value();
+                            // Hack to tell if scrubber was manually changed
+                            // When setting value from playback position, the
+                            // value won't have a fractional part. When the
+                            // user manually changes it, it probably will.
+                            if value.fract() == 0.0 {
+                                return;
+                            }
+                            sender.input(VideoPlayerInput::Seek(value));
+                        },
+                        add_controller = gtk::GestureClick {
+                            connect_pressed[sender] => move |_, _, _, _| {
+                                sender.input(VideoPlayerInput::ScrubberBeingMoved(true));
+                            },
+                            connect_unpaired_release[sender] => move |_, _, _, _, _| {
+                                sender.input(VideoPlayerInput::ScrubberBeingMoved(false));
+                            },
+                            connect_stopped[sender] => move |_| {
+                                sender.input(VideoPlayerInput::ScrubberBeingMoved(false));
+                            },
+                        },
                     },
 
                     #[name = "timestamp"]
@@ -126,6 +152,7 @@ impl SimpleComponent for VideoPlayer {
             playback_timeout_id: RefCell::new(None),
             show_controls: false,
             playing: true,
+            scrubber_being_moved: Arc::new(RwLock::new(false)),
         };
 
         let widgets = view_output!();
@@ -165,6 +192,10 @@ impl SimpleComponent for VideoPlayer {
                     }
                 }
             }
+            VideoPlayerInput::ScrubberBeingMoved(scrubber_being_moved) => {
+                *self.scrubber_being_moved.write().unwrap() = scrubber_being_moved;
+            }
+            VideoPlayerInput::Seek(timestamp) => println!("Seek to {}", timestamp),
             VideoPlayerInput::ExitPlayer => {
                 if let Some(playback_timeout_id) = self.playback_timeout_id.borrow_mut().take() {
                     playback_timeout_id.remove();
@@ -195,6 +226,7 @@ fn setup_pipeline(
         .expect("Unable to set pipeline to Playing state");
 
     {
+        let scrubber_being_moved = Arc::clone(&model.scrubber_being_moved);
         let pipeline = pipeline.downgrade();
         let scrubber = scrubber.downgrade();
         let timestamp = timestamp.downgrade();
@@ -216,13 +248,22 @@ fn setup_pipeline(
                 // to the one that Jellyfin gives us in RunTimeTicks
                 let duration = pipeline.query_duration::<gst::ClockTime>();
                 if let (Some(position), Some(duration)) = (position, duration) {
-                    scrubber.set_range(0.0, duration.seconds() as f64);
-                    scrubber.set_value(position.seconds() as f64);
-                    timestamp.set_label(&format!(
-                        "{} / {}",
-                        position.to_timestamp(),
-                        duration.to_timestamp()
-                    ));
+                    if !*scrubber_being_moved.read().unwrap() {
+                        scrubber.set_range(0.0, duration.seconds() as f64);
+                        scrubber.set_value(position.seconds() as f64);
+                        timestamp.set_label(&format!(
+                            "{} / {}",
+                            position.to_timestamp(),
+                            duration.to_timestamp()
+                        ));
+                    } else {
+                        let position = gst::ClockTime::from_seconds(scrubber.value() as u64);
+                        timestamp.set_label(&format!(
+                            "{} / {}",
+                            position.to_timestamp(),
+                            duration.to_timestamp()
+                        ));
+                    }
                 }
 
                 glib::Continue(true)
