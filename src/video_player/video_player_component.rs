@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::time::Duration;
 
 use gst::prelude::ElementExtManual;
-use gst::traits::ElementExt;
+use gst::traits::{ElementExt, GstBinExt};
 use gtk::prelude::*;
 use relm4::gtk::glib;
 use relm4::prelude::*;
@@ -19,11 +19,13 @@ pub struct VideoPlayer {
     pipeline: Option<gst::Pipeline>,
     playback_timeout_id: RefCell<Option<glib::SourceId>>,
     show_controls: bool,
+    playing: bool,
 }
 
 #[derive(Debug)]
 pub enum VideoPlayerInput {
     ToggleControls,
+    TogglePlaying,
     ExitPlayer,
 }
 
@@ -80,9 +82,17 @@ impl SimpleComponent for VideoPlayer {
                     add_css_class: "video-player-controls",
 
                     gtk::Button {
-                        set_icon_name: "media-playback-start",
+                        #[watch]
+                        set_icon_name: if model.playing {
+                            "media-playback-pause"
+                        } else {
+                            "media-playback-start"
+                        },
                         add_css_class: "flat",
                         add_css_class: "play-pause",
+                        connect_clicked[sender] => move |_| {
+                            sender.input(VideoPlayerInput::TogglePlaying);
+                        },
                     },
 
                     #[name = "scrubber"]
@@ -115,6 +125,7 @@ impl SimpleComponent for VideoPlayer {
             pipeline: None,
             playback_timeout_id: RefCell::new(None),
             show_controls: false,
+            playing: true,
         };
 
         let widgets = view_output!();
@@ -133,6 +144,27 @@ impl SimpleComponent for VideoPlayer {
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
             VideoPlayerInput::ToggleControls => self.show_controls = !self.show_controls,
+            VideoPlayerInput::TogglePlaying => {
+                if let Some(pipeline) = &self.pipeline {
+                    // TODO: using a valve cause just pausing the pipeline
+                    // wasn't working
+                    // (this sucks)
+                    let valve = pipeline.by_name("valve").unwrap();
+
+                    match self.playing {
+                        true => {
+                            valve.set_property("drop", true);
+                            pipeline.set_state(gst::State::Paused).unwrap();
+                            self.playing = false;
+                        }
+                        false => {
+                            valve.set_property("drop", false);
+                            pipeline.set_state(gst::State::Playing).unwrap();
+                            self.playing = true;
+                        }
+                    }
+                }
+            }
             VideoPlayerInput::ExitPlayer => {
                 if let Some(playback_timeout_id) = self.playback_timeout_id.borrow_mut().take() {
                     playback_timeout_id.remove();

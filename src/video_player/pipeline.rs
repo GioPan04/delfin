@@ -35,8 +35,9 @@ pub fn create_pipeline(url: &str, sink: Box<Element>) -> Pipeline {
         let insert_sink = |is_video| -> Result<()> {
             if is_video {
                 let queue = ElementFactory::make("queue2").build()?;
+                let valve = ElementFactory::make("valve").name("valve").build()?;
                 let convert = ElementFactory::make("videoconvert").build()?;
-                let els = &[&queue, &convert, &sink];
+                let els = &[&queue, &valve, &convert, &sink];
                 pipeline.add_many(els)?;
                 Element::link_many(els)?;
                 for e in els {
