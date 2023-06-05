@@ -58,6 +58,7 @@ impl Component for ViewLatest {
                 media_box -> gtk::Grid {
                     set_column_spacing: 16,
                     set_column_homogeneous: true,
+                    set_halign: gtk::Align::Start,
                 },
             }
         }
