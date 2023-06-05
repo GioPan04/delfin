@@ -7,7 +7,7 @@ use super::url::httpify;
 pub fn get_stream_url(server: &config::Server, item_id: &str) -> String {
     Url::parse(&httpify(&server.url))
         .unwrap()
-        .join(&format!("Videos/{}/stream", item_id))
+        .join(&format!("Videos/{}/stream?Static=true", item_id))
         .unwrap()
         .to_string()
 }
