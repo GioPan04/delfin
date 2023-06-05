@@ -8,7 +8,7 @@ use crate::{
     config::{self, Config},
     library::library_component::{Library, LibraryOutput},
     servers::server_list::{ServerList, ServerListOutput},
-    video_player::video_player_component::VideoPlayer,
+    video_player::video_player_component::{VideoPlayer, VideoPlayerOutput},
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -196,7 +196,7 @@ impl Component for App {
                     .launch(String::from(
                         "https://gstreamer.freedesktop.org/data/media/sintel_trailer-480p.webm",
                     ))
-                    .detach();
+                    .forward(sender.input_sender(), convert_video_player_output);
                 stack.add_named(
                     video_player.widget(),
                     Some(&AppPage::VideoPlayer.to_string()),
@@ -221,6 +221,12 @@ fn convert_account_list_output(output: AccountListOutput) -> AppInput {
         AccountListOutput::AccountSelected(server, account) => {
             AppInput::AccountSelected(server, account)
         }
+    }
+}
+
+fn convert_video_player_output(output: VideoPlayerOutput) -> AppInput {
+    match output {
+        VideoPlayerOutput::NavigateBack => AppInput::NavigateBack,
     }
 }
 
