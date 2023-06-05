@@ -59,6 +59,7 @@ impl Component for ViewLatest {
                     set_column_spacing: 16,
                     set_column_homogeneous: true,
                     set_halign: gtk::Align::Start,
+                    set_margin_bottom: 12,
                 },
             }
         }
@@ -173,9 +174,9 @@ impl FactoryComponent for MediaTile {
         relm4::view! {
             root = gtk::Box {
                 set_orientation: gtk::Orientation::Vertical,
-                set_spacing: 8,
                 set_width_request: 200,
                 set_height_request: 256,
+                add_css_class: "media-tile",
             }
         }
         root
@@ -210,6 +211,14 @@ impl FactoryComponent for MediaTile {
                 add_controller = gtk::GestureClick {
                     connect_pressed[sender, media] => move |_, _, _, _| {
                         sender.output(MediaTileOutput::Selected(media.clone()));
+                    },
+                },
+                add_controller = gtk::EventControllerMotion {
+                    connect_enter[root] => move |_, _, _| {
+                        root.add_css_class("hover");
+                    },
+                    connect_leave[root] => move |_| {
+                        root.remove_css_class("hover");
                     },
                 },
                 #[local_ref]

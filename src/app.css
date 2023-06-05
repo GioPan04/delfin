@@ -1,0 +1,10 @@
+.media-tile {
+  padding: 8px;
+  padding-bottom: 12px;
+  padding-top: 0;
+}
+
+.media-tile.hover {
+  background-color: alpha(white, 0.1);
+  border-radius: 8px;
+}

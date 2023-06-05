@@ -14,5 +14,7 @@ fn main() {
 
     let app = RelmApp::new("cafe.avery.jellything");
     relm4_icons::initialize_icons();
+    // TODO
+    relm4::set_global_css_from_file("src/app.css");
     app.run::<App>(Arc::new(RwLock::new(config)));
 }
