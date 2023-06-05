@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::sync::{Arc, RwLock};
+use std::thread::sleep;
 use std::time::Duration;
 
 use gst::prelude::ElementExtManual;
@@ -7,7 +8,7 @@ use gst::traits::{ElementExt, GstBinExt};
 use gtk::prelude::*;
 use relm4::gtk::glib;
 use relm4::prelude::*;
-use relm4::{gtk, ComponentParts, SimpleComponent};
+use relm4::{gtk, ComponentParts};
 
 use crate::api::item::get_stream_url;
 use crate::api::latest::LatestMedia;
@@ -22,6 +23,7 @@ pub struct VideoPlayer {
     show_controls: bool,
     playing: bool,
     scrubber_being_moved: Arc<RwLock<bool>>,
+    scrubber_debounce_id: usize,
 }
 
 #[derive(Debug)]
@@ -29,6 +31,7 @@ pub enum VideoPlayerInput {
     ToggleControls,
     TogglePlaying,
     ScrubberBeingMoved(bool),
+    ScrubberMoved,
     Seek(f64),
     ExitPlayer,
 }
@@ -38,11 +41,17 @@ pub enum VideoPlayerOutput {
     NavigateBack,
 }
 
+#[derive(Debug)]
+pub enum VideoPlayerCommandOutput {
+    ScrubberDebounce(usize),
+}
+
 #[relm4::component(pub)]
-impl SimpleComponent for VideoPlayer {
+impl Component for VideoPlayer {
     type Init = (Server, LatestMedia);
     type Input = VideoPlayerInput;
     type Output = VideoPlayerOutput;
+    type CommandOutput = VideoPlayerCommandOutput;
 
     view! {
         gtk::Box {
@@ -113,7 +122,8 @@ impl SimpleComponent for VideoPlayer {
                             if value.fract() == 0.0 {
                                 return;
                             }
-                            sender.input(VideoPlayerInput::Seek(value));
+                            sender.input(VideoPlayerInput::ScrubberMoved);
+                            // sender.input(VideoPlayerInput::Seek(value));
                         },
                         add_controller = gtk::GestureClick {
                             connect_pressed[sender] => move |_, _, _, _| {
@@ -122,8 +132,10 @@ impl SimpleComponent for VideoPlayer {
                             connect_unpaired_release[sender] => move |_, _, _, _, _| {
                                 sender.input(VideoPlayerInput::ScrubberBeingMoved(false));
                             },
-                            connect_stopped[sender] => move |_| {
-                                sender.input(VideoPlayerInput::ScrubberBeingMoved(false));
+                            connect_stopped[sender] => move |gesture| {
+                                if gesture.current_button() == 0 {
+                                    sender.input(VideoPlayerInput::ScrubberBeingMoved(false));
+                                }
                             },
                         },
                     },
@@ -153,6 +165,7 @@ impl SimpleComponent for VideoPlayer {
             show_controls: false,
             playing: true,
             scrubber_being_moved: Arc::new(RwLock::new(false)),
+            scrubber_debounce_id: 0,
         };
 
         let widgets = view_output!();
@@ -168,7 +181,7 @@ impl SimpleComponent for VideoPlayer {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
+    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match message {
             VideoPlayerInput::ToggleControls => self.show_controls = !self.show_controls,
             VideoPlayerInput::TogglePlaying => {
@@ -195,6 +208,14 @@ impl SimpleComponent for VideoPlayer {
             VideoPlayerInput::ScrubberBeingMoved(scrubber_being_moved) => {
                 *self.scrubber_being_moved.write().unwrap() = scrubber_being_moved;
             }
+            VideoPlayerInput::ScrubberMoved => {
+                self.scrubber_debounce_id = self.scrubber_debounce_id.wrapping_add(1);
+                let id = self.scrubber_debounce_id;
+                sender.spawn_oneshot_command(move || {
+                    sleep(Duration::from_millis(250));
+                    VideoPlayerCommandOutput::ScrubberDebounce(id)
+                });
+            }
             VideoPlayerInput::Seek(timestamp) => println!("Seek to {}", timestamp),
             VideoPlayerInput::ExitPlayer => {
                 if let Some(playback_timeout_id) = self.playback_timeout_id.borrow_mut().take() {
@@ -206,6 +227,22 @@ impl SimpleComponent for VideoPlayer {
                     pipeline.set_state(gst::State::Null).unwrap();
                 }
                 sender.output(VideoPlayerOutput::NavigateBack).unwrap();
+            }
+        }
+    }
+
+    fn update_cmd_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        message: Self::CommandOutput,
+        sender: ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match message {
+            VideoPlayerCommandOutput::ScrubberDebounce(id) => {
+                if id == self.scrubber_debounce_id {
+                    sender.input(VideoPlayerInput::Seek(widgets.scrubber.value()));
+                }
             }
         }
     }
