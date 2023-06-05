@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use super::api_client::ApiClient;
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct LatestMedia {
     pub id: String,
@@ -11,7 +11,7 @@ pub struct LatestMedia {
     pub image_tags: ImageTags,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ImageTags {
     pub primary: String,

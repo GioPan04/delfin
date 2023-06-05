@@ -5,11 +5,11 @@ use adw::prelude::*;
 use relm4::{adw, gtk, prelude::*, Component, Controller};
 
 use crate::{
-    api::{api_client::ApiClient, views::UserViews},
+    api::{api_client::ApiClient, latest::LatestMedia, views::UserViews},
     config::{Account, Config, Server},
 };
 
-use super::view_latest::ViewLatest;
+use super::view_latest::{ViewLatest, ViewLatestOutput};
 
 enum LibraryState {
     Loading,
@@ -27,8 +27,14 @@ pub struct Library {
 }
 
 #[derive(Debug)]
+pub enum LibraryInput {
+    MediaSelected(LatestMedia),
+}
+
+#[derive(Debug)]
 pub enum LibraryOutput {
     NavigateBack,
+    PlayVideo,
 }
 
 #[derive(Debug)]
@@ -39,7 +45,7 @@ pub enum LibraryCommandOutput {
 #[relm4::component(pub)]
 impl Component for Library {
     type Init = (Arc<RwLock<Config>>, Server, Account);
-    type Input = ();
+    type Input = LibraryInput;
     type Output = LibraryOutput;
     type CommandOutput = LibraryCommandOutput;
 
@@ -151,6 +157,15 @@ impl Component for Library {
         relm4::ComponentParts { model, widgets }
     }
 
+    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
+        match message {
+            LibraryInput::MediaSelected(media) => {
+                sender.output(LibraryOutput::PlayVideo).unwrap();
+                println!("library media {:#?}", media);
+            }
+        }
+    }
+
     fn update_cmd_with_view(
         &mut self,
         widgets: &mut Self::Widgets,
@@ -160,7 +175,7 @@ impl Component for Library {
     ) {
         match message {
             LibraryCommandOutput::LibraryLoaded(user_views) => {
-                self.display_user_views(widgets, user_views)
+                self.display_user_views(widgets, &sender, user_views)
             }
         }
 
@@ -180,7 +195,12 @@ impl Library {
         });
     }
 
-    fn display_user_views(&mut self, widgets: &mut LibraryWidgets, user_views: UserViews) {
+    fn display_user_views(
+        &mut self,
+        widgets: &mut LibraryWidgets,
+        sender: &relm4::ComponentSender<Self>,
+        user_views: UserViews,
+    ) {
         self.state = LibraryState::Ready;
 
         let home = &widgets.home;
@@ -194,7 +214,7 @@ impl Library {
                     view.name.clone(),
                     Arc::clone(&self.api_client),
                 ))
-                .detach();
+                .forward(sender.input_sender(), convert_view_latest_output);
             let widget = new_view.widget();
             home.append(widget);
             views.push(new_view);
@@ -215,15 +235,12 @@ impl Library {
             );
         }
 
-        // add_titled_with_icon[Some("movies"), "Movies", "video-clip-multiple-filled"] = &gtk::Box {
-        //     set_valign: gtk::Align::Start,
-        //     set_vexpand: true,
-        //
-        //     gtk::Label {
-        //         set_label: "moviessssssssss",
-        //     },
-        // },
-
         self.views = Some(views);
+    }
+}
+
+fn convert_view_latest_output(output: ViewLatestOutput) -> LibraryInput {
+    match output {
+        ViewLatestOutput::MediaSelected(media) => LibraryInput::MediaSelected(media),
     }
 }

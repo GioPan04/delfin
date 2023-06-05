@@ -47,7 +47,7 @@ pub struct App {
     servers: Controller<ServerList>,
     account_list: Controller<AccountList>,
     library: Option<Controller<Library>>,
-    video_player: Controller<VideoPlayer>,
+    video_player: Option<Controller<VideoPlayer>>,
 }
 
 #[derive(Debug)]
@@ -56,6 +56,7 @@ pub enum AppInput {
     NavigateBack,
     ServerSelected(config::Server),
     AccountSelected(config::Server, config::Account),
+    PlayVideo,
 }
 
 #[relm4::component(pub)]
@@ -103,11 +104,6 @@ impl Component for App {
                         set_name: &AppPage::Accounts.to_string(),
                     },
 
-                    add_child = model.video_player.widget() {} -> {
-                        set_name: &AppPage::VideoPlayer.to_string(),
-                    },
-
-
                     #[watch]
                     set_visible_child_name: &model.page.to_string(),
                 },
@@ -128,15 +124,13 @@ impl Component for App {
             .launch(Arc::clone(&config))
             .forward(sender.input_sender(), convert_account_list_output);
 
-        let video_player = VideoPlayer::builder().launch(()).detach();
-
         let model = App {
             config,
             page: AppPage::Servers,
             servers,
             account_list,
             library: None,
-            video_player,
+            video_player: None,
         };
 
         let widgets = view_output!();
@@ -191,6 +185,25 @@ impl Component for App {
                 self.library = Some(library);
                 sender.input(AppInput::SetPage(AppPage::Library));
             }
+            AppInput::PlayVideo => {
+                let stack = &widgets.stack;
+
+                if let Some(previous) = &self.video_player {
+                    stack.remove(previous.widget());
+                }
+
+                let video_player = VideoPlayer::builder()
+                    .launch(String::from(
+                        "https://gstreamer.freedesktop.org/data/media/sintel_trailer-480p.webm",
+                    ))
+                    .detach();
+                stack.add_named(
+                    video_player.widget(),
+                    Some(&AppPage::VideoPlayer.to_string()),
+                );
+                self.video_player = Some(video_player);
+                sender.input(AppInput::SetPage(AppPage::VideoPlayer));
+            }
         }
 
         self.update_view(widgets, sender);
@@ -214,5 +227,6 @@ fn convert_account_list_output(output: AccountListOutput) -> AppInput {
 fn convert_library_output(output: LibraryOutput) -> AppInput {
     match output {
         LibraryOutput::NavigateBack => AppInput::NavigateBack,
+        LibraryOutput::PlayVideo => AppInput::PlayVideo,
     }
 }

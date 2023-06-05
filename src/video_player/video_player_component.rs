@@ -9,7 +9,7 @@ pub struct VideoPlayer {}
 
 #[relm4::component(pub)]
 impl SimpleComponent for VideoPlayer {
-    type Init = ();
+    type Init = String;
     type Input = ();
     type Output = ();
 
@@ -19,7 +19,7 @@ impl SimpleComponent for VideoPlayer {
     }
 
     fn init(
-        _init: Self::Init,
+        init: Self::Init,
         root: &Self::Root,
         _sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
@@ -29,13 +29,9 @@ impl SimpleComponent for VideoPlayer {
         let (sink, paintable) = create_gtk_sink();
         video_out.set_paintable(Some(&paintable));
 
-        let pipeline = create_pipeline(
-            "https://gstreamer.freedesktop.org/data/media/sintel_trailer-480p.webm",
-            Box::new(sink),
-        );
-        // Paused pipeline for now
+        let pipeline = create_pipeline(&init, Box::new(sink));
         pipeline
-            .set_state(gst::State::Paused)
+            .set_state(gst::State::Playing)
             .expect("Unable to set pipeline to Playing state");
 
         let model = VideoPlayer {};

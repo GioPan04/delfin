@@ -19,6 +19,16 @@ pub struct ViewLatest {
 }
 
 #[derive(Debug)]
+pub enum ViewLatestInput {
+    MediaSelected(LatestMedia),
+}
+
+#[derive(Debug)]
+pub enum ViewLatestOutput {
+    MediaSelected(LatestMedia),
+}
+
+#[derive(Debug)]
 pub enum ViewLatestCommandOutput {
     LatestMediaLoaded(Vec<LatestMedia>),
 }
@@ -26,8 +36,8 @@ pub enum ViewLatestCommandOutput {
 #[relm4::component(pub)]
 impl Component for ViewLatest {
     type Init = (String, String, Arc<ApiClient>);
-    type Input = ();
-    type Output = ();
+    type Input = ViewLatestInput;
+    type Output = ViewLatestOutput;
     type CommandOutput = ViewLatestCommandOutput;
 
     view! {
@@ -76,6 +86,21 @@ impl Component for ViewLatest {
         ComponentParts { model, widgets }
     }
 
+    fn update(
+        &mut self,
+        message: Self::Input,
+        sender: relm4::ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match message {
+            ViewLatestInput::MediaSelected(media) => {
+                sender
+                    .output(ViewLatestOutput::MediaSelected(media))
+                    .unwrap();
+            }
+        }
+    }
+
     fn update_cmd(
         &mut self,
         message: Self::CommandOutput,
@@ -111,8 +136,13 @@ impl ViewLatest {
 }
 
 struct MediaTile {
-    name: String,
+    media: LatestMedia,
     image: Controller<WebImage>,
+}
+
+#[derive(Debug)]
+enum MediaTileOutput {
+    Selected(LatestMedia),
 }
 
 impl Position<GridPosition, DynamicIndex> for MediaTile {
@@ -130,12 +160,12 @@ impl Position<GridPosition, DynamicIndex> for MediaTile {
 impl FactoryComponent for MediaTile {
     type Init = LatestMedia;
     type Input = ();
-    type Output = ();
+    type Output = MediaTileOutput;
     type CommandOutput = ();
     type Root = gtk::Box;
     type Widgets = ();
     type ParentWidget = gtk::Grid;
-    type ParentInput = ();
+    type ParentInput = ViewLatestInput;
     type Index = DynamicIndex;
 
     fn init_root(&self) -> Self::Root {
@@ -158,13 +188,10 @@ impl FactoryComponent for MediaTile {
         let media = init;
 
         let image = WebImage::builder()
-            .launch(media.image_tags.primary)
+            .launch(media.image_tags.primary.clone())
             .detach();
 
-        MediaTile {
-            name: media.name,
-            image,
-        }
+        MediaTile { media, image }
     }
 
     fn init_widgets(
@@ -172,20 +199,32 @@ impl FactoryComponent for MediaTile {
         _index: &Self::Index,
         root: &Self::Root,
         _returned_widget: &<Self::ParentWidget as relm4::factory::FactoryView>::ReturnedWidget,
-        _sender: relm4::FactorySender<Self>,
+        sender: relm4::FactorySender<Self>,
     ) -> Self::Widgets {
         let image = self.image.widget();
+        let media = &self.media;
         relm4::view! {
             #[local_ref]
             root -> gtk::Box {
+                add_controller = gtk::GestureClick {
+                    connect_pressed[sender, media] => move |_, _, _, _| {
+                        sender.output(MediaTileOutput::Selected(media.clone()));
+                    },
+                },
                 #[local_ref]
                 image -> gtk::Box {},
                 gtk::Label {
                     set_ellipsize: gtk::pango::EllipsizeMode::End,
                     #[watch]
-                    set_label: &self.name,
+                    set_label: &self.media.name,
                 },
             }
         }
+    }
+
+    fn forward_to_parent(output: Self::Output) -> Option<Self::ParentInput> {
+        Some(match output {
+            MediaTileOutput::Selected(media) => ViewLatestInput::MediaSelected(media),
+        })
     }
 }
