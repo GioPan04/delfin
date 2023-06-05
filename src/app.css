@@ -8,3 +8,19 @@
   background-color: alpha(white, 0.1);
   border-radius: 8px;
 }
+
+.video-player-controls, .video-player-header {
+	background: alpha(black, 0.75);
+}
+
+.video-player-controls {
+  padding: 0 20px;
+}
+
+.video-player-controls > button {
+  padding: 0;
+}
+
+.video-player-controls > label {
+	padding-left: 5px;
+}
