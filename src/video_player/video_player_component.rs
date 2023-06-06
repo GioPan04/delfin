@@ -215,6 +215,11 @@ impl Component for VideoPlayer {
         let scrubber = &widgets.scrubber;
         let timestamp = &widgets.timestamp;
 
+        // Allow clicking on any scrubber position to seek to that timestamp
+        // By default, this would move the scrubber by a set increment
+        let settings = scrubber.settings();
+        settings.set_gtk_primary_button_warps_slider(true);
+
         let (player, playback_timeout_id) =
             create_player(&gtksink, scrubber, &model.scrubber_being_moved, timestamp);
 
