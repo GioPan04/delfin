@@ -170,6 +170,11 @@ impl Component for VideoPlayer {
                         },
                     },
 
+                    #[name = "position"]
+                    gtk::Label {
+                        set_label: "00:00",
+                    },
+
                     #[name = "scrubber"]
                     gtk::Scale {
                         set_range: (0.0, 100.0),
@@ -190,9 +195,10 @@ impl Component for VideoPlayer {
                         },
                     },
 
-                    #[name = "timestamp"]
+
+                    #[name = "duration"]
                     gtk::Label {
-                        set_label: "4:20/69:42",
+                        set_label: "42:69",
                     },
 
                     gtk::Button {
@@ -234,7 +240,8 @@ impl Component for VideoPlayer {
         let widgets = view_output!();
         let video_out = &widgets.video_out;
         let scrubber = &widgets.scrubber;
-        let timestamp = &widgets.timestamp;
+        let position = &widgets.position;
+        let duration = &widgets.duration;
 
         // Allow clicking on any scrubber position to seek to that timestamp
         // By default, this would move the scrubber by a set increment
@@ -253,7 +260,8 @@ impl Component for VideoPlayer {
             scrubber,
             scrubber_value_changed_handler,
             &model.scrubber_being_moved,
-            timestamp,
+            position,
+            duration,
         );
 
         let mut model = model
