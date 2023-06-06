@@ -2,6 +2,7 @@ use std::sync::{Arc, RwLock};
 use std::thread::sleep;
 use std::time::Duration;
 
+use gst::glib;
 use gtk::prelude::*;
 use relm4::prelude::*;
 use relm4::{gtk, ComponentParts};
@@ -10,10 +11,64 @@ use crate::api::item::get_stream_url;
 use crate::api::latest::LatestMedia;
 use crate::config::Server;
 use crate::video_player::gtksink::create_gtk_sink;
+use crate::video_player::player::create_player;
+
+struct VideoPlayerBuilder {
+    media: LatestMedia,
+    player: Option<gstplay::Play>,
+    playback_timeout_id: Option<glib::SourceId>,
+    show_controls: bool,
+    playing: bool,
+    scrubber_being_moved: Arc<RwLock<bool>>,
+    scrubber_debounce_id: usize,
+}
+
+impl VideoPlayerBuilder {
+    fn new(media: LatestMedia) -> Self {
+        Self {
+            media,
+            player: None,
+            playback_timeout_id: None,
+            show_controls: false,
+            playing: true,
+            scrubber_being_moved: Arc::new(RwLock::new(false)),
+            scrubber_debounce_id: 0,
+        }
+    }
+
+    fn set_player(mut self, player: gstplay::Play) -> Self {
+        self.player = Some(player);
+        self
+    }
+
+    fn set_playback_timeout_id(mut self, playback_timeout_id: glib::SourceId) -> Self {
+        self.playback_timeout_id = Some(playback_timeout_id);
+        self
+    }
+
+    fn build(self) -> VideoPlayer {
+        let player = self
+            .player
+            .expect("Tried to build VideoPlayer without player.");
+        let playback_timeout_id = self
+            .playback_timeout_id
+            .expect("Tried to build VideoPlayer without playback_timeout_id.");
+        VideoPlayer {
+            media: self.media.clone(),
+            player,
+            playback_timeout_id: Some(playback_timeout_id),
+            show_controls: self.show_controls,
+            playing: self.playing,
+            scrubber_being_moved: self.scrubber_being_moved,
+            scrubber_debounce_id: self.scrubber_debounce_id,
+        }
+    }
+}
 
 pub struct VideoPlayer {
     media: LatestMedia,
     player: gstplay::Play,
+    playback_timeout_id: Option<glib::SourceId>,
     show_controls: bool,
     playing: bool,
     scrubber_being_moved: Arc<RwLock<bool>>,
@@ -153,19 +208,21 @@ impl Component for VideoPlayer {
         let media = init.1;
 
         let (gtksink, paintable) = create_gtk_sink();
-        let renderer = gstplay::PlayVideoOverlayVideoRenderer::with_sink(&gtksink);
 
-        let model = VideoPlayer {
-            media,
-            player: gstplay::Play::new(Some(renderer)),
-            show_controls: false,
-            playing: true,
-            scrubber_being_moved: Arc::new(RwLock::new(false)),
-            scrubber_debounce_id: 0,
-        };
+        let model = VideoPlayerBuilder::new(media);
 
         let widgets = view_output!();
         let video_out = &widgets.video_out;
+        let scrubber = &widgets.scrubber;
+        let timestamp = &widgets.timestamp;
+
+        let (player, playback_timeout_id) =
+            create_player(&gtksink, scrubber, &model.scrubber_being_moved, timestamp);
+
+        let model = model
+            .set_player(player)
+            .set_playback_timeout_id(playback_timeout_id)
+            .build();
 
         video_out.set_paintable(Some(&paintable));
 
@@ -203,6 +260,9 @@ impl Component for VideoPlayer {
             }
             VideoPlayerInput::Seek(timestamp) => println!("Seek to {}", timestamp),
             VideoPlayerInput::ExitPlayer => {
+                if let Some(playback_timeout_id) = self.playback_timeout_id.take() {
+                    playback_timeout_id.remove();
+                }
                 self.player.stop();
                 sender.output(VideoPlayerOutput::NavigateBack).unwrap();
             }
@@ -223,17 +283,5 @@ impl Component for VideoPlayer {
                 }
             }
         }
-    }
-}
-
-trait ToTimestamp {
-    fn to_timestamp(self) -> String;
-}
-
-impl ToTimestamp for gst::ClockTime {
-    fn to_timestamp(self) -> String {
-        let minutes = self.seconds() / 60;
-        let seconds = self.seconds() % 60;
-        format!("{:0>2}:{:0>2}", minutes, seconds)
     }
 }
