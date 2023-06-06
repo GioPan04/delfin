@@ -172,7 +172,6 @@ impl Component for VideoPlayer {
                                 return;
                             }
                             sender.input(VideoPlayerInput::ScrubberMoved);
-                            // sender.input(VideoPlayerInput::Seek(value));
                         },
                         add_controller = gtk::GestureClick {
                             connect_pressed[sender] => move |_, _, _, _| {
@@ -258,7 +257,10 @@ impl Component for VideoPlayer {
                     VideoPlayerCommandOutput::ScrubberDebounce(id)
                 });
             }
-            VideoPlayerInput::Seek(timestamp) => println!("Seek to {}", timestamp),
+            VideoPlayerInput::Seek(timestamp) => {
+                self.player
+                    .seek(gst::ClockTime::from_seconds(timestamp as u64));
+            }
             VideoPlayerInput::ExitPlayer => {
                 if let Some(playback_timeout_id) = self.playback_timeout_id.take() {
                     playback_timeout_id.remove();
