@@ -159,6 +159,12 @@ impl Component for VideoPlayer {
                         } else {
                             "media-playback-start"
                         },
+                        #[watch]
+                        set_tooltip_text: Some(if model.playing {
+                            "Pause"
+                        } else {
+                            "Play"
+                        }),
                         connect_clicked[sender] => move |_| {
                             sender.input(VideoPlayerInput::TogglePlaying);
                         },
