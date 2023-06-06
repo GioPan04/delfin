@@ -3,6 +3,7 @@ use std::thread::sleep;
 use std::time::Duration;
 
 use gst::glib;
+use gst::prelude::*;
 use gtk::prelude::*;
 use relm4::prelude::*;
 use relm4::{gtk, ComponentParts};
@@ -123,7 +124,7 @@ impl Component for VideoPlayer {
                     #[watch]
                     set_visible: model.show_controls,
                     set_valign: gtk::Align::Start,
-                    add_css_class: "video-player-header",
+                    add_css_class: "osd",
                     #[wrap(Some)]
                     set_title_widget = &adw::WindowTitle {
                         #[watch]
@@ -141,6 +142,8 @@ impl Component for VideoPlayer {
                     #[watch]
                     set_visible: model.show_controls,
                     set_valign: gtk::Align::End,
+                    add_css_class: "toolbar",
+                    add_css_class: "osd",
                     add_css_class: "video-player-controls",
 
                     gtk::Button {
@@ -150,8 +153,6 @@ impl Component for VideoPlayer {
                         } else {
                             "media-playback-start"
                         },
-                        add_css_class: "flat",
-                        add_css_class: "play-pause",
                         connect_clicked[sender] => move |_| {
                             sender.input(VideoPlayerInput::TogglePlaying);
                         },
@@ -191,7 +192,6 @@ impl Component for VideoPlayer {
                     #[name = "timestamp"]
                     gtk::Label {
                         set_label: "4:20/69:42",
-                        add_css_class: "timestamp",
                     },
                 },
             },
