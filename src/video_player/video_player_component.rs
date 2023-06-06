@@ -145,6 +145,7 @@ impl Component for VideoPlayer {
                 },
 
                 add_overlay = &gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
                     #[watch]
                     set_visible: model.show_controls,
                     set_valign: gtk::Align::End,
@@ -152,71 +153,79 @@ impl Component for VideoPlayer {
                     add_css_class: "osd",
                     add_css_class: "video-player-controls",
 
-                    gtk::Button {
-                        #[watch]
-                        set_icon_name: if model.playing {
-                            "media-playback-pause"
-                        } else {
-                            "media-playback-start"
-                        },
-                        #[watch]
-                        set_tooltip_text: Some(if model.playing {
-                            "Pause"
-                        } else {
-                            "Play"
-                        }),
-                        connect_clicked[sender] => move |_| {
-                            sender.input(VideoPlayerInput::TogglePlaying);
-                        },
-                    },
+                    gtk::Box {
+                        set_spacing: 8,
 
-                    #[name = "position"]
-                    gtk::Label {
-                        set_label: "00:00",
-                    },
+                        #[name = "position"]
+                        gtk::Label {
+                            set_label: "00:00",
+                        },
 
-                    #[name = "scrubber"]
-                    gtk::Scale {
-                        set_range: (0.0, 100.0),
-                        set_value: 0.0,
-                        set_hexpand: true,
-                        add_controller = gtk::GestureClick {
-                            connect_pressed[sender] => move |_, _, _, _| {
-                                sender.input(VideoPlayerInput::ScrubberBeingMoved(true));
-                            },
-                            connect_unpaired_release[sender] => move |_, _, _, _, _| {
-                                sender.input(VideoPlayerInput::ScrubberBeingMoved(false));
-                            },
-                            connect_stopped[sender] => move |gesture| {
-                                if gesture.current_button() == 0 {
+                        #[name = "scrubber"]
+                        gtk::Scale {
+                            set_range: (0.0, 100.0),
+                            set_value: 0.0,
+                            set_hexpand: true,
+                            add_controller = gtk::GestureClick {
+                                connect_pressed[sender] => move |_, _, _, _| {
+                                    sender.input(VideoPlayerInput::ScrubberBeingMoved(true));
+                                },
+                                connect_unpaired_release[sender] => move |_, _, _, _, _| {
                                     sender.input(VideoPlayerInput::ScrubberBeingMoved(false));
-                                }
+                                },
+                                connect_stopped[sender] => move |gesture| {
+                                    if gesture.current_button() == 0 {
+                                        sender.input(VideoPlayerInput::ScrubberBeingMoved(false));
+                                    }
+                                },
                             },
                         },
-                    },
 
 
-                    #[name = "duration"]
-                    gtk::Label {
-                        set_label: "42:69",
-                    },
-
-                    gtk::Button {
-                        #[watch]
-                        // TODO: probably find better icons
-                        set_icon_name: if model.fullscreen {
-                            "view-restore"
-                        } else {
-                            "view-fullscreen"
+                        #[name = "duration"]
+                        gtk::Label {
+                            set_label: "42:69",
                         },
-                        #[watch]
-                        set_tooltip_text: Some(if model.fullscreen {
-                            "Exit fullscreen"
-                        } else {
-                            "Enter fullscreen"
-                        }),
-                        connect_clicked[sender] => move |_| {
-                            sender.input(VideoPlayerInput::ToggleFullscreen);
+                    },
+
+                    gtk::Box {
+                        gtk::Button {
+                            #[watch]
+                            set_icon_name: if model.playing {
+                                "media-playback-pause"
+                            } else {
+                                "media-playback-start"
+                            },
+                            #[watch]
+                            set_tooltip_text: Some(if model.playing {
+                                "Pause"
+                            } else {
+                                "Play"
+                            }),
+                            connect_clicked[sender] => move |_| {
+                                sender.input(VideoPlayerInput::TogglePlaying);
+                            },
+                        },
+
+                        gtk::Button {
+                            #[watch]
+                            // TODO: probably find better icons
+                            set_icon_name: if model.fullscreen {
+                                "view-restore"
+                            } else {
+                                "view-fullscreen"
+                            },
+                            #[watch]
+                            set_tooltip_text: Some(if model.fullscreen {
+                                "Exit fullscreen"
+                            } else {
+                                "Enter fullscreen"
+                            }),
+                            set_halign: gtk::Align::End,
+                            set_hexpand: true,
+                            connect_clicked[sender] => move |_| {
+                                sender.input(VideoPlayerInput::ToggleFullscreen);
+                            },
                         },
                     },
                 },
