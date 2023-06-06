@@ -8,6 +8,7 @@ use crate::{
     api::latest::LatestMedia,
     config::{self, Config},
     library::library_component::{Library, LibraryOutput},
+    main_window::MAIN_APP_WINDOW_NAME,
     servers::server_list::{ServerList, ServerListOutput},
     video_player::video_player_component::{VideoPlayer, VideoPlayerOutput},
 };
@@ -70,6 +71,7 @@ impl Component for App {
 
     view! {
         adw::ApplicationWindow {
+            set_widget_name: MAIN_APP_WINDOW_NAME,
             set_title: Some("Jellything"),
             set_default_width: 960,
             set_default_height: 540,

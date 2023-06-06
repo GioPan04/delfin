@@ -10,6 +10,7 @@ use relm4::{gtk, ComponentParts};
 use crate::api::item::get_stream_url;
 use crate::api::latest::LatestMedia;
 use crate::config::Server;
+use crate::main_window::get_main_window;
 use crate::video_player::gtksink::create_gtk_sink;
 use crate::video_player::player::create_player;
 
@@ -18,6 +19,7 @@ struct VideoPlayerBuilder {
     player: Option<gstplay::Play>,
     playback_timeout_id: Option<glib::SourceId>,
     show_controls: bool,
+    fullscreen: bool,
     playing: bool,
     scrubber_being_moved: Arc<RwLock<bool>>,
     scrubber_debounce_id: usize,
@@ -31,6 +33,7 @@ impl VideoPlayerBuilder {
             playback_timeout_id: None,
             show_controls: false,
             playing: true,
+            fullscreen: false,
             scrubber_being_moved: Arc::new(RwLock::new(false)),
             scrubber_debounce_id: 0,
         }
@@ -59,6 +62,7 @@ impl VideoPlayerBuilder {
             playback_timeout_id: Some(playback_timeout_id),
             show_controls: self.show_controls,
             playing: self.playing,
+            fullscreen: self.fullscreen,
             scrubber_being_moved: self.scrubber_being_moved,
             scrubber_debounce_id: self.scrubber_debounce_id,
         }
@@ -71,6 +75,7 @@ pub struct VideoPlayer {
     playback_timeout_id: Option<glib::SourceId>,
     show_controls: bool,
     playing: bool,
+    fullscreen: bool,
     scrubber_being_moved: Arc<RwLock<bool>>,
     scrubber_debounce_id: usize,
 }
@@ -82,6 +87,8 @@ pub enum VideoPlayerInput {
     ScrubberBeingMoved(bool),
     ScrubberMoved,
     Seek(f64),
+    ToggleFullscreen,
+    WindowFullscreenChanged(bool),
     ExitPlayer,
 }
 
@@ -181,9 +188,29 @@ impl Component for VideoPlayer {
                     gtk::Label {
                         set_label: "4:20/69:42",
                     },
+
+                    gtk::Button {
+                        #[watch]
+                        // TODO: probably find better icons
+                        set_icon_name: if model.fullscreen {
+                            "view-restore"
+                        } else {
+                            "view-fullscreen"
+                        },
+                        #[watch]
+                        set_tooltip_text: Some(if model.fullscreen {
+                            "Exit fullscreen"
+                        } else {
+                            "Enter fullscreen"
+                        }),
+                        connect_clicked[sender] => move |_| {
+                            sender.input(VideoPlayerInput::ToggleFullscreen);
+                        },
+                    },
                 },
             },
         }
+
     }
 
     fn init(
@@ -208,8 +235,11 @@ impl Component for VideoPlayer {
         let settings = scrubber.settings();
         settings.set_gtk_primary_button_warps_slider(true);
 
-        let scrubber_value_changed_handler = scrubber.connect_value_changed(move |_| {
-            sender.input(VideoPlayerInput::ScrubberMoved);
+        let scrubber_value_changed_handler = scrubber.connect_value_changed({
+            let sender = sender.clone();
+            move |_| {
+                sender.input(VideoPlayerInput::ScrubberMoved);
+            }
         });
 
         let (player, playback_timeout_id) = create_player(
@@ -220,7 +250,7 @@ impl Component for VideoPlayer {
             timestamp,
         );
 
-        let model = model
+        let mut model = model
             .set_player(player)
             .set_playback_timeout_id(playback_timeout_id)
             .build();
@@ -232,10 +262,19 @@ impl Component for VideoPlayer {
         model.player.set_uri(Some(&url));
         model.player.play();
 
+        if let Some(window) = get_main_window() {
+            model.fullscreen = window.is_fullscreen();
+            window.connect_notify(Some("fullscreened"), move |window, _| {
+                sender.input(VideoPlayerInput::WindowFullscreenChanged(
+                    window.is_fullscreen(),
+                ));
+            });
+        }
+
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
+    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, root: &Self::Root) {
         match message {
             VideoPlayerInput::ToggleControls => self.show_controls = !self.show_controls,
             VideoPlayerInput::TogglePlaying => match self.playing {
@@ -262,6 +301,15 @@ impl Component for VideoPlayer {
             VideoPlayerInput::Seek(timestamp) => {
                 self.player
                     .seek(gst::ClockTime::from_seconds(timestamp as u64));
+            }
+            VideoPlayerInput::ToggleFullscreen => {
+                self.fullscreen = !self.fullscreen;
+                if let Some(window) = root.toplevel_window() {
+                    window.set_fullscreened(self.fullscreen);
+                }
+            }
+            VideoPlayerInput::WindowFullscreenChanged(fullscreen) => {
+                self.fullscreen = fullscreen;
             }
             VideoPlayerInput::ExitPlayer => {
                 if let Some(playback_timeout_id) = self.playback_timeout_id.take() {
