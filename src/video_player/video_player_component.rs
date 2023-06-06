@@ -3,7 +3,6 @@ use std::thread::sleep;
 use std::time::Duration;
 
 use gst::glib;
-use gst::prelude::*;
 use gtk::prelude::*;
 use relm4::prelude::*;
 use relm4::{gtk, ComponentParts};
@@ -163,17 +162,6 @@ impl Component for VideoPlayer {
                         set_range: (0.0, 100.0),
                         set_value: 0.0,
                         set_hexpand: true,
-                        connect_value_changed[sender] => move |scrubber| {
-                            let value = scrubber.value();
-                            // Hack to tell if scrubber was manually changed
-                            // When setting value from playback position, the
-                            // value won't have a fractional part. When the
-                            // user manually changes it, it probably will.
-                            if value.fract() == 0.0 {
-                                return;
-                            }
-                            sender.input(VideoPlayerInput::ScrubberMoved);
-                        },
                         add_controller = gtk::GestureClick {
                             connect_pressed[sender] => move |_, _, _, _| {
                                 sender.input(VideoPlayerInput::ScrubberBeingMoved(true));
@@ -220,8 +208,17 @@ impl Component for VideoPlayer {
         let settings = scrubber.settings();
         settings.set_gtk_primary_button_warps_slider(true);
 
-        let (player, playback_timeout_id) =
-            create_player(&gtksink, scrubber, &model.scrubber_being_moved, timestamp);
+        let scrubber_value_changed_handler = scrubber.connect_value_changed(move |_| {
+            sender.input(VideoPlayerInput::ScrubberMoved);
+        });
+
+        let (player, playback_timeout_id) = create_player(
+            &gtksink,
+            scrubber,
+            scrubber_value_changed_handler,
+            &model.scrubber_being_moved,
+            timestamp,
+        );
 
         let model = model
             .set_player(player)

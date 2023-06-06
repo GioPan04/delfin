@@ -4,7 +4,7 @@ use std::{
 };
 
 use gst::{
-    glib::{self, SourceId},
+    glib::{self, SignalHandlerId, SourceId},
     Element,
 };
 use gstplay::{Play, PlayVideoOverlayVideoRenderer};
@@ -14,6 +14,7 @@ use relm4::gtk;
 pub fn create_player(
     sink: &Element,
     scrubber: &gtk::Scale,
+    scrubber_value_change_handler: SignalHandlerId,
     scrubber_being_moved: &Arc<RwLock<bool>>,
     timestamp: &gtk::Label,
 ) -> (Play, SourceId) {
@@ -31,6 +32,8 @@ pub fn create_player(
                     (Some(scrubber), Some(timestamp)) => (scrubber, timestamp),
                     _ => return glib::Continue(true),
                 };
+
+                scrubber.block_signal(&scrubber_value_change_handler);
 
                 let position = player.position();
                 // TODO: some formats don't have duration, maybe we can default
@@ -54,6 +57,8 @@ pub fn create_player(
                         ));
                     }
                 }
+
+                scrubber.unblock_signal(&scrubber_value_change_handler);
             }
             glib::Continue(true)
         }
