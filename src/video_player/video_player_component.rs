@@ -1,8 +1,4 @@
-use std::sync::{Arc, RwLock};
-use std::thread::sleep;
-use std::time::Duration;
-
-use gst::glib;
+use gst::glib::WeakRef;
 use gtk::prelude::*;
 use relm4::prelude::*;
 use relm4::{gtk, ComponentParts};
@@ -11,41 +7,39 @@ use crate::api::item::get_stream_url;
 use crate::api::latest::LatestMedia;
 use crate::config::Server;
 use crate::main_window::get_main_window;
-use crate::video_player::gtksink::create_gtk_sink;
 use crate::video_player::player::create_player;
+use crate::video_player::scrubber::Scrubber;
+
+use super::scrubber::ScrubberOutput;
 
 struct VideoPlayerBuilder {
     media: LatestMedia,
-    player: Option<gstplay::Play>,
-    playback_timeout_id: Option<glib::SourceId>,
+    scrubber: Option<Controller<Scrubber>>,
+    player: Option<WeakRef<gstplay::Play>>,
     show_controls: bool,
     fullscreen: bool,
     playing: bool,
-    scrubber_being_moved: Arc<RwLock<bool>>,
-    scrubber_debounce_id: usize,
 }
 
 impl VideoPlayerBuilder {
     fn new(media: LatestMedia) -> Self {
         Self {
             media,
+            scrubber: None,
             player: None,
-            playback_timeout_id: None,
             show_controls: false,
             playing: true,
             fullscreen: false,
-            scrubber_being_moved: Arc::new(RwLock::new(false)),
-            scrubber_debounce_id: 0,
         }
     }
 
-    fn set_player(mut self, player: gstplay::Play) -> Self {
-        self.player = Some(player);
+    fn set_player(mut self, player: &gstplay::Play) -> Self {
+        self.player = Some(player.downgrade());
         self
     }
 
-    fn set_playback_timeout_id(mut self, playback_timeout_id: glib::SourceId) -> Self {
-        self.playback_timeout_id = Some(playback_timeout_id);
+    fn set_scrubber(mut self, scrubber: Controller<Scrubber>) -> Self {
+        self.scrubber = Some(scrubber);
         self
     }
 
@@ -53,39 +47,36 @@ impl VideoPlayerBuilder {
         let player = self
             .player
             .expect("Tried to build VideoPlayer without player.");
-        let playback_timeout_id = self
-            .playback_timeout_id
-            .expect("Tried to build VideoPlayer without playback_timeout_id.");
+
+        if self.scrubber.is_none() {
+            panic!("Tried to build VideoPlayer without scrubber.");
+        }
+
         VideoPlayer {
             media: self.media.clone(),
+            _scrubber: self.scrubber,
             player,
-            playback_timeout_id: Some(playback_timeout_id),
             show_controls: self.show_controls,
             playing: self.playing,
             fullscreen: self.fullscreen,
-            scrubber_being_moved: self.scrubber_being_moved,
-            scrubber_debounce_id: self.scrubber_debounce_id,
         }
     }
 }
 
 pub struct VideoPlayer {
     media: LatestMedia,
-    player: gstplay::Play,
-    playback_timeout_id: Option<glib::SourceId>,
+    // We need to keep this controller around, even if we don't read it
+    _scrubber: Option<Controller<Scrubber>>,
+    player: WeakRef<gstplay::Play>,
     show_controls: bool,
     playing: bool,
     fullscreen: bool,
-    scrubber_being_moved: Arc<RwLock<bool>>,
-    scrubber_debounce_id: usize,
 }
 
 #[derive(Debug)]
 pub enum VideoPlayerInput {
     ToggleControls,
     TogglePlaying,
-    ScrubberBeingMoved(bool),
-    ScrubberMoved,
     Seek(f64),
     ToggleFullscreen,
     WindowFullscreenChanged(bool),
@@ -97,17 +88,12 @@ pub enum VideoPlayerOutput {
     NavigateBack,
 }
 
-#[derive(Debug)]
-pub enum VideoPlayerCommandOutput {
-    ScrubberDebounce(usize),
-}
-
 #[relm4::component(pub)]
 impl Component for VideoPlayer {
     type Init = (Server, LatestMedia);
     type Input = VideoPlayerInput;
     type Output = VideoPlayerOutput;
-    type CommandOutput = VideoPlayerCommandOutput;
+    type CommandOutput = ();
 
     view! {
         gtk::Box {
@@ -144,6 +130,7 @@ impl Component for VideoPlayer {
                     },
                 },
 
+                #[name = "overlay"]
                 add_overlay = &gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
                     #[watch]
@@ -152,41 +139,6 @@ impl Component for VideoPlayer {
                     add_css_class: "toolbar",
                     add_css_class: "osd",
                     add_css_class: "video-player-controls",
-
-                    gtk::Box {
-                        set_spacing: 8,
-
-                        #[name = "position"]
-                        gtk::Label {
-                            set_label: "00:00",
-                        },
-
-                        #[name = "scrubber"]
-                        gtk::Scale {
-                            set_range: (0.0, 100.0),
-                            set_value: 0.0,
-                            set_hexpand: true,
-                            add_controller = gtk::GestureClick {
-                                connect_pressed[sender] => move |_, _, _, _| {
-                                    sender.input(VideoPlayerInput::ScrubberBeingMoved(true));
-                                },
-                                connect_unpaired_release[sender] => move |_, _, _, _, _| {
-                                    sender.input(VideoPlayerInput::ScrubberBeingMoved(false));
-                                },
-                                connect_stopped[sender] => move |gesture| {
-                                    if gesture.current_button() == 0 {
-                                        sender.input(VideoPlayerInput::ScrubberBeingMoved(false));
-                                    }
-                                },
-                            },
-                        },
-
-
-                        #[name = "duration"]
-                        gtk::Label {
-                            set_label: "42:69",
-                        },
-                    },
 
                     gtk::Box {
                         gtk::Button {
@@ -242,48 +194,25 @@ impl Component for VideoPlayer {
         let server = init.0;
         let media = init.1;
 
-        let (gtksink, paintable) = create_gtk_sink();
-
         let model = VideoPlayerBuilder::new(media);
 
         let widgets = view_output!();
+        let overlay = &widgets.overlay;
         let video_out = &widgets.video_out;
-        let scrubber = &widgets.scrubber;
-        let position = &widgets.position;
-        let duration = &widgets.duration;
 
-        // Allow clicking on any scrubber position to seek to that timestamp
-        // By default, this would move the scrubber by a set increment
-        let settings = scrubber.settings();
-        settings.set_gtk_primary_button_warps_slider(true);
-
-        let scrubber_value_changed_handler = scrubber.connect_value_changed({
-            let sender = sender.clone();
-            move |_| {
-                sender.input(VideoPlayerInput::ScrubberMoved);
-            }
-        });
-
-        let (player, playback_timeout_id) = create_player(
-            &gtksink,
-            scrubber,
-            scrubber_value_changed_handler,
-            &model.scrubber_being_moved,
-            position,
-            duration,
-        );
-
-        let mut model = model
-            .set_player(player)
-            .set_playback_timeout_id(playback_timeout_id)
-            .build();
-
+        let (player, paintable) = create_player();
         video_out.set_paintable(Some(&paintable));
 
-        let url = get_stream_url(&server, &model.media.id);
+        let scrubber = Scrubber::builder()
+            .launch(player.downgrade())
+            .forward(sender.input_sender(), convert_scrubber_output);
+        overlay.prepend(scrubber.widget());
 
-        model.player.set_uri(Some(&url));
-        model.player.play();
+        let mut model = model.set_player(&player).set_scrubber(scrubber).build();
+
+        let url = get_stream_url(&server, &model.media.id);
+        player.set_uri(Some(&url));
+        player.play();
 
         if let Some(window) = get_main_window() {
             model.fullscreen = window.is_fullscreen();
@@ -300,30 +229,24 @@ impl Component for VideoPlayer {
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, root: &Self::Root) {
         match message {
             VideoPlayerInput::ToggleControls => self.show_controls = !self.show_controls,
-            VideoPlayerInput::TogglePlaying => match self.playing {
-                true => {
-                    self.player.pause();
-                    self.playing = false;
+            VideoPlayerInput::TogglePlaying => {
+                if let Some(player) = self.player.upgrade() {
+                    match self.playing {
+                        true => {
+                            player.pause();
+                            self.playing = false;
+                        }
+                        false => {
+                            player.play();
+                            self.playing = true;
+                        }
+                    }
                 }
-                false => {
-                    self.player.play();
-                    self.playing = true;
-                }
-            },
-            VideoPlayerInput::ScrubberBeingMoved(scrubber_being_moved) => {
-                *self.scrubber_being_moved.write().unwrap() = scrubber_being_moved;
-            }
-            VideoPlayerInput::ScrubberMoved => {
-                self.scrubber_debounce_id = self.scrubber_debounce_id.wrapping_add(1);
-                let id = self.scrubber_debounce_id;
-                sender.spawn_oneshot_command(move || {
-                    sleep(Duration::from_millis(250));
-                    VideoPlayerCommandOutput::ScrubberDebounce(id)
-                });
             }
             VideoPlayerInput::Seek(timestamp) => {
-                self.player
-                    .seek(gst::ClockTime::from_seconds(timestamp as u64));
+                if let Some(player) = self.player.upgrade() {
+                    player.seek(gst::ClockTime::from_seconds(timestamp as u64));
+                }
             }
             VideoPlayerInput::ToggleFullscreen => {
                 self.fullscreen = !self.fullscreen;
@@ -335,28 +258,20 @@ impl Component for VideoPlayer {
                 self.fullscreen = fullscreen;
             }
             VideoPlayerInput::ExitPlayer => {
-                if let Some(playback_timeout_id) = self.playback_timeout_id.take() {
-                    playback_timeout_id.remove();
+                // if let Some(playback_timeout_id) = self.playback_timeout_id.take() {
+                //     playback_timeout_id.remove();
+                // }
+                if let Some(player) = self.player.upgrade() {
+                    player.stop();
                 }
-                self.player.stop();
                 sender.output(VideoPlayerOutput::NavigateBack).unwrap();
             }
         }
     }
+}
 
-    fn update_cmd_with_view(
-        &mut self,
-        widgets: &mut Self::Widgets,
-        message: Self::CommandOutput,
-        sender: ComponentSender<Self>,
-        _root: &Self::Root,
-    ) {
-        match message {
-            VideoPlayerCommandOutput::ScrubberDebounce(id) => {
-                if id == self.scrubber_debounce_id {
-                    sender.input(VideoPlayerInput::Seek(widgets.scrubber.value()));
-                }
-            }
-        }
+fn convert_scrubber_output(output: ScrubberOutput) -> VideoPlayerInput {
+    match output {
+        ScrubberOutput::Seek(timestamp) => VideoPlayerInput::Seek(timestamp),
     }
 }
