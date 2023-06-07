@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use gst::glib::WeakRef;
 use gtk::prelude::*;
 use relm4::{gtk, ComponentParts, SimpleComponent};
@@ -46,8 +48,25 @@ impl SimpleComponent for Volume {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+        let player = init;
+
+        // TODO: immediatley checking if the player is muted always returned
+        // false
+        relm4::spawn({
+            let player = player.clone();
+            let sender = sender.clone();
+            async move {
+                relm4::tokio::time::sleep(Duration::from_millis(250)).await;
+                if let Some(player) = player.upgrade() {
+                    if player.is_muted() {
+                        sender.input(VolumeInput::ToggleMute);
+                    }
+                }
+            }
+        });
+
         let model = Volume {
-            player: init,
+            player,
             muted: false,
         };
 
