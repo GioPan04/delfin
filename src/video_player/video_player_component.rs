@@ -17,8 +17,9 @@ struct VideoPlayerBuilder {
     scrubber: Option<Controller<Scrubber>>,
     player: Option<WeakRef<gstplay::Play>>,
     show_controls: bool,
-    fullscreen: bool,
     playing: bool,
+    muted: bool,
+    fullscreen: bool,
 }
 
 impl VideoPlayerBuilder {
@@ -29,6 +30,7 @@ impl VideoPlayerBuilder {
             player: None,
             show_controls: false,
             playing: true,
+            muted: false,
             fullscreen: false,
         }
     }
@@ -58,6 +60,7 @@ impl VideoPlayerBuilder {
             player,
             show_controls: self.show_controls,
             playing: self.playing,
+            muted: self.muted,
             fullscreen: self.fullscreen,
         }
     }
@@ -70,6 +73,7 @@ pub struct VideoPlayer {
     player: WeakRef<gstplay::Play>,
     show_controls: bool,
     playing: bool,
+    muted: bool,
     fullscreen: bool,
 }
 
@@ -79,6 +83,7 @@ pub enum VideoPlayerInput {
     TogglePlaying,
     Seek(f64),
     ToggleFullscreen,
+    ToggleMute,
     WindowFullscreenChanged(bool),
     ExitPlayer,
 }
@@ -161,6 +166,27 @@ impl Component for VideoPlayer {
 
                         gtk::Button {
                             #[watch]
+                            // TODO: icon is oddly bright
+                            set_icon_name: if model.muted {
+                                "audio-volume-muted"
+                            } else {
+                                "audio-volume-high"
+                            },
+                            #[watch]
+                            set_tooltip_text: Some(if model.muted {
+                                "Unmute"
+                            } else {
+                                "Mute"
+                            }),
+                            set_halign: gtk::Align::End,
+                            set_hexpand: true,
+                            connect_clicked[sender] => move |_| {
+                                sender.input(VideoPlayerInput::ToggleMute);
+                            },
+                        },
+
+                        gtk::Button {
+                            #[watch]
                             // TODO: probably find better icons
                             set_icon_name: if model.fullscreen {
                                 "view-restore"
@@ -173,8 +199,6 @@ impl Component for VideoPlayer {
                             } else {
                                 "Enter fullscreen"
                             }),
-                            set_halign: gtk::Align::End,
-                            set_hexpand: true,
                             connect_clicked[sender] => move |_| {
                                 sender.input(VideoPlayerInput::ToggleFullscreen);
                             },
@@ -252,6 +276,12 @@ impl Component for VideoPlayer {
                 self.fullscreen = !self.fullscreen;
                 if let Some(window) = root.toplevel_window() {
                     window.set_fullscreened(self.fullscreen);
+                }
+            }
+            VideoPlayerInput::ToggleMute => {
+                if let Some(player) = self.player.upgrade() {
+                    self.muted = !self.muted;
+                    player.set_mute(self.muted);
                 }
             }
             VideoPlayerInput::WindowFullscreenChanged(fullscreen) => {
