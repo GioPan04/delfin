@@ -11,16 +11,17 @@ use crate::video_player::player::create_player;
 use crate::video_player::scrubber::Scrubber;
 use crate::video_player::volume::Volume;
 
+use super::play_pause::PlayPause;
 use super::scrubber::ScrubberOutput;
 
 struct VideoPlayerBuilder {
     media: LatestMedia,
     scrubber: Option<Controller<Scrubber>>,
+    play_pause: Option<Controller<PlayPause>>,
     volume: Option<Controller<Volume>>,
     fullscreen: Option<Controller<Fullscreen>>,
     player: Option<WeakRef<gstplay::Play>>,
     show_controls: bool,
-    playing: bool,
 }
 
 impl VideoPlayerBuilder {
@@ -28,16 +29,21 @@ impl VideoPlayerBuilder {
         Self {
             media,
             scrubber: None,
+            play_pause: None,
             volume: None,
             fullscreen: None,
             player: None,
             show_controls: false,
-            playing: true,
         }
     }
 
     fn set_player(mut self, player: &gstplay::Play) -> Self {
         self.player = Some(player.downgrade());
+        self
+    }
+
+    fn set_play_pause(mut self, play_pause: Controller<PlayPause>) -> Self {
+        self.play_pause = Some(play_pause);
         self
     }
 
@@ -65,6 +71,10 @@ impl VideoPlayerBuilder {
             panic!("Tried to build VideoPlayer without scrubber.");
         }
 
+        if self.play_pause.is_none() {
+            panic!("Tried to build VideoPlayer without play_pause.");
+        }
+
         if self.volume.is_none() {
             panic!("Tried to build VideoPlayer without volume.");
         }
@@ -76,11 +86,11 @@ impl VideoPlayerBuilder {
         VideoPlayer {
             media: self.media.clone(),
             _scrubber: self.scrubber,
+            _play_pause: self.play_pause,
             _volume: self.volume,
             _fullscreen: self.fullscreen,
             player,
             show_controls: self.show_controls,
-            playing: self.playing,
         }
     }
 }
@@ -89,17 +99,16 @@ pub struct VideoPlayer {
     media: LatestMedia,
     // We need to keep these controllers around, even if we don't read them
     _scrubber: Option<Controller<Scrubber>>,
+    _play_pause: Option<Controller<PlayPause>>,
     _volume: Option<Controller<Volume>>,
     _fullscreen: Option<Controller<Fullscreen>>,
     player: WeakRef<gstplay::Play>,
     show_controls: bool,
-    playing: bool,
 }
 
 #[derive(Debug)]
 pub enum VideoPlayerInput {
     ToggleControls,
-    TogglePlaying,
     Seek(f64),
     ExitPlayer,
 }
@@ -163,23 +172,8 @@ impl Component for VideoPlayer {
 
                     #[name = "second_row"]
                     gtk::Box {
-                        gtk::Button {
-                            #[watch]
-                            set_icon_name: if model.playing {
-                                "media-playback-pause"
-                            } else {
-                                "media-playback-start"
-                            },
-                            #[watch]
-                            set_tooltip_text: Some(if model.playing {
-                                "Pause"
-                            } else {
-                                "Play"
-                            }),
-                            connect_clicked[sender] => move |_| {
-                                sender.input(VideoPlayerInput::TogglePlaying);
-                            },
-                        },
+                        #[name = "play_pause_placeholder"]
+                        gtk::Box {},
 
                         #[name = "volume_placeholder"]
                         gtk::Box {},
@@ -207,6 +201,7 @@ impl Component for VideoPlayer {
         let overlay = &widgets.overlay;
         let video_out = &widgets.video_out;
         let second_row = &widgets.second_row;
+        let play_pause_placeholder = &widgets.play_pause_placeholder;
         let volume_placeholder = &widgets.volume_placeholder;
         let fullscreen_placeholder = &widgets.fullscreen_placeholder;
 
@@ -218,6 +213,9 @@ impl Component for VideoPlayer {
             .forward(sender.input_sender(), convert_scrubber_output);
         overlay.prepend(scrubber.widget());
 
+        let play_pause = PlayPause::builder().launch(player.downgrade()).detach();
+        second_row.insert_child_after(play_pause.widget(), Some(play_pause_placeholder));
+
         let volume = Volume::builder().launch(player.downgrade()).detach();
         second_row.insert_child_after(volume.widget(), Some(volume_placeholder));
 
@@ -227,6 +225,7 @@ impl Component for VideoPlayer {
         let model = model
             .set_player(&player)
             .set_scrubber(scrubber)
+            .set_play_pause(play_pause)
             .set_volume(volume)
             .set_fullscreen(fullscreen)
             .build();
@@ -243,20 +242,6 @@ impl Component for VideoPlayer {
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match message {
             VideoPlayerInput::ToggleControls => self.show_controls = !self.show_controls,
-            VideoPlayerInput::TogglePlaying => {
-                if let Some(player) = self.player.upgrade() {
-                    match self.playing {
-                        true => {
-                            player.pause();
-                            self.playing = false;
-                        }
-                        false => {
-                            player.play();
-                            self.playing = true;
-                        }
-                    }
-                }
-            }
             VideoPlayerInput::Seek(timestamp) => {
                 if let Some(player) = self.player.upgrade() {
                     player.seek(gst::ClockTime::from_seconds(timestamp as u64));
