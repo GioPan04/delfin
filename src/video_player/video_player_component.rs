@@ -9,16 +9,17 @@ use crate::config::Server;
 use crate::main_window::get_main_window;
 use crate::video_player::player::create_player;
 use crate::video_player::scrubber::Scrubber;
+use crate::video_player::volume::Volume;
 
 use super::scrubber::ScrubberOutput;
 
 struct VideoPlayerBuilder {
     media: LatestMedia,
     scrubber: Option<Controller<Scrubber>>,
+    volume: Option<Controller<Volume>>,
     player: Option<WeakRef<gstplay::Play>>,
     show_controls: bool,
     playing: bool,
-    muted: bool,
     fullscreen: bool,
 }
 
@@ -27,10 +28,10 @@ impl VideoPlayerBuilder {
         Self {
             media,
             scrubber: None,
+            volume: None,
             player: None,
             show_controls: false,
             playing: true,
-            muted: false,
             fullscreen: false,
         }
     }
@@ -45,6 +46,11 @@ impl VideoPlayerBuilder {
         self
     }
 
+    fn set_volume(mut self, volume: Controller<Volume>) -> Self {
+        self.volume = Some(volume);
+        self
+    }
+
     fn build(self) -> VideoPlayer {
         let player = self
             .player
@@ -54,13 +60,17 @@ impl VideoPlayerBuilder {
             panic!("Tried to build VideoPlayer without scrubber.");
         }
 
+        if self.volume.is_none() {
+            panic!("Tried to build VideoPlayer without volume.");
+        }
+
         VideoPlayer {
             media: self.media.clone(),
             _scrubber: self.scrubber,
+            _volume: self.volume,
             player,
             show_controls: self.show_controls,
             playing: self.playing,
-            muted: self.muted,
             fullscreen: self.fullscreen,
         }
     }
@@ -68,12 +78,12 @@ impl VideoPlayerBuilder {
 
 pub struct VideoPlayer {
     media: LatestMedia,
-    // We need to keep this controller around, even if we don't read it
+    // We need to keep these controllers around, even if we don't read them
     _scrubber: Option<Controller<Scrubber>>,
+    _volume: Option<Controller<Volume>>,
     player: WeakRef<gstplay::Play>,
     show_controls: bool,
     playing: bool,
-    muted: bool,
     fullscreen: bool,
 }
 
@@ -83,7 +93,6 @@ pub enum VideoPlayerInput {
     TogglePlaying,
     Seek(f64),
     ToggleFullscreen,
-    ToggleMute,
     WindowFullscreenChanged(bool),
     ExitPlayer,
 }
@@ -145,6 +154,7 @@ impl Component for VideoPlayer {
                     add_css_class: "osd",
                     add_css_class: "video-player-controls",
 
+                    #[name = "second_row"]
                     gtk::Box {
                         gtk::Button {
                             #[watch]
@@ -164,26 +174,8 @@ impl Component for VideoPlayer {
                             },
                         },
 
-                        gtk::Button {
-                            #[watch]
-                            // TODO: icon is oddly bright
-                            set_icon_name: if model.muted {
-                                "audio-volume-muted"
-                            } else {
-                                "audio-volume-high"
-                            },
-                            #[watch]
-                            set_tooltip_text: Some(if model.muted {
-                                "Unmute"
-                            } else {
-                                "Mute"
-                            }),
-                            set_halign: gtk::Align::End,
-                            set_hexpand: true,
-                            connect_clicked[sender] => move |_| {
-                                sender.input(VideoPlayerInput::ToggleMute);
-                            },
-                        },
+                        #[name = "volume_placeholder"]
+                        gtk::Box {},
 
                         gtk::Button {
                             #[watch]
@@ -223,6 +215,8 @@ impl Component for VideoPlayer {
         let widgets = view_output!();
         let overlay = &widgets.overlay;
         let video_out = &widgets.video_out;
+        let second_row = &widgets.second_row;
+        let volume_placeholder = &widgets.volume_placeholder;
 
         let (player, paintable) = create_player();
         video_out.set_paintable(Some(&paintable));
@@ -232,7 +226,14 @@ impl Component for VideoPlayer {
             .forward(sender.input_sender(), convert_scrubber_output);
         overlay.prepend(scrubber.widget());
 
-        let mut model = model.set_player(&player).set_scrubber(scrubber).build();
+        let volume = Volume::builder().launch(player.downgrade()).detach();
+        second_row.insert_child_after(volume.widget(), Some(volume_placeholder));
+
+        let mut model = model
+            .set_player(&player)
+            .set_scrubber(scrubber)
+            .set_volume(volume)
+            .build();
 
         let url = get_stream_url(&server, &model.media.id);
         player.set_uri(Some(&url));
@@ -276,12 +277,6 @@ impl Component for VideoPlayer {
                 self.fullscreen = !self.fullscreen;
                 if let Some(window) = root.toplevel_window() {
                     window.set_fullscreened(self.fullscreen);
-                }
-            }
-            VideoPlayerInput::ToggleMute => {
-                if let Some(player) = self.player.upgrade() {
-                    self.muted = !self.muted;
-                    player.set_mute(self.muted);
                 }
             }
             VideoPlayerInput::WindowFullscreenChanged(fullscreen) => {
