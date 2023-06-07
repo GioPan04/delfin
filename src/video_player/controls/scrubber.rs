@@ -11,15 +11,32 @@ use gst::{
 use gtk::prelude::*;
 use relm4::{gtk, Component, ComponentParts};
 
+#[derive(Clone, Copy, Debug)]
+enum DurationDisplay {
+    Total,
+    Remaining,
+}
+
+impl DurationDisplay {
+    fn toggle(&self) -> Self {
+        match self {
+            Self::Total => Self::Remaining,
+            Self::Remaining => Self::Total,
+        }
+    }
+}
+
 pub struct Scrubber {
     scrubber_being_moved: Arc<RwLock<bool>>,
     debounce_id: usize,
+    duration_display: Arc<RwLock<DurationDisplay>>,
 }
 
 #[derive(Debug)]
 pub enum ScrubberInput {
     SetScrubberBeingMoved(bool),
     ScrubberMoved,
+    ToggleDurationDisplay,
 }
 
 #[derive(Debug)]
@@ -44,7 +61,9 @@ impl Component for Scrubber {
             set_spacing: 8,
 
             #[name = "position"]
-            gtk::Label::new(Some("00:00")),
+            gtk::Label::new(Some("00:00")) {
+                add_css_class: "scrubber-position-label",
+            },
 
             #[name = "scrubber"]
             gtk::Scale {
@@ -66,7 +85,13 @@ impl Component for Scrubber {
 
 
             #[name = "duration"]
-            gtk::Label::new(Some("42:69")),
+            gtk::Button::with_label("42:69") {
+                add_css_class: "flat",
+                add_css_class: "scrubber-duration-label",
+                connect_clicked[sender] => move |_| {
+                    sender.input(ScrubberInput::ToggleDurationDisplay);
+                },
+            },
         }
     }
 
@@ -80,6 +105,7 @@ impl Component for Scrubber {
         let model = Scrubber {
             scrubber_being_moved: Arc::new(RwLock::new(false)),
             debounce_id: 0,
+            duration_display: Arc::new(RwLock::new(DurationDisplay::Total)),
         };
 
         let widgets = view_output!();
@@ -103,6 +129,7 @@ impl Component for Scrubber {
             let position = position.downgrade();
             let duration = duration.downgrade();
             let scrubber_being_moved = Arc::clone(&model.scrubber_being_moved);
+            let duration_display = Arc::clone(&model.duration_display);
             move || {
                 if !*scrubber_being_moved.read().unwrap() {
                     if let (Some(player), Some(scrubber), Some(position), Some(duration)) = (
@@ -118,7 +145,19 @@ impl Component for Scrubber {
                         {
                             if !*scrubber_being_moved.read().unwrap() {
                                 position.set_label(&position_time.to_timestamp());
-                                duration.set_label(&duration_time.to_timestamp());
+
+                                match *duration_display.read().unwrap() {
+                                    DurationDisplay::Total => {
+                                        duration.set_label(&duration_time.to_timestamp());
+                                    }
+                                    DurationDisplay::Remaining => {
+                                        let timestamp = &duration_time
+                                            .wrapping_sub(position_time)
+                                            .to_timestamp();
+                                        duration.set_label(&format!("-{}", timestamp));
+                                    }
+                                }
+
                                 scrubber.set_range(0.0, duration_time.seconds() as f64);
                                 scrubber.set_value(position_time.seconds() as f64);
                             } else {
@@ -157,6 +196,11 @@ impl Component for Scrubber {
             }
             ScrubberInput::SetScrubberBeingMoved(scrubber_being_moved) => {
                 *self.scrubber_being_moved.write().unwrap() = scrubber_being_moved;
+            }
+
+            ScrubberInput::ToggleDurationDisplay => {
+                let mut duration_display = self.duration_display.write().unwrap();
+                *duration_display = duration_display.toggle();
             }
         }
     }
