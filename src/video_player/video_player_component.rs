@@ -6,7 +6,7 @@ use relm4::{gtk, ComponentParts};
 use crate::api::item::get_stream_url;
 use crate::api::latest::LatestMedia;
 use crate::config::Server;
-use crate::main_window::get_main_window;
+use crate::video_player::fullscreen::Fullscreen;
 use crate::video_player::player::create_player;
 use crate::video_player::scrubber::Scrubber;
 use crate::video_player::volume::Volume;
@@ -17,10 +17,10 @@ struct VideoPlayerBuilder {
     media: LatestMedia,
     scrubber: Option<Controller<Scrubber>>,
     volume: Option<Controller<Volume>>,
+    fullscreen: Option<Controller<Fullscreen>>,
     player: Option<WeakRef<gstplay::Play>>,
     show_controls: bool,
     playing: bool,
-    fullscreen: bool,
 }
 
 impl VideoPlayerBuilder {
@@ -29,10 +29,10 @@ impl VideoPlayerBuilder {
             media,
             scrubber: None,
             volume: None,
+            fullscreen: None,
             player: None,
             show_controls: false,
             playing: true,
-            fullscreen: false,
         }
     }
 
@@ -51,6 +51,11 @@ impl VideoPlayerBuilder {
         self
     }
 
+    fn set_fullscreen(mut self, fullscreen: Controller<Fullscreen>) -> Self {
+        self.fullscreen = Some(fullscreen);
+        self
+    }
+
     fn build(self) -> VideoPlayer {
         let player = self
             .player
@@ -64,14 +69,18 @@ impl VideoPlayerBuilder {
             panic!("Tried to build VideoPlayer without volume.");
         }
 
+        if self.fullscreen.is_none() {
+            panic!("Tried to build VideoPlayer without fullscreen.");
+        }
+
         VideoPlayer {
             media: self.media.clone(),
             _scrubber: self.scrubber,
             _volume: self.volume,
+            _fullscreen: self.fullscreen,
             player,
             show_controls: self.show_controls,
             playing: self.playing,
-            fullscreen: self.fullscreen,
         }
     }
 }
@@ -81,10 +90,10 @@ pub struct VideoPlayer {
     // We need to keep these controllers around, even if we don't read them
     _scrubber: Option<Controller<Scrubber>>,
     _volume: Option<Controller<Volume>>,
+    _fullscreen: Option<Controller<Fullscreen>>,
     player: WeakRef<gstplay::Play>,
     show_controls: bool,
     playing: bool,
-    fullscreen: bool,
 }
 
 #[derive(Debug)]
@@ -92,8 +101,6 @@ pub enum VideoPlayerInput {
     ToggleControls,
     TogglePlaying,
     Seek(f64),
-    ToggleFullscreen,
-    WindowFullscreenChanged(bool),
     ExitPlayer,
 }
 
@@ -177,24 +184,8 @@ impl Component for VideoPlayer {
                         #[name = "volume_placeholder"]
                         gtk::Box {},
 
-                        gtk::Button {
-                            #[watch]
-                            // TODO: probably find better icons
-                            set_icon_name: if model.fullscreen {
-                                "view-restore"
-                            } else {
-                                "view-fullscreen"
-                            },
-                            #[watch]
-                            set_tooltip_text: Some(if model.fullscreen {
-                                "Exit fullscreen"
-                            } else {
-                                "Enter fullscreen"
-                            }),
-                            connect_clicked[sender] => move |_| {
-                                sender.input(VideoPlayerInput::ToggleFullscreen);
-                            },
-                        },
+                        #[name = "fullscreen_placeholder"]
+                        gtk::Box {},
                     },
                 },
             },
@@ -217,6 +208,7 @@ impl Component for VideoPlayer {
         let video_out = &widgets.video_out;
         let second_row = &widgets.second_row;
         let volume_placeholder = &widgets.volume_placeholder;
+        let fullscreen_placeholder = &widgets.fullscreen_placeholder;
 
         let (player, paintable) = create_player();
         video_out.set_paintable(Some(&paintable));
@@ -229,29 +221,26 @@ impl Component for VideoPlayer {
         let volume = Volume::builder().launch(player.downgrade()).detach();
         second_row.insert_child_after(volume.widget(), Some(volume_placeholder));
 
-        let mut model = model
+        let fullscreen = Fullscreen::builder().launch(()).detach();
+        second_row.insert_child_after(fullscreen.widget(), Some(fullscreen_placeholder));
+
+        let model = model
             .set_player(&player)
             .set_scrubber(scrubber)
             .set_volume(volume)
+            .set_fullscreen(fullscreen)
             .build();
 
         let url = get_stream_url(&server, &model.media.id);
         player.set_uri(Some(&url));
-        player.play();
-
-        if let Some(window) = get_main_window() {
-            model.fullscreen = window.is_fullscreen();
-            window.connect_notify(Some("fullscreened"), move |window, _| {
-                sender.input(VideoPlayerInput::WindowFullscreenChanged(
-                    window.is_fullscreen(),
-                ));
-            });
-        }
+        relm4::spawn(async move {
+            player.play();
+        });
 
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, root: &Self::Root) {
+    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match message {
             VideoPlayerInput::ToggleControls => self.show_controls = !self.show_controls,
             VideoPlayerInput::TogglePlaying => {
@@ -273,19 +262,7 @@ impl Component for VideoPlayer {
                     player.seek(gst::ClockTime::from_seconds(timestamp as u64));
                 }
             }
-            VideoPlayerInput::ToggleFullscreen => {
-                self.fullscreen = !self.fullscreen;
-                if let Some(window) = root.toplevel_window() {
-                    window.set_fullscreened(self.fullscreen);
-                }
-            }
-            VideoPlayerInput::WindowFullscreenChanged(fullscreen) => {
-                self.fullscreen = fullscreen;
-            }
             VideoPlayerInput::ExitPlayer => {
-                // if let Some(playback_timeout_id) = self.playback_timeout_id.take() {
-                //     playback_timeout_id.remove();
-                // }
                 if let Some(player) = self.player.upgrade() {
                     player.stop();
                 }
