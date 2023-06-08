@@ -1,5 +1,8 @@
 use gst::glib::WeakRef;
+use gst::ElementFactory;
+use gstplay::PlayVideoOverlayVideoRenderer;
 use gtk::prelude::*;
+use relm4::gtk::gdk::Paintable;
 use relm4::prelude::*;
 use relm4::{gtk, ComponentParts};
 
@@ -9,54 +12,8 @@ use crate::config::Server;
 use crate::video_player::controls::video_player_controls::{
     VideoPlayerControls, VideoPlayerControlsInit,
 };
-use crate::video_player::player::create_player;
 
 use super::controls::video_player_controls::VideoPlayerControlsInput;
-
-struct VideoPlayerBuilder {
-    media: LatestMedia,
-    player: Option<WeakRef<gstplay::Play>>,
-    controls: Option<Controller<VideoPlayerControls>>,
-    show_controls: bool,
-}
-
-impl VideoPlayerBuilder {
-    fn new(media: LatestMedia) -> Self {
-        Self {
-            media,
-            player: None,
-            controls: None,
-            show_controls: true,
-        }
-    }
-
-    fn set_player(mut self, player: &gstplay::Play) -> Self {
-        self.player = Some(player.downgrade());
-        self
-    }
-
-    fn set_controls(mut self, controls: Controller<VideoPlayerControls>) -> Self {
-        self.controls = Some(controls);
-        self
-    }
-
-    fn build(self) -> VideoPlayer {
-        let player = self
-            .player
-            .expect("Tried to build VideoPlayer without player.");
-
-        let controls = self
-            .controls
-            .expect("Tried to build VideoPlayer without controls.");
-
-        VideoPlayer {
-            media: self.media.clone(),
-            player,
-            controls,
-            show_controls: self.show_controls,
-        }
-    }
-}
 
 pub struct VideoPlayer {
     media: LatestMedia,
@@ -131,24 +88,34 @@ impl Component for VideoPlayer {
         let server = init.0;
         let media = init.1;
 
-        let model = VideoPlayerBuilder::new(media);
+        let sink = ElementFactory::make("gtk4paintablesink").build().unwrap();
+        let paintable = sink.property::<Paintable>("paintable");
+        let renderer = PlayVideoOverlayVideoRenderer::with_sink(&sink);
+        let player = gstplay::Play::new(Some(renderer));
+
+        let show_controls = true;
+
+        let controls = VideoPlayerControls::builder()
+            .launch(VideoPlayerControlsInit {
+                player: player.downgrade(),
+                default_show_controls: show_controls,
+            })
+            .detach();
+
+        let model = VideoPlayer {
+            media,
+            player: player.downgrade(),
+            controls,
+            show_controls,
+        };
 
         let widgets = view_output!();
         let overlay = &widgets.overlay;
         let video_out = &widgets.video_out;
 
-        let (player, paintable) = create_player();
         video_out.set_paintable(Some(&paintable));
 
-        let controls = VideoPlayerControls::builder()
-            .launch(VideoPlayerControlsInit {
-                player: player.downgrade(),
-                default_show_controls: model.show_controls,
-            })
-            .detach();
-        overlay.add_overlay(controls.widget());
-
-        let model = model.set_player(&player).set_controls(controls).build();
+        overlay.add_overlay(model.controls.widget());
 
         let url = get_stream_url(&server, &model.media.id);
         player.set_uri(Some(&url));
