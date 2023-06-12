@@ -1,13 +1,10 @@
 use relm4::ComponentController;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use adw::prelude::*;
 use relm4::{adw, gtk, prelude::*, Component, Controller};
 
-use crate::{
-    api::{api_client::ApiClient, latest::LatestMedia, views::UserViews},
-    config::{Account, Config, Server},
-};
+use crate::api::{api_client::ApiClient, latest::LatestMedia, views::UserViews};
 
 use super::view_latest::{ViewLatest, ViewLatestOutput};
 
@@ -21,8 +18,6 @@ enum LibraryState {
 pub struct Library {
     api_client: Arc<ApiClient>,
     state: LibraryState,
-    server: Server,
-    account: Account,
     views: Option<Vec<Controller<ViewLatest>>>,
 }
 
@@ -44,7 +39,7 @@ pub enum LibraryCommandOutput {
 
 #[relm4::component(pub)]
 impl Component for Library {
-    type Init = (Arc<RwLock<Config>>, Server, Account);
+    type Init = Arc<ApiClient>;
     type Input = LibraryInput;
     type Output = LibraryOutput;
     type CommandOutput = LibraryCommandOutput;
@@ -126,17 +121,11 @@ impl Component for Library {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let config = init.0;
-        let server = init.1;
-        let account = init.2;
-
-        let api_client = Arc::new(ApiClient::new(config, &server, &account));
+        let api_client = init;
 
         let model = Library {
             api_client: Arc::clone(&api_client),
             state: LibraryState::Loading,
-            server,
-            account,
             views: None,
         };
 

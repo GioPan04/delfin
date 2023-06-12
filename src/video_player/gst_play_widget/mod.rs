@@ -30,7 +30,7 @@ impl GstVideoPlayer {
         self.imp().player.clone()
     }
 
-    pub fn play_uri(&mut self, uri: &str) {
+    pub fn play_uri(&self, uri: &str) {
         let imp = self.imp();
 
         let player = imp.player.get().unwrap();

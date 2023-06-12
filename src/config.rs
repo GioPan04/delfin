@@ -8,6 +8,8 @@ use uuid::Uuid;
 pub struct Config {
     pub device_id: String,
     pub servers: Vec<Server>,
+    #[serde(default)]
+    pub video_player: VideoPlayerConfig,
 }
 
 impl Default for Config {
@@ -15,6 +17,20 @@ impl Default for Config {
         Self {
             device_id: Uuid::new_v4().to_string(),
             servers: Vec::default(),
+            video_player: VideoPlayerConfig::default(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct VideoPlayerConfig {
+    pub position_update_frequency: usize,
+}
+
+impl Default for VideoPlayerConfig {
+    fn default() -> Self {
+        Self {
+            position_update_frequency: 10,
         }
     }
 }

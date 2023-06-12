@@ -5,7 +5,7 @@ use std::sync::{Arc, RwLock};
 
 use crate::{
     accounts::account_list::{AccountList, AccountListInput, AccountListOutput},
-    api::latest::LatestMedia,
+    api::{api_client::ApiClient, latest::LatestMedia},
     config::{self, Config},
     library::library_component::{Library, LibraryOutput},
     main_window::MAIN_APP_WINDOW_NAME,
@@ -45,6 +45,7 @@ impl fmt::Display for AppPage {
 
 pub struct App {
     config: Arc<RwLock<Config>>,
+    api_client: Option<Arc<ApiClient>>,
     page: AppPage,
     servers: Controller<ServerList>,
     account_list: Controller<AccountList>,
@@ -133,11 +134,12 @@ impl Component for App {
             .forward(sender.input_sender(), convert_account_list_output);
 
         let video_player = VideoPlayer::builder()
-            .launch(())
+            .launch(Arc::clone(&config))
             .forward(sender.input_sender(), convert_video_player_output);
 
         let model = App {
             config,
+            api_client: None,
             page: AppPage::Servers,
             servers,
             account_list,
@@ -192,8 +194,12 @@ impl Component for App {
                     stack.remove(previous.widget());
                 }
 
+                let api_client = ApiClient::new(Arc::clone(&self.config), &server, &account);
+                let api_client = Arc::new(api_client);
+                self.api_client = Some(api_client.clone());
+
                 let library = Library::builder()
-                    .launch((Arc::clone(&self.config), server, account))
+                    .launch(api_client)
                     .forward(sender.input_sender(), convert_library_output);
                 stack.add_named(library.widget(), Some(&AppPage::Library.to_string()));
                 self.library = Some(library);
@@ -201,9 +207,12 @@ impl Component for App {
                 sender.input(AppInput::SetPage(AppPage::Library));
             }
             AppInput::PlayVideo(media) => {
-                if let Some(server) = &self.server {
-                    self.video_player
-                        .emit(VideoPlayerInput::PlayVideo(server.clone(), media));
+                if let (Some(api_client), Some(server)) = (&self.api_client, &self.server) {
+                    self.video_player.emit(VideoPlayerInput::PlayVideo(
+                        api_client.clone(),
+                        server.clone(),
+                        media,
+                    ));
                     sender.input(AppInput::SetPage(AppPage::VideoPlayer));
                 }
             }

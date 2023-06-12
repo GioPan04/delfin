@@ -1,12 +1,14 @@
 use std::cell::OnceCell;
+use std::sync::{Arc, RwLock};
 
 use gtk::prelude::*;
-use relm4::prelude::*;
 use relm4::{gtk, ComponentParts};
+use relm4::{prelude::*, JoinHandle};
 
+use crate::api::api_client::ApiClient;
 use crate::api::item::get_stream_url;
 use crate::api::latest::LatestMedia;
-use crate::config::Server;
+use crate::config::{Config, Server};
 use crate::utils::ticks::ticks_to_seconds;
 use crate::video_player::controls::video_player_controls::{
     VideoPlayerControls, VideoPlayerControlsInit,
@@ -14,16 +16,19 @@ use crate::video_player::controls::video_player_controls::{
 use crate::video_player::gst_play_widget::GstVideoPlayer;
 
 use super::controls::video_player_controls::VideoPlayerControlsInput;
+use super::session::start_session_reporting;
 
 pub struct VideoPlayer {
+    config: Arc<RwLock<Config>>,
     controls: OnceCell<Controller<VideoPlayerControls>>,
     media: Option<LatestMedia>,
     show_controls: bool,
+    session_reporting_handle: Option<JoinHandle<()>>,
 }
 
 #[derive(Debug)]
 pub enum VideoPlayerInput {
-    PlayVideo(Server, LatestMedia),
+    PlayVideo(Arc<ApiClient>, Server, LatestMedia),
     ToggleControls,
     ExitPlayer,
 }
@@ -35,7 +40,7 @@ pub enum VideoPlayerOutput {
 
 #[relm4::component(pub)]
 impl Component for VideoPlayer {
-    type Init = ();
+    type Init = Arc<RwLock<Config>>;
     type Input = VideoPlayerInput;
     type Output = VideoPlayerOutput;
     type CommandOutput = ();
@@ -83,18 +88,22 @@ impl Component for VideoPlayer {
     }
 
     fn init(
-        _init: Self::Init,
+        init: Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+        let config = init;
+
         let show_controls = true;
 
         let controls = OnceCell::new();
 
         let model = VideoPlayer {
+            config,
             media: None,
             controls,
             show_controls,
+            session_reporting_handle: None,
         };
 
         let video_player = GstVideoPlayer::new();
@@ -127,12 +136,22 @@ impl Component for VideoPlayer {
         _root: &Self::Root,
     ) {
         match message {
-            VideoPlayerInput::PlayVideo(server, media) => {
+            VideoPlayerInput::PlayVideo(api_client, server, media) => {
+                let video_player = &widgets.video_player;
+
                 self.media = Some(media.clone());
                 let url = get_stream_url(&server, &media.id);
-                widgets.video_player.play_uri(&url);
+                video_player.play_uri(&url);
+
                 let playback_position = ticks_to_seconds(media.user_data.playback_position_ticks);
-                widgets.video_player.seek(playback_position);
+                video_player.seek(playback_position);
+
+                self.session_reporting_handle = Some(start_session_reporting(
+                    self.config.clone(),
+                    api_client,
+                    &media.id,
+                    video_player,
+                ));
             }
             VideoPlayerInput::ToggleControls => {
                 self.show_controls = !self.show_controls;
@@ -143,7 +162,13 @@ impl Component for VideoPlayer {
             }
             VideoPlayerInput::ExitPlayer => {
                 widgets.video_player.stop();
+
                 sender.output(VideoPlayerOutput::NavigateBack).unwrap();
+
+                if let Some(session_reporting_handle) = &self.session_reporting_handle {
+                    session_reporting_handle.abort();
+                    self.session_reporting_handle = None;
+                }
             }
         }
 
