@@ -103,4 +103,20 @@ impl GstVideoPlayer {
             }
         });
     }
+
+    pub fn connect_mute_changed<F>(&self, callback: F)
+    where
+        F: Fn(bool) + Send + 'static,
+    {
+        let imp = self.imp();
+
+        let signal_adapter = match imp.signal_adapter.get() {
+            Some(s) => s,
+            None => return,
+        };
+
+        signal_adapter.connect_mute_changed(move |_, muted| {
+            callback(muted);
+        });
+    }
 }

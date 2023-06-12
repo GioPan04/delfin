@@ -13,6 +13,7 @@ pub struct Volume {
 #[derive(Debug)]
 pub enum VolumeInput {
     ToggleMute,
+    SetMute(bool),
 }
 
 #[relm4::component(pub)]
@@ -52,11 +53,16 @@ impl SimpleComponent for Volume {
         let video_player = init;
 
         let model = Volume {
-            video_player,
+            video_player: video_player.clone(),
             muted: false,
         };
 
         let widgets = view_output!();
+
+        let video_player = video_player.get().unwrap();
+        video_player.connect_mute_changed(move |muted| {
+            sender.input(VolumeInput::SetMute(muted));
+        });
 
         ComponentParts { model, widgets }
     }
@@ -68,6 +74,7 @@ impl SimpleComponent for Volume {
                 self.muted = !self.muted;
                 video_player.set_mute(self.muted);
             }
+            VolumeInput::SetMute(muted) => self.muted = muted,
         }
     }
 }
