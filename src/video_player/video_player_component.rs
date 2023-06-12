@@ -129,6 +129,13 @@ impl Component for VideoPlayer {
             }
         });
 
+        video_player.connect_end_of_stream({
+            let sender = sender.clone();
+            move || {
+                sender.input(VideoPlayerInput::ExitPlayer);
+            }
+        });
+
         let widgets = view_output!();
         let overlay = &widgets.overlay;
 
