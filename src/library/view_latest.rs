@@ -205,6 +205,7 @@ impl FactoryComponent for MediaTile {
     ) -> Self::Widgets {
         let image = self.image.widget();
         let media = &self.media;
+        let played_percentage = media.user_data.played_percentage.map(|p| p / 100.0);
         relm4::view! {
             #[local_ref]
             root -> gtk::Box {
@@ -221,8 +222,17 @@ impl FactoryComponent for MediaTile {
                         root.remove_css_class("hover");
                     },
                 },
-                #[local_ref]
-                image -> gtk::Box {},
+
+                gtk::Overlay {
+                    #[local_ref]
+                    image -> gtk::Box {},
+
+                    add_overlay = &gtk::ProgressBar {
+                        set_visible: self.media.user_data.played_percentage.is_some(),
+                        set_fraction?: played_percentage,
+                    },
+                },
+
                 gtk::Label {
                     set_ellipsize: gtk::pango::EllipsizeMode::End,
                     #[watch]
