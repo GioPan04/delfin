@@ -51,11 +51,13 @@ impl Component for AccountList {
                 set_description: Some("Choose which account you'd like to sign in as"),
                 #[wrap(Some)]
                 set_header_suffix = &gtk::Button {
-                    set_tooltip_text: Some("Add an account"),
-                    set_icon_name: "list-add-symbolic",
                     connect_clicked[sender] => move |_| {
                         sender.input(AccountListInput::AddAccount);
-                    }
+                    },
+                    adw::ButtonContent {
+                        set_icon_name: "list-add-symbolic",
+                        set_label: "Add an account",
+                    },
                 },
 
                 #[local_ref]

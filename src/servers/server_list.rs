@@ -45,10 +45,12 @@ impl Component for ServerList {
                 set_description: Some("Choose which Jellyfin server you'd like to use"),
                 #[wrap(Some)]
                 set_header_suffix = &gtk::Button {
-                    set_tooltip_text: Some("Add a server"),
-                    set_icon_name: "list-add-symbolic",
                     connect_clicked[sender] => move |_| {
                         sender.input(ServerListInput::AddServer);
+                    },
+                    adw::ButtonContent {
+                        set_icon_name: "list-add-symbolic",
+                        set_label: "Add a server",
                     },
                 },
 
