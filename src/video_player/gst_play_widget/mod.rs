@@ -3,8 +3,8 @@ mod imp;
 use std::cell::OnceCell;
 
 use gst::glib::clone::Downgrade;
-use gst::glib::SignalHandlerId;
-use gst::ClockTime;
+use gst::glib::{Error, SignalHandlerId};
+use gst::{ClockTime, Structure};
 use gtk::glib;
 use gtk::subclass::prelude::*;
 use relm4::gtk;
@@ -97,6 +97,19 @@ impl GstVideoPlayer {
 
         signal_adapter.connect_end_of_stream(move |_| {
             callback();
+        })
+    }
+
+    pub fn connect_error<F>(&self, callback: F) -> SignalHandlerId
+    where
+        F: Fn(&Error, Option<&Structure>) + Send + 'static,
+    {
+        let imp = self.imp();
+
+        let signal_adapter = imp.signal_adapter.get().unwrap();
+
+        signal_adapter.connect_error(move |_, error, structure| {
+            callback(error, structure);
         })
     }
 

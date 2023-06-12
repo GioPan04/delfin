@@ -30,6 +30,7 @@ pub struct VideoPlayer {
 
 #[derive(Debug)]
 pub enum VideoPlayerInput {
+    Toast(String),
     PlayVideo(Arc<ApiClient>, Server, LatestMedia),
     ToggleControls,
     SetBuffering(bool),
@@ -49,8 +50,8 @@ impl Component for VideoPlayer {
     type CommandOutput = ();
 
     view! {
-        gtk::Box {
-            set_orientation: gtk::Orientation::Vertical,
+        #[name = "toaster"]
+        adw::ToastOverlay {
             add_css_class: "video-player",
 
             #[name = "overlay"]
@@ -138,6 +139,18 @@ impl Component for VideoPlayer {
             }
         });
 
+        video_player.connect_error({
+            let sender = sender.clone();
+            move |err, details| {
+                println!("Video player error: {err:#?}");
+                println!("Details: {details:#?}");
+                sender.input(VideoPlayerInput::Toast(format!(
+                    "Video player error: {}",
+                    err.message()
+                )));
+            }
+        });
+
         let widgets = view_output!();
         let overlay = &widgets.overlay;
 
@@ -147,7 +160,6 @@ impl Component for VideoPlayer {
                 default_show_controls: show_controls,
             })
             .detach();
-
         overlay.add_overlay(controls.widget());
 
         model
@@ -166,6 +178,10 @@ impl Component for VideoPlayer {
         _root: &Self::Root,
     ) {
         match message {
+            VideoPlayerInput::Toast(message) => {
+                let toast = adw::Toast::new(&message);
+                widgets.toaster.add_toast(toast);
+            }
             VideoPlayerInput::PlayVideo(api_client, server, media) => {
                 let video_player = &widgets.video_player;
 
