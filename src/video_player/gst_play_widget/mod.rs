@@ -81,7 +81,10 @@ impl GstVideoPlayer {
         player.set_volume(volume);
     }
 
-    pub fn connect_buffering(&self, callback: fn(progress: i32)) -> SignalHandlerId {
+    pub fn connect_buffering<F>(&self, callback: F) -> SignalHandlerId
+    where
+        F: Fn(i32) + Send + 'static,
+    {
         let imp = self.imp();
 
         let signal_adapter = imp.signal_adapter.get().unwrap();

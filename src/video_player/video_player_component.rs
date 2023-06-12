@@ -24,12 +24,14 @@ pub struct VideoPlayer {
     media: Option<LatestMedia>,
     show_controls: bool,
     session_reporting_handle: Option<JoinHandle<()>>,
+    buffering: bool,
 }
 
 #[derive(Debug)]
 pub enum VideoPlayerInput {
     PlayVideo(Arc<ApiClient>, Server, LatestMedia),
     ToggleControls,
+    SetBuffering(bool),
     ExitPlayer,
 }
 
@@ -82,6 +84,17 @@ impl Component for VideoPlayer {
                         },
                     },
                 },
+
+                #[name = "spinner"]
+                add_overlay = &gtk::Spinner {
+                    #[watch]
+                    set_visible: model.buffering,
+                    set_spinning: true,
+                    set_halign: gtk::Align::Center,
+                    set_valign: gtk::Align::Center,
+                    set_width_request: 48,
+                    set_height_request: 48,
+                },
             },
         }
 
@@ -104,9 +117,17 @@ impl Component for VideoPlayer {
             controls,
             show_controls,
             session_reporting_handle: None,
+            buffering: false,
         };
 
         let video_player = GstVideoPlayer::new();
+
+        video_player.connect_buffering({
+            let sender = sender.clone();
+            move |progress| {
+                sender.input(VideoPlayerInput::SetBuffering(progress != 100));
+            }
+        });
 
         let widgets = view_output!();
         let overlay = &widgets.overlay;
@@ -160,6 +181,7 @@ impl Component for VideoPlayer {
                     self.show_controls,
                 ));
             }
+            VideoPlayerInput::SetBuffering(buffering) => self.buffering = buffering,
             VideoPlayerInput::ExitPlayer => {
                 widgets.video_player.stop();
 
