@@ -3,6 +3,7 @@ mod imp;
 use std::cell::OnceCell;
 
 use gst::glib::clone::Downgrade;
+use gst::glib::SignalHandlerId;
 use gst::ClockTime;
 use gtk::glib;
 use gtk::subclass::prelude::*;
@@ -80,20 +81,17 @@ impl GstVideoPlayer {
         player.set_volume(volume);
     }
 
-    pub fn connect_buffering(&self, callback: fn(progress: i32)) {
+    pub fn connect_buffering(&self, callback: fn(progress: i32)) -> SignalHandlerId {
         let imp = self.imp();
 
-        let signal_adapter = match imp.signal_adapter.get() {
-            Some(s) => s,
-            None => return,
-        };
+        let signal_adapter = imp.signal_adapter.get().unwrap();
 
         signal_adapter.connect_buffering(move |_, progress| {
             callback(progress);
-        });
+        })
     }
 
-    pub fn connect_position_updated<F>(&self, callback: F)
+    pub fn connect_position_updated<F>(&self, callback: F) -> SignalHandlerId
     where
         F: Fn(gst::ClockTime, gst::ClockTime) + Send + 'static,
     {
@@ -107,38 +105,32 @@ impl GstVideoPlayer {
             if let (Some(position), Some(duration)) = (position, player.duration()) {
                 callback(position, duration);
             }
-        });
+        })
     }
 
-    pub fn connect_mute_changed<F>(&self, callback: F)
+    pub fn connect_mute_changed<F>(&self, callback: F) -> SignalHandlerId
     where
         F: Fn(bool) + Send + 'static,
     {
         let imp = self.imp();
 
-        let signal_adapter = match imp.signal_adapter.get() {
-            Some(s) => s,
-            None => return,
-        };
+        let signal_adapter = imp.signal_adapter.get().unwrap();
 
         signal_adapter.connect_mute_changed(move |_, muted| {
             callback(muted);
-        });
+        })
     }
 
-    pub fn connect_volume_changed<F>(&self, callback: F)
+    pub fn connect_volume_changed<F>(&self, callback: F) -> SignalHandlerId
     where
         F: Fn(f64) + Send + 'static,
     {
         let imp = self.imp();
 
-        let signal_adapter = match imp.signal_adapter.get() {
-            Some(s) => s,
-            None => return,
-        };
+        let signal_adapter = imp.signal_adapter.get().unwrap();
 
         signal_adapter.connect_volume_changed(move |_, volume| {
             callback(volume);
-        });
+        })
     }
 }

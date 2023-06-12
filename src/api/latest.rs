@@ -9,12 +9,21 @@ pub struct LatestMedia {
     pub id: String,
     pub name: String,
     pub image_tags: ImageTags,
+    pub user_data: UserData,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ImageTags {
     pub primary: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct UserData {
+    pub played: bool,
+    pub playback_position_ticks: usize,
+    pub played_percentage: Option<f64>,
 }
 
 impl ApiClient {

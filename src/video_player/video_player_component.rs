@@ -7,6 +7,7 @@ use relm4::{gtk, ComponentParts};
 use crate::api::item::get_stream_url;
 use crate::api::latest::LatestMedia;
 use crate::config::Server;
+use crate::utils::ticks::ticks_to_seconds;
 use crate::video_player::controls::video_player_controls::{
     VideoPlayerControls, VideoPlayerControlsInit,
 };
@@ -130,6 +131,8 @@ impl Component for VideoPlayer {
                 self.media = Some(media.clone());
                 let url = get_stream_url(&server, &media.id);
                 widgets.video_player.play_uri(&url);
+                let playback_position = ticks_to_seconds(media.user_data.playback_position_ticks);
+                widgets.video_player.seek(playback_position);
             }
             VideoPlayerInput::ToggleControls => {
                 self.show_controls = !self.show_controls;

@@ -5,4 +5,5 @@ pub mod config;
 pub mod library;
 mod main_window;
 pub mod servers;
+pub mod utils;
 pub mod video_player;
