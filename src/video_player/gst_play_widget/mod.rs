@@ -81,6 +81,12 @@ impl GstVideoPlayer {
         player.set_volume(volume);
     }
 
+    pub fn position(&self) -> Option<ClockTime> {
+        let imp = self.imp();
+        let player = imp.player.get().unwrap();
+        player.position()
+    }
+
     pub fn connect_end_of_stream<F>(&self, callback: F) -> SignalHandlerId
     where
         F: Fn() + Send + 'static,

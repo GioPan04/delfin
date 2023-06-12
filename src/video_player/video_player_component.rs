@@ -22,6 +22,7 @@ pub struct VideoPlayer {
     config: Arc<RwLock<Config>>,
     controls: OnceCell<Controller<VideoPlayerControls>>,
     media: Option<LatestMedia>,
+    api_client: Option<Arc<ApiClient>>,
     show_controls: bool,
     session_reporting_handle: Option<JoinHandle<()>>,
     buffering: bool,
@@ -115,6 +116,7 @@ impl Component for VideoPlayer {
             config,
             media: None,
             controls,
+            api_client: None,
             show_controls,
             session_reporting_handle: None,
             buffering: false,
@@ -174,12 +176,24 @@ impl Component for VideoPlayer {
                 let playback_position = ticks_to_seconds(media.user_data.playback_position_ticks);
                 video_player.seek(playback_position);
 
+                // Report start of playback
+                relm4::spawn({
+                    let api_client = api_client.clone();
+                    let item_id = media.id.clone();
+                    async move {
+                        api_client.report_playback_started(&item_id).await.unwrap();
+                    }
+                });
+
+                // Starts a background task that continuously reports playback progress
                 self.session_reporting_handle = Some(start_session_reporting(
                     self.config.clone(),
-                    api_client,
+                    api_client.clone(),
                     &media.id,
                     video_player,
                 ));
+
+                self.api_client = Some(api_client);
             }
             VideoPlayerInput::ToggleControls => {
                 self.show_controls = !self.show_controls;
@@ -191,13 +205,35 @@ impl Component for VideoPlayer {
             VideoPlayerInput::SetBuffering(buffering) => self.buffering = buffering,
             VideoPlayerInput::ExitPlayer => {
                 widgets.video_player.stop();
+                let position = widgets.video_player.position();
 
-                sender.output(VideoPlayerOutput::NavigateBack).unwrap();
+                // Report end of playback
+                if let (Some(api_client), Some(media), Some(position)) =
+                    (&self.api_client, &self.media, position)
+                {
+                    // Report end of playback
+                    relm4::spawn({
+                        let api_client = api_client.clone();
+                        let item_id = media.id.clone();
+                        async move {
+                            api_client
+                                .report_playback_stopped(&item_id, position.seconds() as usize)
+                                .await
+                                .unwrap();
+                        }
+                    });
 
+                    self.api_client = None;
+                    self.media = None;
+                }
+
+                // Stop background playback progress reporter
                 if let Some(session_reporting_handle) = &self.session_reporting_handle {
                     session_reporting_handle.abort();
                     self.session_reporting_handle = None;
                 }
+
+                sender.output(VideoPlayerOutput::NavigateBack).unwrap();
             }
         }
 
