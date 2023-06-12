@@ -10,7 +10,7 @@ use crate::{
     library::library_component::{Library, LibraryOutput},
     main_window::MAIN_APP_WINDOW_NAME,
     servers::server_list::{ServerList, ServerListOutput},
-    video_player::video_player_component::{VideoPlayer, VideoPlayerOutput},
+    video_player::video_player_component::{VideoPlayer, VideoPlayerInput, VideoPlayerOutput},
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -49,7 +49,7 @@ pub struct App {
     servers: Controller<ServerList>,
     account_list: Controller<AccountList>,
     library: Option<Controller<Library>>,
-    video_player: Option<Controller<VideoPlayer>>,
+    video_player: Controller<VideoPlayer>,
     server: Option<config::Server>,
 }
 
@@ -108,6 +108,10 @@ impl Component for App {
                         set_name: &AppPage::Accounts.to_string(),
                     },
 
+                    add_child = model.video_player.widget() {} -> {
+                        set_name: &AppPage::VideoPlayer.to_string(),
+                    },
+
                     #[watch]
                     set_visible_child_name: &model.page.to_string(),
                 },
@@ -128,13 +132,17 @@ impl Component for App {
             .launch(Arc::clone(&config))
             .forward(sender.input_sender(), convert_account_list_output);
 
+        let video_player = VideoPlayer::builder()
+            .launch(())
+            .forward(sender.input_sender(), convert_video_player_output);
+
         let model = App {
             config,
             page: AppPage::Servers,
             servers,
             account_list,
             library: None,
-            video_player: None,
+            video_player,
             server: None,
         };
 
@@ -189,24 +197,13 @@ impl Component for App {
                     .forward(sender.input_sender(), convert_library_output);
                 stack.add_named(library.widget(), Some(&AppPage::Library.to_string()));
                 self.library = Some(library);
+
                 sender.input(AppInput::SetPage(AppPage::Library));
             }
             AppInput::PlayVideo(media) => {
                 if let Some(server) = &self.server {
-                    let stack = &widgets.stack;
-
-                    if let Some(previous) = &self.video_player {
-                        stack.remove(previous.widget());
-                    }
-
-                    let video_player = VideoPlayer::builder()
-                        .launch((server.clone(), media))
-                        .forward(sender.input_sender(), convert_video_player_output);
-                    stack.add_named(
-                        video_player.widget(),
-                        Some(&AppPage::VideoPlayer.to_string()),
-                    );
-                    self.video_player = Some(video_player);
+                    self.video_player
+                        .emit(VideoPlayerInput::PlayVideo(server.clone(), media));
                     sender.input(AppInput::SetPage(AppPage::VideoPlayer));
                 }
             }

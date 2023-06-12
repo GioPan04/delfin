@@ -1,8 +1,6 @@
-use gst::glib::WeakRef;
-use gst::ElementFactory;
-use gstplay::PlayVideoOverlayVideoRenderer;
+use std::cell::OnceCell;
+
 use gtk::prelude::*;
-use relm4::gtk::gdk::Paintable;
 use relm4::prelude::*;
 use relm4::{gtk, ComponentParts};
 
@@ -12,18 +10,19 @@ use crate::config::Server;
 use crate::video_player::controls::video_player_controls::{
     VideoPlayerControls, VideoPlayerControlsInit,
 };
+use crate::video_player::gst_play_widget::GstVideoPlayer;
 
 use super::controls::video_player_controls::VideoPlayerControlsInput;
 
 pub struct VideoPlayer {
-    media: LatestMedia,
-    player: WeakRef<gstplay::Play>,
-    controls: Controller<VideoPlayerControls>,
+    controls: OnceCell<Controller<VideoPlayerControls>>,
+    media: Option<LatestMedia>,
     show_controls: bool,
 }
 
 #[derive(Debug)]
 pub enum VideoPlayerInput {
+    PlayVideo(Server, LatestMedia),
     ToggleControls,
     ExitPlayer,
 }
@@ -35,7 +34,7 @@ pub enum VideoPlayerOutput {
 
 #[relm4::component(pub)]
 impl Component for VideoPlayer {
-    type Init = (Server, LatestMedia);
+    type Init = ();
     type Input = VideoPlayerInput;
     type Output = VideoPlayerOutput;
     type CommandOutput = ();
@@ -47,10 +46,8 @@ impl Component for VideoPlayer {
 
             #[name = "overlay"]
             gtk::Overlay {
-                #[name = "video_out"]
-                gtk::Picture {
-                    set_vexpand: true,
-                    add_css_class: "video-out",
+                #[local_ref]
+                video_player -> GstVideoPlayer {
                     add_controller = gtk::GestureClick {
                         connect_pressed[sender] => move |_, _, _, _| {
                             sender.input(VideoPlayerInput::ToggleControls);
@@ -66,7 +63,11 @@ impl Component for VideoPlayer {
                     #[wrap(Some)]
                     set_title_widget = &adw::WindowTitle {
                         #[watch]
-                        set_title: &model.media.name,
+                        set_title: if let Some(media) = &model.media {
+                            &media.name
+                        } else {
+                            "Jellything"
+                        },
                     },
                     pack_start = &gtk::Button {
                         set_icon_name: "go-previous",
@@ -81,66 +82,68 @@ impl Component for VideoPlayer {
     }
 
     fn init(
-        init: Self::Init,
+        _init: Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let server = init.0;
-        let media = init.1;
-
-        let sink = ElementFactory::make("gtk4paintablesink").build().unwrap();
-        let paintable = sink.property::<Paintable>("paintable");
-        let renderer = PlayVideoOverlayVideoRenderer::with_sink(&sink);
-        let player = gstplay::Play::new(Some(renderer));
-
         let show_controls = true;
 
-        let controls = VideoPlayerControls::builder()
-            .launch(VideoPlayerControlsInit {
-                player: player.downgrade(),
-                default_show_controls: show_controls,
-            })
-            .detach();
+        let controls = OnceCell::new();
 
         let model = VideoPlayer {
-            media,
-            player: player.downgrade(),
+            media: None,
             controls,
             show_controls,
         };
 
+        let video_player = GstVideoPlayer::new();
+
         let widgets = view_output!();
         let overlay = &widgets.overlay;
-        let video_out = &widgets.video_out;
 
-        video_out.set_paintable(Some(&paintable));
+        let controls = VideoPlayerControls::builder()
+            .launch(VideoPlayerControlsInit {
+                player: OnceCell::from(video_player),
+                default_show_controls: show_controls,
+            })
+            .detach();
 
-        overlay.add_overlay(model.controls.widget());
+        overlay.add_overlay(controls.widget());
 
-        let url = get_stream_url(&server, &model.media.id);
-        player.set_uri(Some(&url));
-        relm4::spawn(async move {
-            player.play();
-        });
+        model
+            .controls
+            .set(controls)
+            .unwrap_or_else(|_| panic!("Failed to set controls"));
 
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
+    fn update_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        message: Self::Input,
+        sender: ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         match message {
+            VideoPlayerInput::PlayVideo(server, media) => {
+                self.media = Some(media.clone());
+                let url = get_stream_url(&server, &media.id);
+                widgets.video_player.play_uri(&url);
+            }
             VideoPlayerInput::ToggleControls => {
                 self.show_controls = !self.show_controls;
-                self.controls
-                    .emit(VideoPlayerControlsInput::SetShowControls(
-                        self.show_controls,
-                    ));
+                let controls = self.controls.get().unwrap();
+                controls.emit(VideoPlayerControlsInput::SetShowControls(
+                    self.show_controls,
+                ));
             }
             VideoPlayerInput::ExitPlayer => {
-                if let Some(player) = self.player.upgrade() {
-                    player.stop();
-                }
+                widgets.video_player.stop();
                 sender.output(VideoPlayerOutput::NavigateBack).unwrap();
             }
         }
+
+        self.update_view(widgets, sender);
     }
 }

@@ -1,12 +1,12 @@
-use crate::video_player::controls::scrubber::ScrubberOutput;
-use gst::glib::WeakRef;
+use std::cell::OnceCell;
+
+use crate::video_player::gst_play_widget::GstVideoPlayer;
 use gtk::prelude::*;
 use relm4::{gtk, Component, ComponentController, ComponentParts, Controller, SimpleComponent};
 
 use super::{fullscreen::Fullscreen, play_pause::PlayPause, scrubber::Scrubber, volume::Volume};
 
 pub struct VideoPlayerControls {
-    player: WeakRef<gstplay::Play>,
     show_controls: bool,
     // We need to keep these controllers around, even if we don't read them
     _scrubber: Option<Controller<Scrubber>>,
@@ -16,14 +16,13 @@ pub struct VideoPlayerControls {
 }
 
 pub struct VideoPlayerControlsInit {
-    pub player: WeakRef<gstplay::Play>,
+    pub player: OnceCell<GstVideoPlayer>,
     pub default_show_controls: bool,
 }
 
 #[derive(Debug)]
 pub enum VideoPlayerControlsInput {
     SetShowControls(bool),
-    Seek(f64),
 }
 
 #[relm4::component(pub)]
@@ -59,7 +58,7 @@ impl SimpleComponent for VideoPlayerControls {
     fn init(
         init: Self::Init,
         root: &Self::Root,
-        sender: relm4::ComponentSender<Self>,
+        _sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let VideoPlayerControlsInit {
             player,
@@ -67,7 +66,6 @@ impl SimpleComponent for VideoPlayerControls {
         } = init;
 
         let mut model = VideoPlayerControls {
-            player: player.clone(),
             show_controls: default_show_controls,
             _scrubber: None,
             _play_pause: None,
@@ -81,9 +79,7 @@ impl SimpleComponent for VideoPlayerControls {
         let volume_placeholder = &widgets.volume_placeholder;
         let fullscreen_placeholder = &widgets.fullscreen_placeholder;
 
-        let scrubber = Scrubber::builder()
-            .launch(player.clone())
-            .forward(sender.input_sender(), convert_scrubber_output);
+        let scrubber = Scrubber::builder().launch(player.clone()).detach();
         root.prepend(scrubber.widget());
         model._scrubber = Some(scrubber);
 
@@ -107,17 +103,6 @@ impl SimpleComponent for VideoPlayerControls {
             VideoPlayerControlsInput::SetShowControls(show_controls) => {
                 self.show_controls = show_controls
             }
-            VideoPlayerControlsInput::Seek(timestamp) => {
-                if let Some(player) = self.player.upgrade() {
-                    player.seek(gst::ClockTime::from_seconds(timestamp as u64));
-                }
-            }
         }
-    }
-}
-
-fn convert_scrubber_output(output: ScrubberOutput) -> VideoPlayerControlsInput {
-    match output {
-        ScrubberOutput::Seek(timestamp) => VideoPlayerControlsInput::Seek(timestamp),
     }
 }

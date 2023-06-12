@@ -1,11 +1,12 @@
-use std::time::Duration;
+use std::cell::OnceCell;
 
-use gst::glib::WeakRef;
 use gtk::prelude::*;
 use relm4::{gtk, ComponentParts, SimpleComponent};
 
+use crate::video_player::gst_play_widget::GstVideoPlayer;
+
 pub struct Volume {
-    player: WeakRef<gstplay::Play>,
+    video_player: OnceCell<GstVideoPlayer>,
     muted: bool,
 }
 
@@ -16,7 +17,7 @@ pub enum VolumeInput {
 
 #[relm4::component(pub)]
 impl SimpleComponent for Volume {
-    type Init = WeakRef<gstplay::Play>;
+    type Init = OnceCell<GstVideoPlayer>;
     type Input = VolumeInput;
     type Output = ();
 
@@ -48,25 +49,10 @@ impl SimpleComponent for Volume {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let player = init;
-
-        // TODO: immediatley checking if the player is muted always returned
-        // false
-        relm4::spawn({
-            let player = player.clone();
-            let sender = sender.clone();
-            async move {
-                relm4::tokio::time::sleep(Duration::from_millis(250)).await;
-                if let Some(player) = player.upgrade() {
-                    if player.is_muted() {
-                        sender.input(VolumeInput::ToggleMute);
-                    }
-                }
-            }
-        });
+        let video_player = init;
 
         let model = Volume {
-            player,
+            video_player,
             muted: false,
         };
 
@@ -78,10 +64,9 @@ impl SimpleComponent for Volume {
     fn update(&mut self, message: Self::Input, _sender: relm4::ComponentSender<Self>) {
         match message {
             VolumeInput::ToggleMute => {
-                if let Some(player) = self.player.upgrade() {
-                    self.muted = !self.muted;
-                    player.set_mute(self.muted);
-                }
+                let video_player = self.video_player.get().unwrap();
+                self.muted = !self.muted;
+                video_player.set_mute(self.muted);
             }
         }
     }

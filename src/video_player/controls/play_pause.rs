@@ -1,9 +1,12 @@
-use gst::glib::WeakRef;
+use std::cell::OnceCell;
+
 use gtk::prelude::*;
 use relm4::{gtk, ComponentParts, ComponentSender, SimpleComponent};
 
+use crate::video_player::gst_play_widget::GstVideoPlayer;
+
 pub struct PlayPause {
-    player: WeakRef<gstplay::Play>,
+    video_player: OnceCell<GstVideoPlayer>,
     playing: bool,
 }
 
@@ -14,7 +17,7 @@ pub enum PlayPauseInput {
 
 #[relm4::component(pub)]
 impl SimpleComponent for PlayPause {
-    type Init = WeakRef<gstplay::Play>;
+    type Init = OnceCell<GstVideoPlayer>;
     type Input = PlayPauseInput;
     type Output = ();
 
@@ -44,7 +47,7 @@ impl SimpleComponent for PlayPause {
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let model = PlayPause {
-            player: init,
+            video_player: init,
             playing: true,
         };
         let widgets = view_output!();
@@ -54,16 +57,15 @@ impl SimpleComponent for PlayPause {
     fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
         match message {
             PlayPauseInput::TogglePlaying => {
-                if let Some(player) = self.player.upgrade() {
-                    match self.playing {
-                        true => {
-                            player.pause();
-                            self.playing = false;
-                        }
-                        false => {
-                            player.play();
-                            self.playing = true;
-                        }
+                let video_player = self.video_player.get().unwrap();
+                match self.playing {
+                    true => {
+                        video_player.pause();
+                        self.playing = false;
+                    }
+                    false => {
+                        video_player.play();
+                        self.playing = true;
                     }
                 }
             }

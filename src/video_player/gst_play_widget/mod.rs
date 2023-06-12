@@ -1,0 +1,106 @@
+mod imp;
+
+use std::cell::OnceCell;
+
+use gst::glib::clone::Downgrade;
+use gst::ClockTime;
+use gtk::glib;
+use gtk::subclass::prelude::*;
+use relm4::gtk;
+
+glib::wrapper! {
+    pub struct GstVideoPlayer(ObjectSubclass<imp::GstVideoPlayer>)
+        @extends gtk::Widget,
+        @implements gtk::Accessible;
+}
+
+impl Default for GstVideoPlayer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl GstVideoPlayer {
+    pub fn new() -> Self {
+        glib::Object::new()
+    }
+
+    pub fn player(&self) -> OnceCell<gstplay::Play> {
+        self.imp().player.clone()
+    }
+
+    pub fn play_uri(&mut self, uri: &str) {
+        let imp = self.imp();
+
+        let player = imp.player.get().unwrap();
+        player.set_uri(Some(uri));
+        player.play();
+    }
+
+    pub fn play(&self) {
+        let imp = self.imp();
+        let player = imp.player.get().unwrap();
+        player.play();
+    }
+
+    pub fn pause(&self) {
+        let imp = self.imp();
+        let player = imp.player.get().unwrap();
+        player.pause();
+    }
+
+    pub fn stop(&self) {
+        let imp = self.imp();
+        let player = imp.player.get().unwrap();
+        player.stop();
+    }
+
+    pub fn seek(&self, seconds: usize) {
+        let imp = self.imp();
+        let player = imp.player.get().unwrap();
+        let time = ClockTime::from_seconds(seconds as u64);
+        player.seek(time);
+    }
+
+    pub fn is_muted(&self) -> bool {
+        let imp = self.imp();
+        let player = imp.player.get().unwrap();
+        player.is_muted()
+    }
+
+    pub fn set_mute(&self, muted: bool) {
+        let imp = self.imp();
+        let player = imp.player.get().unwrap();
+        player.set_mute(muted);
+    }
+
+    pub fn connect_buffering(&self, callback: fn(progress: i32)) {
+        let imp = self.imp();
+
+        let signal_adapter = match imp.signal_adapter.get() {
+            Some(s) => s,
+            None => return,
+        };
+
+        signal_adapter.connect_buffering(move |_, progress| {
+            callback(progress);
+        });
+    }
+
+    pub fn connect_position_updated<F>(&self, callback: F)
+    where
+        F: Fn(gst::ClockTime, gst::ClockTime) + Send + 'static,
+    {
+        let imp = self.imp();
+
+        let signal_adapter = imp.signal_adapter.get().unwrap();
+        let player = imp.player.get().unwrap().downgrade();
+
+        signal_adapter.connect_position_updated(move |_, position| {
+            let player = player.upgrade().unwrap();
+            if let (Some(position), Some(duration)) = (position, player.duration()) {
+                callback(position, duration);
+            }
+        });
+    }
+}
