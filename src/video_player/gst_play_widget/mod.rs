@@ -74,6 +74,12 @@ impl GstVideoPlayer {
         player.set_mute(muted);
     }
 
+    pub fn set_volume(&self, volume: f64) {
+        let imp = self.imp();
+        let player = imp.player.get().unwrap();
+        player.set_volume(volume);
+    }
+
     pub fn connect_buffering(&self, callback: fn(progress: i32)) {
         let imp = self.imp();
 
@@ -117,6 +123,22 @@ impl GstVideoPlayer {
 
         signal_adapter.connect_mute_changed(move |_, muted| {
             callback(muted);
+        });
+    }
+
+    pub fn connect_volume_changed<F>(&self, callback: F)
+    where
+        F: Fn(f64) + Send + 'static,
+    {
+        let imp = self.imp();
+
+        let signal_adapter = match imp.signal_adapter.get() {
+            Some(s) => s,
+            None => return,
+        };
+
+        signal_adapter.connect_volume_changed(move |_, volume| {
+            callback(volume);
         });
     }
 }

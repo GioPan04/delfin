@@ -8,12 +8,17 @@ use crate::video_player::gst_play_widget::GstVideoPlayer;
 pub struct Volume {
     video_player: OnceCell<GstVideoPlayer>,
     muted: bool,
+    volume: f64,
 }
 
 #[derive(Debug)]
 pub enum VolumeInput {
     ToggleMute,
-    SetMute(bool),
+    UpdateMute(bool),
+    // Set video player volume
+    SetVolume(f64),
+    // Update displayed volume
+    UpdateVolume(f64),
 }
 
 #[relm4::component(pub)]
@@ -23,25 +28,43 @@ impl SimpleComponent for Volume {
     type Output = ();
 
     view! {
-        gtk::Button {
-            #[watch]
-            // TODO: icon is oddly bright
-            set_icon_name: if model.muted {
-                "audio-volume-muted"
-            } else {
-                "audio-volume-high"
+        gtk::Box {
+            gtk::Button {
+                #[watch]
+                // TODO: icon is oddly bright
+                set_icon_name: if model.muted {
+                    "audio-volume-muted"
+                } else {
+                    "audio-volume-high"
+                },
+                #[watch]
+                set_tooltip_text: Some(if model.muted {
+                    "Unmute"
+                } else {
+                    "Mute"
+                }),
+                set_halign: gtk::Align::End,
+                set_hexpand: true,
+                connect_clicked[sender] => move |_| {
+                    sender.input(VolumeInput::ToggleMute);
+                },
             },
-            #[watch]
-            set_tooltip_text: Some(if model.muted {
-                "Unmute"
-            } else {
-                "Mute"
-            }),
-            set_halign: gtk::Align::End,
-            set_hexpand: true,
-            connect_clicked[sender] => move |_| {
-                sender.input(VolumeInput::ToggleMute);
+
+            gtk::Scale {
+                #[watch]
+                #[block_signal(volume_changed_handler)]
+                set_value: model.volume,
+                set_range: (0.0, 1.0),
+                #[watch]
+                set_sensitive: !model.muted,
+                // TODO: responsive
+                set_width_request: 125,
+                connect_value_changed[sender] => move |scale| {
+                    sender.input(VolumeInput::SetVolume(scale.value()));
+                } @volume_changed_handler,
             },
+
+            gtk::Separator { add_css_class: "spacer" },
         }
     }
 
@@ -55,13 +78,22 @@ impl SimpleComponent for Volume {
         let model = Volume {
             video_player: video_player.clone(),
             muted: false,
+            volume: 1.0,
         };
 
         let widgets = view_output!();
 
         let video_player = video_player.get().unwrap();
-        video_player.connect_mute_changed(move |muted| {
-            sender.input(VolumeInput::SetMute(muted));
+
+        video_player.connect_mute_changed({
+            let sender = sender.clone();
+            move |muted| {
+                sender.input(VolumeInput::UpdateMute(muted));
+            }
+        });
+
+        video_player.connect_volume_changed(move |volume| {
+            sender.input(VolumeInput::UpdateVolume(volume));
         });
 
         ComponentParts { model, widgets }
@@ -74,7 +106,13 @@ impl SimpleComponent for Volume {
                 self.muted = !self.muted;
                 video_player.set_mute(self.muted);
             }
-            VolumeInput::SetMute(muted) => self.muted = muted,
+            VolumeInput::UpdateMute(muted) => self.muted = muted,
+            VolumeInput::SetVolume(volume) => {
+                let video_player = self.video_player.get().unwrap();
+                self.volume = volume;
+                video_player.set_volume(volume);
+            }
+            VolumeInput::UpdateVolume(volume) => self.volume = volume,
         }
     }
 }
