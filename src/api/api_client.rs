@@ -4,9 +4,9 @@ use reqwest::{header::HeaderMap, Url};
 
 use crate::config::{Account, Config, Server};
 
-use super::{auth_header::get_auth_header, url::httpify};
+use super::{auth_header::get_auth_header, mitmproxy::mitmproxy_cert, url::httpify};
 
-static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
+pub static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
 
 // TODO: remove this
 #[allow(dead_code)]
@@ -28,11 +28,17 @@ impl ApiClient {
         let mut headers = HeaderMap::new();
         headers.insert(reqwest::header::AUTHORIZATION, auth_header.parse().unwrap());
 
-        let client = reqwest::Client::builder()
+        let mut client = reqwest::Client::builder()
             .user_agent(APP_USER_AGENT)
-            .default_headers(headers)
-            .build()
-            .unwrap();
+            .default_headers(headers);
+
+        #[cfg(debug_assertions)]
+        let mitmproxy_cert = mitmproxy_cert();
+        if let Some(mitmproxy_cert) = mitmproxy_cert {
+            client = client.add_root_certificate(mitmproxy_cert);
+        }
+
+        let client = client.build().unwrap();
 
         let root = Url::parse(&httpify(&server.url)).unwrap();
 

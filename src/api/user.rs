@@ -1,8 +1,8 @@
 use anyhow::Result;
-use reqwest::{Client, StatusCode};
+use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
-use super::{auth_header::get_auth_header, url::httpify};
+use super::{auth_header::get_auth_header, unauthed_client::get_unauthed_client, url::httpify};
 
 #[derive(Serialize)]
 #[serde(rename_all = "PascalCase")]
@@ -33,10 +33,12 @@ pub async fn authenticate_by_name(
     username: &str,
     password: &str,
 ) -> Result<AuthenticateByNameRes> {
-    let url = httpify(url);
-    let url = format!("{}/Users/AuthenticateByName", url);
+    let client = get_unauthed_client();
 
-    let res = Client::new()
+    let url = httpify(url);
+    let url = format!("{}Users/AuthenticateByName", url);
+
+    let res = client
         .post(url)
         .header("authorization", get_auth_header(device_id, None))
         .json(&AuthenticateByNameReqBody {
