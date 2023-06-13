@@ -7,8 +7,8 @@ use relm4::{
 };
 
 use crate::{
-    api::user::AuthenticateByNameRes,
     config::{Account, Config, Server},
+    jellyfin_api::api::user::AuthenticateByNameRes,
 };
 
 use super::{

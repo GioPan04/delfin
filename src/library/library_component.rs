@@ -4,7 +4,10 @@ use std::sync::Arc;
 use adw::prelude::*;
 use relm4::{adw, gtk, prelude::*, Component, Controller};
 
-use crate::api::{api_client::ApiClient, latest::LatestMedia, views::UserViews};
+use crate::jellyfin_api::{
+    api::{latest::LatestMedia, views::UserViews},
+    api_client::ApiClient,
+};
 
 use super::view_latest::{ViewLatest, ViewLatestOutput};
 

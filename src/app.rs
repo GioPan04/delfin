@@ -5,8 +5,8 @@ use std::sync::{Arc, RwLock};
 
 use crate::{
     accounts::account_list::{AccountList, AccountListInput, AccountListOutput},
-    api::{api_client::ApiClient, latest::LatestMedia},
     config::{self, Config},
+    jellyfin_api::{api::latest::LatestMedia, api_client::ApiClient},
     library::library_component::{Library, LibraryOutput},
     main_window::MAIN_APP_WINDOW_NAME,
     servers::server_list::{ServerList, ServerListOutput},

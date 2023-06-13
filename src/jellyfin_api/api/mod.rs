@@ -1,11 +1,6 @@
-pub mod api_client;
-mod auth_header;
 pub mod info;
 pub mod item;
 pub mod latest;
-mod mitmproxy;
 pub mod playstate;
-mod unauthed_client;
-mod url;
 pub mod user;
 pub mod views;

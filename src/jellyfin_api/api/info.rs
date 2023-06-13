@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use super::{unauthed_client::get_unauthed_client, url::httpify};
+use crate::jellyfin_api::{unauthed_client::get_unauthed_client, util::url::httpify};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]

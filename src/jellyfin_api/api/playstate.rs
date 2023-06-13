@@ -1,9 +1,7 @@
 use anyhow::Result;
 use serde::Serialize;
 
-use crate::utils::ticks::seconds_to_ticks;
-
-use super::api_client::ApiClient;
+use crate::{jellyfin_api::api_client::ApiClient, utils::ticks::seconds_to_ticks};
 
 #[derive(Serialize)]
 #[serde(rename_all = "PascalCase")]

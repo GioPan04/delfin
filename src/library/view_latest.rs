@@ -9,7 +9,7 @@ use relm4::{
 };
 use relm4_components::web_image::WebImage;
 
-use crate::api::{api_client::ApiClient, latest::LatestMedia};
+use crate::jellyfin_api::{api::latest::LatestMedia, api_client::ApiClient};
 
 pub struct ViewLatest {
     id: String,

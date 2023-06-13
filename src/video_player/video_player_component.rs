@@ -5,10 +5,11 @@ use gtk::prelude::*;
 use relm4::{gtk, ComponentParts};
 use relm4::{prelude::*, JoinHandle};
 
-use crate::api::api_client::ApiClient;
-use crate::api::item::get_stream_url;
-use crate::api::latest::LatestMedia;
 use crate::config::{Config, Server};
+use crate::jellyfin_api::{
+    api::{item::get_stream_url, latest::LatestMedia},
+    api_client::ApiClient,
+};
 use crate::utils::ticks::ticks_to_seconds;
 use crate::video_player::controls::video_player_controls::{
     VideoPlayerControls, VideoPlayerControlsInit,

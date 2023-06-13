@@ -1,7 +1,7 @@
 use adw::prelude::*;
 use relm4::prelude::*;
 
-use crate::{api::info::get_public_server_info, config};
+use crate::{config, jellyfin_api::api::info::get_public_server_info};
 
 #[derive(Clone, Debug)]
 pub enum ValidationState {

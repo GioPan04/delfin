@@ -2,7 +2,10 @@ use anyhow::Result;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
-use super::{auth_header::get_auth_header, unauthed_client::get_unauthed_client, url::httpify};
+use crate::jellyfin_api::{
+    unauthed_client::get_unauthed_client,
+    util::{auth_header::get_auth_header, url::httpify},
+};
 
 #[derive(Serialize)]
 #[serde(rename_all = "PascalCase")]

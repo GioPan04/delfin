@@ -1,7 +1,7 @@
 use anyhow::Result;
 use serde::Deserialize;
 
-use super::api_client::ApiClient;
+use crate::jellyfin_api::api_client::ApiClient;
 
 pub type UserViews = Vec<UserViewItem>;
 

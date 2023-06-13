@@ -4,7 +4,7 @@ use reqwest::{header::HeaderMap, Url};
 
 use crate::config::{Account, Config, Server};
 
-use super::{auth_header::get_auth_header, mitmproxy::mitmproxy_cert, url::httpify};
+use super::util::{auth_header::get_auth_header, mitmproxy::mitmproxy_cert, url::httpify};
 
 pub static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
 

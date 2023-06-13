@@ -2,8 +2,8 @@ use adw::prelude::*;
 use relm4::{adw, gtk, prelude::*, Component, ComponentParts};
 
 use crate::{
-    api::user::{authenticate_by_name, AuthenticateByNameRes},
     config::Server,
+    jellyfin_api::api::user::{authenticate_by_name, AuthenticateByNameRes},
 };
 
 #[derive(Debug, Default)]

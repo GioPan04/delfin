@@ -1,8 +1,6 @@
 use reqwest::Url;
 
-use crate::config;
-
-use super::url::httpify;
+use crate::{config, jellyfin_api::util::url::httpify};
 
 pub fn get_stream_url(server: &config::Server, item_id: &str) -> String {
     Url::parse(&httpify(&server.url))
