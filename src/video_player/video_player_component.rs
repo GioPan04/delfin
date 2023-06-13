@@ -6,10 +6,7 @@ use relm4::{gtk, ComponentParts};
 use relm4::{prelude::*, JoinHandle};
 
 use crate::config::{Config, Server};
-use crate::jellyfin_api::{
-    api::{item::get_stream_url, latest::LatestMedia},
-    api_client::ApiClient,
-};
+use crate::jellyfin_api::{api::item::get_stream_url, api_client::ApiClient, models::media::Media};
 use crate::utils::ticks::ticks_to_seconds;
 use crate::video_player::controls::video_player_controls::{
     VideoPlayerControls, VideoPlayerControlsInit,
@@ -22,7 +19,7 @@ use super::session::start_session_reporting;
 pub struct VideoPlayer {
     config: Arc<RwLock<Config>>,
     controls: OnceCell<Controller<VideoPlayerControls>>,
-    media: Option<LatestMedia>,
+    media: Option<Media>,
     api_client: Option<Arc<ApiClient>>,
     show_controls: bool,
     session_reporting_handle: Option<JoinHandle<()>>,
@@ -32,7 +29,7 @@ pub struct VideoPlayer {
 #[derive(Debug)]
 pub enum VideoPlayerInput {
     Toast(String),
-    PlayVideo(Arc<ApiClient>, Server, LatestMedia),
+    PlayVideo(Arc<ApiClient>, Server, Media),
     ToggleControls,
     SetBuffering(bool),
     ExitPlayer,

@@ -9,7 +9,7 @@ use relm4::{
 };
 use relm4_components::web_image::WebImage;
 
-use crate::jellyfin_api::{api::latest::LatestMedia, api_client::ApiClient};
+use crate::jellyfin_api::{api_client::ApiClient, models::media::Media};
 
 pub struct ViewLatest {
     id: String,
@@ -20,17 +20,17 @@ pub struct ViewLatest {
 
 #[derive(Debug)]
 pub enum ViewLatestInput {
-    MediaSelected(LatestMedia),
+    MediaSelected(Media),
 }
 
 #[derive(Debug)]
 pub enum ViewLatestOutput {
-    MediaSelected(LatestMedia),
+    MediaSelected(Media),
 }
 
 #[derive(Debug)]
 pub enum ViewLatestCommandOutput {
-    LatestMediaLoaded(Vec<LatestMedia>),
+    MediaLoaded(Vec<Media>),
 }
 
 #[relm4::component(pub)]
@@ -110,7 +110,7 @@ impl Component for ViewLatest {
         root: &Self::Root,
     ) {
         match message {
-            ViewLatestCommandOutput::LatestMediaLoaded(latest_media) => {
+            ViewLatestCommandOutput::MediaLoaded(latest_media) => {
                 if latest_media.is_empty() {
                     root.set_visible(false);
                     return;
@@ -132,19 +132,19 @@ impl ViewLatest {
                 .get_latest_media(&id, None)
                 .await
                 .expect("Error getting latest media.");
-            ViewLatestCommandOutput::LatestMediaLoaded(latest_media)
+            ViewLatestCommandOutput::MediaLoaded(latest_media)
         });
     }
 }
 
 struct MediaTile {
-    media: LatestMedia,
+    media: Media,
     image: Controller<WebImage>,
 }
 
 #[derive(Debug)]
 enum MediaTileOutput {
-    Selected(LatestMedia),
+    Selected(Media),
 }
 
 impl Position<GridPosition, DynamicIndex> for MediaTile {
@@ -160,7 +160,7 @@ impl Position<GridPosition, DynamicIndex> for MediaTile {
 }
 
 impl FactoryComponent for MediaTile {
-    type Init = LatestMedia;
+    type Init = Media;
     type Input = ();
     type Output = MediaTileOutput;
     type CommandOutput = ();

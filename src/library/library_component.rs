@@ -4,10 +4,7 @@ use std::sync::Arc;
 use adw::prelude::*;
 use relm4::{adw, gtk, prelude::*, Component, Controller};
 
-use crate::jellyfin_api::{
-    api::{latest::LatestMedia, views::UserViews},
-    api_client::ApiClient,
-};
+use crate::jellyfin_api::{api::views::UserViews, api_client::ApiClient, models::media::Media};
 
 use super::view_latest::{ViewLatest, ViewLatestOutput};
 
@@ -26,13 +23,13 @@ pub struct Library {
 
 #[derive(Debug)]
 pub enum LibraryInput {
-    MediaSelected(LatestMedia),
+    MediaSelected(Media),
 }
 
 #[derive(Debug)]
 pub enum LibraryOutput {
     NavigateBack,
-    PlayVideo(LatestMedia),
+    PlayVideo(Media),
 }
 
 #[derive(Debug)]

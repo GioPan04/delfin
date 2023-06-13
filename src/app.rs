@@ -6,7 +6,7 @@ use std::sync::{Arc, RwLock};
 use crate::{
     accounts::account_list::{AccountList, AccountListInput, AccountListOutput},
     config::{self, Config},
-    jellyfin_api::{api::latest::LatestMedia, api_client::ApiClient},
+    jellyfin_api::{api_client::ApiClient, models::media::Media},
     library::library_component::{Library, LibraryOutput},
     main_window::MAIN_APP_WINDOW_NAME,
     servers::server_list::{ServerList, ServerListOutput},
@@ -60,7 +60,7 @@ pub enum AppInput {
     NavigateBack,
     ServerSelected(config::Server),
     AccountSelected(config::Server, config::Account),
-    PlayVideo(LatestMedia),
+    PlayVideo(Media),
 }
 
 #[relm4::component(pub)]

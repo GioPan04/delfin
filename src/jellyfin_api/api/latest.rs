@@ -1,37 +1,13 @@
 use anyhow::Result;
-use serde::Deserialize;
 
-use crate::jellyfin_api::api_client::ApiClient;
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct LatestMedia {
-    pub id: String,
-    pub name: String,
-    pub image_tags: ImageTags,
-    pub user_data: UserData,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct ImageTags {
-    pub primary: String,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct UserData {
-    pub played: bool,
-    pub playback_position_ticks: usize,
-    pub played_percentage: Option<f64>,
-}
+use crate::jellyfin_api::{api_client::ApiClient, models::media::Media};
 
 impl ApiClient {
     pub async fn get_latest_media(
         &self,
         parent_id: &str,
         limit: Option<usize>,
-    ) -> Result<Vec<LatestMedia>> {
+    ) -> Result<Vec<Media>> {
         let limit = limit.unwrap_or(16);
 
         let mut url = self
@@ -42,7 +18,7 @@ impl ApiClient {
             .append_pair("parentId", parent_id)
             .append_pair("limit", &limit.to_string());
 
-        let mut res: Vec<LatestMedia> = self.client.get(url).send().await?.json().await?;
+        let mut res: Vec<Media> = self.client.get(url).send().await?.json().await?;
 
         // Parse image tags into URLs
         // TODO: pretty sure these are optional
