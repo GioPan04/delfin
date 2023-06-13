@@ -107,7 +107,7 @@ impl Component for ServerList {
             ServerListInput::AddServer => {
                 self.add_server_dialog = Some(
                     AddServerDialog::builder()
-                        .transient_for(&root)
+                        .transient_for(root)
                         .launch(())
                         .forward(sender.input_sender(), convert_add_server_output),
                 );

@@ -119,7 +119,7 @@ impl Component for AccountList {
                 let config = self.config.read().unwrap();
                 self.add_account_dialog = Some(
                     AddAccountDialog::builder()
-                        .transient_for(&root)
+                        .transient_for(root)
                         .launch((self.server.clone(), config.device_id.clone()))
                         .forward(sender.input_sender(), convert_add_account_output),
                 );
