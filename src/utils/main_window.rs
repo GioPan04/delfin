@@ -1,9 +1,6 @@
 use gst::prelude::Cast;
 use gtk::prelude::ListModelExt;
-use relm4::{
-    adw,
-    gtk::{self},
-};
+use relm4::{adw, gtk};
 
 pub const MAIN_APP_WINDOW_NAME: &str = "main_app_window";
 

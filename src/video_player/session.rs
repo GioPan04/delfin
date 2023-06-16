@@ -6,7 +6,7 @@ use std::{
 use gst::prelude::ObjectExt;
 use relm4::{tokio, JoinHandle};
 
-use crate::{jellyfin_api::api_client::ApiClient, config::Config};
+use crate::{config::Config, jellyfin_api::api_client::ApiClient};
 
 use super::gst_play_widget::GstVideoPlayer;
 
