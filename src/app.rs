@@ -8,8 +8,8 @@ use crate::{
     config::{self, Config},
     jellyfin_api::{api_client::ApiClient, models::media::Media},
     library::library_component::{Library, LibraryOutput},
-    main_window::MAIN_APP_WINDOW_NAME,
     servers::server_list::{ServerList, ServerListOutput},
+    utils::main_window::MAIN_APP_WINDOW_NAME,
     video_player::video_player_component::{VideoPlayer, VideoPlayerInput, VideoPlayerOutput},
 };
 

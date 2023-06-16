@@ -4,7 +4,7 @@ use glib::SignalHandlerId;
 use gtk::{glib, prelude::*};
 use relm4::{gtk, ComponentParts, SimpleComponent};
 
-use crate::main_window::get_main_window;
+use crate::utils::main_window::get_main_window;
 
 pub struct Fullscreen {
     fullscreen: bool,
