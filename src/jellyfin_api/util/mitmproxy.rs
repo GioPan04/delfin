@@ -19,7 +19,5 @@ pub fn mitmproxy_cert() -> Option<Certificate> {
         Ok(b) => b,
         _ => return None,
     };
-    let cert = Certificate::from_pem(&buf).ok();
-    println!("got cert {cert:#?}");
-    cert
+    Certificate::from_pem(&buf).ok()
 }
