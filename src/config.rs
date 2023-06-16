@@ -46,7 +46,7 @@ impl Config {
     }
 
     pub fn save(&self) -> Result<()> {
-        let config_file = match get_config_file() {
+        let config_file = match get_config_file(true) {
             Some(f) => f,
             None => return Err(anyhow!("Error getting config file")),
         };
@@ -60,18 +60,25 @@ impl Config {
     }
 }
 
-fn get_config_file() -> Option<PathBuf> {
+fn get_config_file(create_dir: bool) -> Option<PathBuf> {
     let config_dir = match dirs::config_dir() {
         Some(d) => d,
         None => return None,
     };
-    let config_file = config_dir.join("jellything/config.toml");
+
+    let dir = config_dir.join("jellything");
+
+    if create_dir {
+        fs::create_dir_all(&dir).expect("Error creating config directory");
+    }
+
+    let config_file = dir.join("config.toml");
 
     Some(config_file)
 }
 
 fn get_config_file_exists() -> Option<PathBuf> {
-    let config_file = match get_config_file() {
+    let config_file = match get_config_file(false) {
         Some(f) => f,
         None => return None,
     };
