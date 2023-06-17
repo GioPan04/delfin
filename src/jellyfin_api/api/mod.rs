@@ -1,3 +1,4 @@
+pub mod display_preferences;
 pub mod info;
 pub mod item;
 pub mod latest;
