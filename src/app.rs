@@ -125,6 +125,10 @@ impl Component for App {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+        // Use development styles when running debug build
+        #[cfg(debug_assertions)]
+        root.add_css_class("devel");
+
         let servers = ServerList::builder()
             .launch(Arc::clone(&config))
             .forward(sender.input_sender(), convert_server_list_output);
