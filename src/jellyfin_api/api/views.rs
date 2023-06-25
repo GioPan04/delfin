@@ -11,11 +11,12 @@ pub struct GetUserViewsRes {
     pub items: UserViews,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct UserViewItem {
     pub id: String,
     pub name: String,
+    // TODO: this should be an enum
     pub collection_type: String,
 }
 

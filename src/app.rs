@@ -1,6 +1,6 @@
 use adw::prelude::*;
 use core::fmt;
-use relm4::prelude::*;
+use relm4::{prelude::*, MessageBroker};
 use std::sync::{Arc, RwLock};
 
 use crate::{
@@ -12,6 +12,13 @@ use crate::{
     utils::main_window::MAIN_APP_WINDOW_NAME,
     video_player::video_player_component::{VideoPlayer, VideoPlayerInput, VideoPlayerOutput},
 };
+
+#[derive(Debug)]
+pub enum AppBrokerMessage {
+    PlayVideo(Media),
+}
+
+pub static APP_BROKER: MessageBroker<AppInput> = MessageBroker::new();
 
 #[derive(Clone, Copy, Debug)]
 pub enum AppPage {

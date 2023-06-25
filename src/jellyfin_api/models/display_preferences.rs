@@ -8,7 +8,7 @@ pub struct DisplayPreferencesRaw {
     pub custom_prefs: Option<HashMap<String, Option<String>>>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum HomeSection {
     MyMedia,
     MyMediaSmall,
@@ -85,7 +85,7 @@ impl Default for HomeSections {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct DisplayPreferences {
     pub home_sections: Vec<HomeSection>,
 }

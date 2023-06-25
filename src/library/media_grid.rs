@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
 use gtk::prelude::*;
-use relm4::{factory::FactoryVecDeque, gtk, Component, ComponentParts, ComponentSender};
+use relm4::{
+    component::{AsyncComponent, AsyncComponentController, AsyncController},
+    gtk, Component, ComponentParts, ComponentSender,
+};
 
 use crate::jellyfin_api::{api_client::ApiClient, models::media::Media};
 
@@ -15,18 +18,18 @@ pub struct MediaGrid {
     api_client: Arc<ApiClient>,
     id: String,
     _grid_type: MediaGridType,
-    media_tiles: FactoryVecDeque<MediaTile>,
+    media_tiles: Vec<AsyncController<MediaTile>>,
 }
 
-#[derive(Debug)]
-pub enum MediaGridInput {
-    MediaSelected(Media),
+pub struct MediaGridInit {
+    pub api_client: Arc<ApiClient>,
+    pub id: String,
+    pub grid_type: MediaGridType,
 }
 
 #[derive(Debug)]
 pub enum MediaGridOutput {
-    MediaSelected(Media),
-    Empty,
+    Empty(String),
 }
 
 #[derive(Debug)]
@@ -36,19 +39,20 @@ pub enum MediaGridCommandOutput {
 
 #[relm4::component(pub)]
 impl Component for MediaGrid {
-    type Init = (Arc<ApiClient>, String, MediaGridType);
-    type Input = MediaGridInput;
+    type Init = MediaGridInit;
+    type Input = ();
     type Output = MediaGridOutput;
     type CommandOutput = MediaGridCommandOutput;
 
     view! {
         gtk::Box {
-            #[local_ref]
-            media_grid -> gtk::Grid {
+            #[name = "media_grid"]
+            gtk::Grid {
                 set_column_spacing: 16,
                 set_column_homogeneous: true,
                 set_halign: gtk::Align::Start,
                 set_margin_bottom: 12,
+                set_height_request: 200,
             },
         }
     }
@@ -58,16 +62,13 @@ impl Component for MediaGrid {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let media_tiles = FactoryVecDeque::new(gtk::Grid::default(), sender.input_sender());
-
         let model = MediaGrid {
-            api_client: init.0,
-            id: init.1,
-            _grid_type: init.2,
-            media_tiles,
+            api_client: init.api_client,
+            id: init.id,
+            _grid_type: init.grid_type,
+            media_tiles: vec![],
         };
 
-        let media_grid = model.media_tiles.widget();
         let widgets = view_output!();
 
         // Initial fetch
@@ -76,32 +77,34 @@ impl Component for MediaGrid {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
-        match message {
-            MediaGridInput::MediaSelected(media) => sender
-                .output(MediaGridOutput::MediaSelected(media))
-                .unwrap(),
-        }
-    }
-
-    fn update_cmd(
+    fn update_cmd_with_view(
         &mut self,
+        widgets: &mut Self::Widgets,
         message: Self::CommandOutput,
         sender: ComponentSender<Self>,
         root: &Self::Root,
     ) {
         match message {
             MediaGridCommandOutput::MediaLoaded(latest_media) => {
+                let media_grid = &widgets.media_grid;
+
                 if latest_media.is_empty() {
                     root.set_visible(false);
-                    sender.output(MediaGridOutput::Empty).unwrap();
+                    sender
+                        .output(MediaGridOutput::Empty(self.id.clone()))
+                        .unwrap();
                     return;
                 }
-                for media in latest_media {
-                    self.media_tiles.guard().push_back(media);
+
+                for (column, media) in latest_media.into_iter().enumerate() {
+                    let media_tile = MediaTile::builder().launch(media).detach();
+                    media_grid.attach(media_tile.widget(), column as i32, 1, 1, 1);
+                    self.media_tiles.push(media_tile);
                 }
             }
         }
+
+        self.update_view(widgets, sender);
     }
 }
 

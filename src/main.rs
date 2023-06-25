@@ -1,6 +1,9 @@
 use std::sync::{Arc, RwLock};
 
-use jellything::{app::App, config::Config};
+use jellything::{
+    app::{App, APP_BROKER},
+    config::Config,
+};
 use relm4::RelmApp;
 
 fn main() {
@@ -14,7 +17,8 @@ fn main() {
     let app = RelmApp::new("cafe.avery.jellything");
     relm4_icons::initialize_icons();
     load_css();
-    app.run::<App>(Arc::new(RwLock::new(config)));
+    app.with_broker(&APP_BROKER)
+        .run::<App>(Arc::new(RwLock::new(config)));
 }
 
 fn load_css() {

@@ -4,21 +4,23 @@ use std::sync::Arc;
 use adw::prelude::*;
 use relm4::{adw, gtk, prelude::*, Component, Controller};
 
-use crate::jellyfin_api::{api::views::UserViews, api_client::ApiClient, models::media::Media};
+use crate::jellyfin_api::{
+    api::views::UserViews,
+    api_client::ApiClient,
+    models::{display_preferences::DisplayPreferences, media::Media},
+};
 
-use super::view_latest::{ViewLatest, ViewLatestOutput};
+use super::home::{Home, HomeInit};
 
 enum LibraryState {
     Loading,
     Ready,
 }
 
-// TODO: remove this
-#[allow(dead_code)]
 pub struct Library {
     api_client: Arc<ApiClient>,
     state: LibraryState,
-    views: Option<Vec<Controller<ViewLatest>>>,
+    home: Option<Controller<Home>>,
 }
 
 #[derive(Debug)]
@@ -34,7 +36,7 @@ pub enum LibraryOutput {
 
 #[derive(Debug)]
 pub enum LibraryCommandOutput {
-    LibraryLoaded(UserViews),
+    LibraryLoaded(UserViews, DisplayPreferences),
 }
 
 #[relm4::component(pub)]
@@ -96,14 +98,6 @@ impl Component for Library {
                         view_stack -> adw::ViewStack {
                             set_margin_all: 20,
                             set_valign: gtk::Align::Fill,
-
-                            #[name = "home"]
-                            add_titled_with_icon[Some("home"), "Home", "home-filled"] = &gtk::Box {
-                                set_valign: gtk::Align::Start,
-                                set_vexpand: true,
-                                set_orientation: gtk::Orientation::Vertical,
-                                set_spacing: 20,
-                            },
                         },
                     },
 
@@ -126,7 +120,7 @@ impl Component for Library {
         let model = Library {
             api_client: Arc::clone(&api_client),
             state: LibraryState::Loading,
-            views: None,
+            home: None,
         };
 
         let view_stack = adw::ViewStack::new();
@@ -140,8 +134,7 @@ impl Component for Library {
             .bind_property("title-visible", view_switcher_bar, "reveal")
             .build();
 
-        // Initial fetch
-        model.fetch_user_views(&sender);
+        model.initial_fetch(&sender);
 
         relm4::ComponentParts { model, widgets }
     }
@@ -162,8 +155,8 @@ impl Component for Library {
         _root: &Self::Root,
     ) {
         match message {
-            LibraryCommandOutput::LibraryLoaded(user_views) => {
-                self.display_user_views(widgets, &sender, user_views)
+            LibraryCommandOutput::LibraryLoaded(user_views, display_preferences) => {
+                self.display_user_views(widgets, &sender, user_views, display_preferences)
             }
         }
 
@@ -172,44 +165,55 @@ impl Component for Library {
 }
 
 impl Library {
-    fn fetch_user_views(&self, sender: &relm4::ComponentSender<Self>) {
+    fn initial_fetch(&self, sender: &relm4::ComponentSender<Self>) {
         let api_client = Arc::clone(&self.api_client);
         sender.oneshot_command(async move {
-            let user_views = api_client
-                .get_user_views()
-                .await
-                .unwrap_or_else(|err| panic!("Error getting library: {}", err));
-            LibraryCommandOutput::LibraryLoaded(user_views)
+            let (user_views, display_preferences) = tokio::join!(
+                async {
+                    api_client
+                        .get_user_views()
+                        .await
+                        .unwrap_or_else(|err| panic!("Error getting library: {}", err))
+                },
+                async {
+                    api_client
+                        // We might eventually want client-specific settings, but for
+                        // now use the Jellyfin ("emby") client settings
+                        .get_user_display_preferences("emby")
+                        .await
+                        .unwrap()
+                }
+            );
+
+            LibraryCommandOutput::LibraryLoaded(user_views, display_preferences)
         });
     }
 
     fn display_user_views(
         &mut self,
         widgets: &mut LibraryWidgets,
-        sender: &relm4::ComponentSender<Self>,
+        _sender: &relm4::ComponentSender<Self>,
         user_views: UserViews,
+        display_preferences: DisplayPreferences,
     ) {
-        self.state = LibraryState::Ready;
-
-        let home = &widgets.home;
         let view_stack = &widgets.view_stack;
 
-        let mut views = Vec::new();
-        for view in user_views {
-            let new_view = ViewLatest::builder()
-                .launch((
-                    view.id.clone(),
-                    view.name.clone(),
-                    Arc::clone(&self.api_client),
-                ))
-                .forward(sender.input_sender(), convert_view_latest_output);
-            let widget = new_view.widget();
-            home.append(widget);
-            views.push(new_view);
+        self.state = LibraryState::Ready;
 
+        let home = Home::builder()
+            .launch(HomeInit {
+                api_client: self.api_client.clone(),
+                display_preferences,
+                user_views: user_views.clone(),
+            })
+            .detach();
+        view_stack.add_titled_with_icon(home.widget(), Some("home"), "Home", "home-filled");
+        self.home = Some(home);
+
+        for view in user_views {
             let icon = match view.collection_type.as_str() {
                 "movies" => "video-clip-multiple-filled",
-                "shows" => "video-clip-multiple-filled",
+                "tvshows" => "video-clip-multiple-filled",
                 "music" => "play-multiple-filled",
                 "playlists" => "tag-multiple-filled",
                 _ => "video-clip-multiple-filled",
@@ -222,13 +226,5 @@ impl Library {
                 icon,
             );
         }
-
-        self.views = Some(views);
-    }
-}
-
-fn convert_view_latest_output(output: ViewLatestOutput) -> LibraryInput {
-    match output {
-        ViewLatestOutput::MediaSelected(media) => LibraryInput::MediaSelected(media),
     }
 }

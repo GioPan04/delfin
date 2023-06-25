@@ -1,122 +1,115 @@
+use std::collections::VecDeque;
+
 use gtk::prelude::*;
 use relm4::{
-    factory::{positions::GridPosition, Position},
-    prelude::*,
+    component::{AsyncComponent, AsyncComponentParts},
+    gtk::{self, gdk_pixbuf},
+    loading_widgets::LoadingWidgets,
+    view, AsyncComponentSender,
 };
-use relm4_components::web_image::WebImage;
 
-use crate::jellyfin_api::models::media::Media;
-
-use super::media_grid::MediaGridInput;
+use crate::{app::APP_BROKER, jellyfin_api::models::media::Media};
 
 pub struct MediaTile {
     media: Media,
-    image: Controller<WebImage>,
 }
 
-#[derive(Debug)]
-pub enum MediaTileOutput {
-    Selected(Media),
-}
-
-impl Position<GridPosition, DynamicIndex> for MediaTile {
-    fn position(&self, index: &DynamicIndex) -> GridPosition {
-        let index = index.current_index();
-        GridPosition {
-            column: index as i32,
-            row: 0,
-            width: 1,
-            height: 1,
-        }
-    }
-}
-
-impl FactoryComponent for MediaTile {
-    type Init = Media;
-    type Input = ();
-    type Output = MediaTileOutput;
+#[relm4::component(pub async)]
+impl AsyncComponent for MediaTile {
     type CommandOutput = ();
-    type Root = gtk::Box;
-    type Widgets = ();
-    type ParentWidget = gtk::Grid;
-    type ParentInput = MediaGridInput;
-    type Index = DynamicIndex;
+    type Input = ();
+    type Output = ();
+    type Init = Media;
 
-    fn init_root(&self) -> Self::Root {
-        relm4::view! {
-            root = gtk::Box {
-                set_orientation: gtk::Orientation::Vertical,
-                set_width_request: 200,
-                set_height_request: 256,
-                add_css_class: "media-tile",
-            }
+    view! {
+        gtk::Box {
+            set_orientation: gtk::Orientation::Vertical,
+            set_width_request: 200,
+            set_height_request: 256,
+            add_css_class: "media-tile",
+
+            add_controller = gtk::GestureClick {
+                connect_pressed[media] => move |_, _, _, _| {
+                    APP_BROKER.send(crate::app::AppInput::PlayVideo(media.clone()));
+                },
+            },
+
+            add_controller = gtk::EventControllerMotion {
+                connect_enter[root] => move |_, _, _| {
+                    root.add_css_class("hover");
+                },
+                connect_leave[root] => move |_| {
+                    root.remove_css_class("hover");
+                },
+            },
+
+            gtk::Overlay {
+                #[name = "image"]
+                gtk::Image {
+                    set_hexpand: true,
+                    set_vexpand: true,
+                    set_halign: gtk::Align::Fill,
+                    set_valign: gtk::Align::Fill,
+                },
+            },
+
+            gtk::Label {
+                set_ellipsize: gtk::pango::EllipsizeMode::End,
+                #[watch]
+                set_label: &model.media.name,
+            },
         }
-        root
     }
 
-    fn init_model(
-        init: Self::Init,
-        _index: &Self::Index,
-        _sender: relm4::FactorySender<Self>,
-    ) -> Self {
-        let media = init;
-
-        let image = WebImage::builder()
-            .launch(media.image_tags.primary.clone())
-            .detach();
-
-        MediaTile { media, image }
-    }
-
-    fn init_widgets(
-        &mut self,
-        _index: &Self::Index,
-        root: &Self::Root,
-        _returned_widget: &<Self::ParentWidget as relm4::factory::FactoryView>::ReturnedWidget,
-        sender: relm4::FactorySender<Self>,
-    ) -> Self::Widgets {
-        let image = self.image.widget();
-        let media = &self.media;
-        let played_percentage = media.user_data.played_percentage.map(|p| p / 100.0);
-        relm4::view! {
+    fn init_loading_widgets(
+        root: &mut Self::Root,
+    ) -> Option<relm4::loading_widgets::LoadingWidgets> {
+        view! {
             #[local_ref]
-            root -> gtk::Box {
-                add_controller = gtk::GestureClick {
-                    connect_pressed[sender, media] => move |_, _, _, _| {
-                        sender.output(MediaTileOutput::Selected(media.clone()));
-                    },
-                },
-                add_controller = gtk::EventControllerMotion {
-                    connect_enter[root] => move |_, _, _| {
-                        root.add_css_class("hover");
-                    },
-                    connect_leave[root] => move |_| {
-                        root.remove_css_class("hover");
-                    },
-                },
+            root {
+                set_width_request: 200,
 
-                gtk::Overlay {
-                    #[local_ref]
-                    image -> gtk::Box {},
-
-                    add_overlay = &gtk::ProgressBar {
-                        set_visible: self.media.user_data.played_percentage.is_some(),
-                        set_fraction?: played_percentage,
-                    },
-                },
-
-                gtk::Label {
-                    set_ellipsize: gtk::pango::EllipsizeMode::End,
-                    #[watch]
-                    set_label: &self.media.name,
-                },
+                #[name(spinner)]
+                gtk::Spinner {
+                    start: (),
+                    set_halign: gtk::Align::Center,
+                    set_valign: gtk::Align::Center,
+                    set_hexpand: true,
+                    set_vexpand: true,
+                }
             }
         }
+        Some(LoadingWidgets::new(root, spinner))
     }
 
-    fn forward_to_parent(output: Self::Output) -> Option<Self::ParentInput> {
-        Some(match output {
-            MediaTileOutput::Selected(media) => MediaGridInput::MediaSelected(media),
-        })
+    async fn init(
+        media: Self::Init,
+        root: Self::Root,
+        _sender: AsyncComponentSender<Self>,
+    ) -> AsyncComponentParts<Self> {
+        let img_url = media.image_tags.primary.clone();
+
+        let img_bytes: VecDeque<u8> = reqwest::get(img_url)
+            .await
+            .expect("Error getting media tile image: {img_url}")
+            .bytes()
+            .await
+            .expect("Error getting media tile image bytes: {img_url}")
+            .into_iter()
+            .collect();
+
+        let pixbuf = gdk_pixbuf::Pixbuf::from_read(img_bytes)
+            .expect("Error creating media tile pixbuf: {img_url}");
+
+        let model = MediaTile {
+            media: media.clone(),
+        };
+
+        let widgets = view_output!();
+        let image = &widgets.image;
+
+        image.set_from_pixbuf(Some(&pixbuf));
+
+        AsyncComponentParts { model, widgets }
     }
 }

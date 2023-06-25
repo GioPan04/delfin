@@ -1,10 +1,10 @@
-use std::{
-    sync::{Arc, RwLock},
-    time::Duration,
-};
+use std::sync::{Arc, RwLock};
 
 use gst::prelude::ObjectExt;
-use relm4::{tokio, JoinHandle};
+use tokio::{
+    task::JoinHandle,
+    time::{sleep, Duration},
+};
 
 use crate::{config::Config, jellyfin_api::api_client::ApiClient};
 
@@ -28,7 +28,7 @@ pub fn start_session_reporting(
     tokio::spawn({
         async move {
             loop {
-                tokio::time::sleep(Duration::from_secs(position_update_frequency)).await;
+                sleep(Duration::from_secs(position_update_frequency)).await;
                 let player = player.upgrade().unwrap();
                 let position = player.position().unwrap().seconds() as usize;
                 let res = api_client.report_playback_progress("timeupdate", &item_id, position);
