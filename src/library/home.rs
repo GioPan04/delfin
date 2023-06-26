@@ -13,9 +13,17 @@ use crate::jellyfin_api::api_client::ApiClient;
 use crate::jellyfin_api::models::display_preferences::{DisplayPreferences, HomeSection};
 use crate::jellyfin_api::models::media::Media;
 
+use super::home_sections::continue_watching::HomeSectionContinueWatching;
 use super::home_sections::latest::HomeSectionLatest;
 
-pub struct Home {}
+enum HomeSectionController {
+    ContinueWatching(Controller<HomeSectionContinueWatching>),
+    Latest(Controller<HomeSectionLatest>),
+}
+
+pub struct Home {
+    _sections: Vec<HomeSectionController>,
+}
 
 #[derive(Debug)]
 pub enum HomeInput {}
@@ -49,7 +57,7 @@ impl SimpleComponent for Home {
         root: &Self::Root,
         _sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let model = Home {};
+        let mut model = Home { _sections: vec![] };
 
         let widgets = view_output!();
 
@@ -66,18 +74,30 @@ impl SimpleComponent for Home {
 
 impl Home {
     fn display_sections(
-        &self,
+        &mut self,
         root: &gtk::Box,
         display_preferences: DisplayPreferences,
         api_client: Arc<ApiClient>,
         user_views: UserViews,
     ) {
         for section in display_preferences.home_sections {
-            if let HomeSection::LatestMedia = section {
-                let section = HomeSectionLatest::builder()
-                    .launch((api_client.clone(), user_views.clone()))
-                    .detach();
-                root.append(section.widget());
+            match section {
+                HomeSection::ContinueWatching => {
+                    let section = HomeSectionContinueWatching::builder()
+                        .launch(api_client.clone())
+                        .detach();
+                    root.append(section.widget());
+                    self._sections
+                        .push(HomeSectionController::ContinueWatching(section));
+                }
+                HomeSection::LatestMedia => {
+                    let section = HomeSectionLatest::builder()
+                        .launch((api_client.clone(), user_views.clone()))
+                        .detach();
+                    root.append(section.widget());
+                    self._sections.push(HomeSectionController::Latest(section));
+                }
+                _ => {}
             }
         }
     }

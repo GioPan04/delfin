@@ -8,28 +8,33 @@ use relm4::{
 
 use crate::jellyfin_api::{api_client::ApiClient, models::media::Media};
 
-use super::media_tile::MediaTile;
+use super::media_tile::{MediaTile, MediaTileDisplay};
 
+#[derive(Clone, Debug)]
 pub enum MediaGridType {
-    Latest,
+    ContinueWatching,
+    Latest(MediaGridTypeLatestParams),
+}
+
+#[derive(Clone, Debug)]
+pub struct MediaGridTypeLatestParams {
+    pub view_id: String,
 }
 
 pub struct MediaGrid {
     api_client: Arc<ApiClient>,
-    id: String,
-    _grid_type: MediaGridType,
+    grid_type: MediaGridType,
     media_tiles: Vec<AsyncController<MediaTile>>,
 }
 
 pub struct MediaGridInit {
     pub api_client: Arc<ApiClient>,
-    pub id: String,
     pub grid_type: MediaGridType,
 }
 
 #[derive(Debug)]
 pub enum MediaGridOutput {
-    Empty(String),
+    Empty(Option<String>),
 }
 
 #[derive(Debug)]
@@ -52,7 +57,7 @@ impl Component for MediaGrid {
                 set_column_homogeneous: true,
                 set_halign: gtk::Align::Start,
                 set_margin_bottom: 12,
-                set_height_request: 200,
+                // set_height_request: 200,
             },
         }
     }
@@ -64,8 +69,7 @@ impl Component for MediaGrid {
     ) -> relm4::ComponentParts<Self> {
         let model = MediaGrid {
             api_client: init.api_client,
-            id: init.id,
-            _grid_type: init.grid_type,
+            grid_type: init.grid_type,
             media_tiles: vec![],
         };
 
@@ -85,19 +89,25 @@ impl Component for MediaGrid {
         root: &Self::Root,
     ) {
         match message {
-            MediaGridCommandOutput::MediaLoaded(latest_media) => {
-                let media_grid = &widgets.media_grid;
-
-                if latest_media.is_empty() {
+            MediaGridCommandOutput::MediaLoaded(media) => {
+                if media.is_empty() {
                     root.set_visible(false);
                     sender
-                        .output(MediaGridOutput::Empty(self.id.clone()))
+                        .output(MediaGridOutput::Empty(self.get_view_id()))
                         .unwrap();
                     return;
                 }
 
-                for (column, media) in latest_media.into_iter().enumerate() {
-                    let media_tile = MediaTile::builder().launch(media).detach();
+                let media_grid = &widgets.media_grid;
+                let media_tile_display = match self.grid_type {
+                    MediaGridType::ContinueWatching => MediaTileDisplay::Wide,
+                    MediaGridType::Latest(_) => MediaTileDisplay::Cover,
+                };
+
+                for (column, media) in media.into_iter().enumerate() {
+                    let media_tile = MediaTile::builder()
+                        .launch((media, media_tile_display))
+                        .detach();
                     media_grid.attach(media_tile.widget(), column as i32, 1, 1, 1);
                     self.media_tiles.push(media_tile);
                 }
@@ -111,13 +121,26 @@ impl Component for MediaGrid {
 impl MediaGrid {
     fn fetch_media(&self, sender: &ComponentSender<Self>) {
         let api_client = Arc::clone(&self.api_client);
-        let id = self.id.clone();
+        let grid_type = self.grid_type.clone();
         sender.oneshot_command(async move {
-            let latest_media = api_client
-                .get_latest_media(&id, None)
-                .await
-                .expect("Error getting latest media.");
-            MediaGridCommandOutput::MediaLoaded(latest_media)
+            let media = match &grid_type {
+                MediaGridType::ContinueWatching => api_client
+                    .get_continue_watching(None)
+                    .await
+                    .expect("Error getting continue watching."),
+                MediaGridType::Latest(params) => api_client
+                    .get_latest_media(&params.view_id, None)
+                    .await
+                    .expect("Error getting latest media."),
+            };
+            MediaGridCommandOutput::MediaLoaded(media)
         });
+    }
+
+    fn get_view_id(&self) -> Option<String> {
+        match &self.grid_type {
+            MediaGridType::ContinueWatching => None,
+            MediaGridType::Latest(params) => Some(params.view_id.clone()),
+        }
     }
 }

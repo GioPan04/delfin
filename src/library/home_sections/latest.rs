@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, convert::identity, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::{
@@ -11,7 +11,9 @@ use crate::{
         api::views::{UserViewItem, UserViews},
         api_client::ApiClient,
     },
-    library::media_grid::{MediaGrid, MediaGridInit, MediaGridOutput, MediaGridType},
+    library::media_grid::{
+        MediaGrid, MediaGridInit, MediaGridOutput, MediaGridType, MediaGridTypeLatestParams,
+    },
 };
 
 pub struct HomeSectionLatest {
@@ -21,6 +23,7 @@ pub struct HomeSectionLatest {
 #[derive(Debug)]
 pub enum HomeSectionLatestInput {
     Empty(String),
+    None,
 }
 
 #[relm4::component(pub)]
@@ -53,8 +56,8 @@ impl Component for HomeSectionLatest {
 
         for view in user_views {
             let row = LatestRow::builder()
-                .launch((view.clone(), api_client.clone()))
-                .forward(sender.input_sender(), |o| o);
+                .launch((api_client.clone(), view.clone()))
+                .forward(sender.input_sender(), identity);
             root.append(row.widget());
             model.rows.insert(view.id, row);
         }
@@ -69,6 +72,7 @@ impl Component for HomeSectionLatest {
                     row.widget().set_visible(false);
                 }
             }
+            HomeSectionLatestInput::None => {}
         }
     }
 }
@@ -76,7 +80,8 @@ impl Component for HomeSectionLatest {
 impl From<MediaGridOutput> for HomeSectionLatestInput {
     fn from(value: MediaGridOutput) -> Self {
         match value {
-            MediaGridOutput::Empty(id) => HomeSectionLatestInput::Empty(id),
+            MediaGridOutput::Empty(Some(id)) => HomeSectionLatestInput::Empty(id),
+            _ => HomeSectionLatestInput::None,
         }
     }
 }
@@ -87,7 +92,7 @@ pub struct LatestRow {
 
 #[relm4::component(pub)]
 impl SimpleComponent for LatestRow {
-    type Init = (UserViewItem, Arc<ApiClient>);
+    type Init = (Arc<ApiClient>, UserViewItem);
     type Input = HomeSectionLatestInput;
     type Output = HomeSectionLatestInput;
 
@@ -115,8 +120,7 @@ impl SimpleComponent for LatestRow {
         _root: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let view = init.0;
-        let api_client = init.1;
+        let (api_client, view) = init;
 
         let widgets = view_output!();
         let title = &widgets.title;
@@ -136,8 +140,7 @@ impl SimpleComponent for LatestRow {
         let media_grid = MediaGrid::builder()
             .launch(MediaGridInit {
                 api_client,
-                id: view.id,
-                grid_type: MediaGridType::Latest,
+                grid_type: MediaGridType::Latest(MediaGridTypeLatestParams { view_id: view.id }),
             })
             .forward(sender.input_sender(), |o| o.into());
         container.set_child(Some(media_grid.widget()));

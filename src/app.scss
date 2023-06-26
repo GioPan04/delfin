@@ -7,6 +7,14 @@
     background-color: rgba(white, 0.1);
     border-radius: 8px;
   }
+
+  > overlay {
+    margin: 16px;
+  }
+
+  progress {
+    border-radius: 0;
+  }
 }
 
 .video-player {

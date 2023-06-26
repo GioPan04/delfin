@@ -3,12 +3,34 @@ use std::collections::VecDeque;
 use gtk::prelude::*;
 use relm4::{
     component::{AsyncComponent, AsyncComponentParts},
-    gtk::{self, gdk_pixbuf},
+    gtk::{self, gdk, gdk_pixbuf},
     loading_widgets::LoadingWidgets,
     view, AsyncComponentSender,
 };
 
 use crate::{app::APP_BROKER, jellyfin_api::models::media::Media};
+
+#[derive(Clone, Copy)]
+pub enum MediaTileDisplay {
+    Cover,
+    Wide,
+}
+
+impl MediaTileDisplay {
+    fn width(&self) -> i32 {
+        match self {
+            Self::Cover => 166,
+            Self::Wide => 350,
+        }
+    }
+
+    fn height(&self) -> i32 {
+        match self {
+            Self::Cover => 250,
+            Self::Wide => 200,
+        }
+    }
+}
 
 pub struct MediaTile {
     media: Media,
@@ -19,13 +41,11 @@ impl AsyncComponent for MediaTile {
     type CommandOutput = ();
     type Input = ();
     type Output = ();
-    type Init = Media;
+    type Init = (Media, MediaTileDisplay);
 
     view! {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
-            set_width_request: 200,
-            set_height_request: 256,
             add_css_class: "media-tile",
 
             add_controller = gtk::GestureClick {
@@ -44,12 +64,21 @@ impl AsyncComponent for MediaTile {
             },
 
             gtk::Overlay {
+                set_halign: gtk::Align::Center,
+
                 #[name = "image"]
-                gtk::Image {
-                    set_hexpand: true,
-                    set_vexpand: true,
-                    set_halign: gtk::Align::Fill,
-                    set_valign: gtk::Align::Fill,
+                gtk::Picture {
+                    set_content_fit: gtk::ContentFit::Contain,
+                    set_can_shrink: true,
+
+                    set_width_request: tile_display.width(),
+                    set_height_request: tile_display.height(),
+                },
+
+                add_overlay = &gtk::ProgressBar {
+                    set_valign: gtk::Align::End,
+                    set_visible: model.media.user_data.played_percentage.is_some(),
+                    set_fraction?: model.media.user_data.played_percentage.map(|p| p / 100.0),
                 },
             },
 
@@ -67,8 +96,6 @@ impl AsyncComponent for MediaTile {
         view! {
             #[local_ref]
             root {
-                set_width_request: 200,
-
                 #[name(spinner)]
                 gtk::Spinner {
                     start: (),
@@ -83,10 +110,12 @@ impl AsyncComponent for MediaTile {
     }
 
     async fn init(
-        media: Self::Init,
+        init: Self::Init,
         root: Self::Root,
         _sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
+        let (media, tile_display) = init;
+
         let img_url = media.image_tags.primary.clone();
 
         let img_bytes: VecDeque<u8> = reqwest::get(img_url)
@@ -100,6 +129,7 @@ impl AsyncComponent for MediaTile {
 
         let pixbuf = gdk_pixbuf::Pixbuf::from_read(img_bytes)
             .expect("Error creating media tile pixbuf: {img_url}");
+        let paintable = gdk::Texture::for_pixbuf(&pixbuf);
 
         let model = MediaTile {
             media: media.clone(),
@@ -108,7 +138,7 @@ impl AsyncComponent for MediaTile {
         let widgets = view_output!();
         let image = &widgets.image;
 
-        image.set_from_pixbuf(Some(&pixbuf));
+        image.set_paintable(Some(&paintable));
 
         AsyncComponentParts { model, widgets }
     }
