@@ -44,11 +44,17 @@ impl SimpleComponent for Home {
     type Init = HomeInit;
 
     view! {
-        gtk::Box {
-            set_valign: gtk::Align::Start,
-            set_vexpand: true,
-            set_orientation: gtk::Orientation::Vertical,
-            set_spacing: 20,
+        adw::Clamp {
+            set_maximum_size: 1280,
+            set_tightening_threshold: 1000,
+
+            #[name = "sections_container"]
+            gtk::Box {
+                set_valign: gtk::Align::Start,
+                set_vexpand: true,
+                set_orientation: gtk::Orientation::Vertical,
+                set_spacing: 20,
+            }
         }
     }
 
@@ -60,9 +66,10 @@ impl SimpleComponent for Home {
         let mut model = Home { _sections: vec![] };
 
         let widgets = view_output!();
+        let sections_container = &widgets.sections_container;
 
         model.display_sections(
-            root,
+            sections_container,
             init.display_preferences,
             init.api_client,
             init.user_views,
@@ -75,7 +82,7 @@ impl SimpleComponent for Home {
 impl Home {
     fn display_sections(
         &mut self,
-        root: &gtk::Box,
+        sections_container: &gtk::Box,
         display_preferences: DisplayPreferences,
         api_client: Arc<ApiClient>,
         user_views: UserViews,
@@ -86,7 +93,7 @@ impl Home {
                     let section = HomeSectionContinueWatching::builder()
                         .launch(api_client.clone())
                         .detach();
-                    root.append(section.widget());
+                    sections_container.append(section.widget());
                     self._sections
                         .push(HomeSectionController::ContinueWatching(section));
                 }
@@ -94,7 +101,7 @@ impl Home {
                     let section = HomeSectionLatest::builder()
                         .launch((api_client.clone(), user_views.clone()))
                         .detach();
-                    root.append(section.widget());
+                    sections_container.append(section.widget());
                     self._sections.push(HomeSectionController::Latest(section));
                 }
                 _ => {}
