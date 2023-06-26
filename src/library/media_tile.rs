@@ -68,7 +68,7 @@ impl AsyncComponent for MediaTile {
 
                 #[name = "image"]
                 gtk::Picture {
-                    set_content_fit: gtk::ContentFit::Contain,
+                    set_content_fit: gtk::ContentFit::Cover,
                     set_can_shrink: true,
 
                     set_width_request: tile_display.width(),
