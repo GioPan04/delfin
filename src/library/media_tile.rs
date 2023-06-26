@@ -19,15 +19,15 @@ pub enum MediaTileDisplay {
 impl MediaTileDisplay {
     fn width(&self) -> i32 {
         match self {
-            Self::Cover => 166,
-            Self::Wide => 350,
+            Self::Cover => 133,
+            Self::Wide => 263,
         }
     }
 
     fn height(&self) -> i32 {
         match self {
-            Self::Cover => 250,
-            Self::Wide => 200,
+            Self::Cover => 200,
+            Self::Wide => 150,
         }
     }
 }
