@@ -71,6 +71,15 @@ impl Display for ImageTagsType {
     }
 }
 
+impl ImageTagsType {
+    fn height(&self) -> usize {
+        match self {
+            Self::Primary => 200,
+            Self::Backdrop => 350,
+        }
+    }
+}
+
 impl ApiClient {
     // Convert image tags into image URLs
     // TODO: pretty sure these are optional
@@ -81,12 +90,18 @@ impl ApiClient {
         image_tags_type: ImageTagsType,
     ) -> Result<()> {
         for media in media.iter_mut() {
+            let item_id = media
+                .parent_backdrop_item_id
+                .clone()
+                .unwrap_or(media.id.clone());
+
             let mut url = self
                 .root
-                .join(&format!("Items/{}/Images/{image_tags_type}", media.id))?;
+                .join(&format!("Items/{item_id}/Images/{image_tags_type}"))?;
+
             url.query_pairs_mut()
                 .append_pair("tag", &media.image_tags.primary)
-                .append_pair("fillWidth", &200.to_string())
+                .append_pair("fillWidth", &image_tags_type.height().to_string())
                 .append_pair("quality", &96.to_string());
             media.image_tags.primary = url.to_string();
         }

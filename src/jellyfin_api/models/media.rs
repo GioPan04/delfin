@@ -7,6 +7,7 @@ pub struct Media {
     pub name: String,
     pub image_tags: ImageTags,
     pub user_data: UserData,
+    pub parent_backdrop_item_id: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
