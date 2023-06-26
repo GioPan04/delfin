@@ -15,10 +15,12 @@ use crate::jellyfin_api::models::media::Media;
 
 use super::home_sections::continue_watching::HomeSectionContinueWatching;
 use super::home_sections::latest::HomeSectionLatest;
+use super::home_sections::next_up::HomeSectionNextUp;
 
 enum HomeSectionController {
     ContinueWatching(Controller<HomeSectionContinueWatching>),
     Latest(Controller<HomeSectionLatest>),
+    NextUp(Controller<HomeSectionNextUp>),
 }
 
 pub struct Home {
@@ -103,6 +105,13 @@ impl Home {
                         .detach();
                     sections_container.append(section.widget());
                     self._sections.push(HomeSectionController::Latest(section));
+                }
+                HomeSection::NextUp => {
+                    let section = HomeSectionNextUp::builder()
+                        .launch(api_client.clone())
+                        .detach();
+                    sections_container.append(section.widget());
+                    self._sections.push(HomeSectionController::NextUp(section));
                 }
                 _ => {}
             }

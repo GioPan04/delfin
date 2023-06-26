@@ -14,6 +14,7 @@ use super::media_tile::{MediaTile, MediaTileDisplay};
 pub enum MediaGridType {
     ContinueWatching,
     Latest(MediaGridTypeLatestParams),
+    NextUp,
 }
 
 #[derive(Clone, Debug)]
@@ -57,7 +58,7 @@ impl Component for MediaGrid {
                 set_column_homogeneous: true,
                 set_halign: gtk::Align::Start,
                 set_margin_bottom: 12,
-                // set_height_request: 200,
+                set_height_request: 200,
             },
         }
     }
@@ -100,7 +101,9 @@ impl Component for MediaGrid {
 
                 let media_grid = &widgets.media_grid;
                 let media_tile_display = match self.grid_type {
-                    MediaGridType::ContinueWatching => MediaTileDisplay::Wide,
+                    MediaGridType::ContinueWatching | MediaGridType::NextUp => {
+                        MediaTileDisplay::Wide
+                    }
                     MediaGridType::Latest(_) => MediaTileDisplay::Cover,
                 };
 
@@ -132,6 +135,10 @@ impl MediaGrid {
                     .get_latest_media(&params.view_id, None)
                     .await
                     .expect("Error getting latest media."),
+                MediaGridType::NextUp => api_client
+                    .get_next_up(None)
+                    .await
+                    .expect("Error getting continue watching."),
             };
             MediaGridCommandOutput::MediaLoaded(media)
         });
@@ -139,7 +146,7 @@ impl MediaGrid {
 
     fn get_view_id(&self) -> Option<String> {
         match &self.grid_type {
-            MediaGridType::ContinueWatching => None,
+            MediaGridType::ContinueWatching | MediaGridType::NextUp => None,
             MediaGridType::Latest(params) => Some(params.view_id.clone()),
         }
     }

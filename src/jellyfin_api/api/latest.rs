@@ -55,6 +55,25 @@ impl ApiClient {
 
         Ok(items)
     }
+
+    // TODO: this can probably be combined with get_latest_media
+    pub async fn get_next_up(&self, limit: Option<usize>) -> Result<Vec<Media>> {
+        let limit = limit.unwrap_or(16);
+
+        let mut url = self.root.join("Shows/NextUp")?;
+
+        url.query_pairs_mut()
+            .append_pair("limit", &limit.to_string())
+            .append_pair("UserId", &self.account.id);
+
+        let res: GetContinueWatchingRes = self.client.get(url).send().await?.json().await?;
+
+        let mut items = res.items;
+
+        self.media_image_tags_to_urls(&mut items, ImageTagsType::Backdrop)?;
+
+        Ok(items)
+    }
 }
 
 enum ImageTagsType {
