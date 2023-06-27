@@ -79,6 +79,7 @@ impl AsyncComponent for MediaTile {
                     set_valign: gtk::Align::End,
                     set_visible: model.media.user_data.played_percentage.is_some(),
                     set_fraction?: model.media.user_data.played_percentage.map(|p| p / 100.0),
+                    set_overflow: gtk::Overflow::Hidden,
                 },
             },
 
