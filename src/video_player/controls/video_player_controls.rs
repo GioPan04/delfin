@@ -5,6 +5,7 @@ use gtk::prelude::*;
 use relm4::{gtk, Component, ComponentController, ComponentParts, Controller, SimpleComponent};
 
 use super::{
+    audio_tracks::{AudioTracks, AudioTracksInput},
     fullscreen::Fullscreen,
     play_pause::PlayPause,
     scrubber::Scrubber,
@@ -19,6 +20,7 @@ pub struct VideoPlayerControls {
     _play_pause: Option<Controller<PlayPause>>,
     _volume: Option<Controller<Volume>>,
     subtitles: OnceCell<Controller<Subtitles>>,
+    audio_tracks: OnceCell<Controller<AudioTracks>>,
     _fullscreen: Option<Controller<Fullscreen>>,
 }
 
@@ -50,19 +52,7 @@ impl SimpleComponent for VideoPlayerControls {
             add_css_class: "video-player-controls",
 
             #[name = "second_row"]
-            gtk::Box {
-                #[name = "play_pause_placeholder"]
-                gtk::Box {},
-
-                #[name = "volume_placeholder"]
-                gtk::Box {},
-
-                #[name = "subtitles_placeholder"]
-                gtk::Box {},
-
-                #[name = "fullscreen_placeholder"]
-                gtk::Box {},
-            },
+            gtk::Box {},
         }
     }
 
@@ -82,34 +72,38 @@ impl SimpleComponent for VideoPlayerControls {
             _play_pause: None,
             _volume: None,
             subtitles: OnceCell::new(),
+            audio_tracks: OnceCell::new(),
             _fullscreen: None,
         };
 
         let widgets = view_output!();
         let second_row = &widgets.second_row;
-        let play_pause_placeholder = &widgets.play_pause_placeholder;
-        let volume_placeholder = &widgets.volume_placeholder;
-        let subtitles_placeholder = &widgets.subtitles_placeholder;
-        let fullscreen_placeholder = &widgets.fullscreen_placeholder;
 
         let scrubber = Scrubber::builder().launch(player.clone()).detach();
         root.prepend(scrubber.widget());
         model._scrubber = Some(scrubber);
 
         let play_pause = PlayPause::builder().launch(player.clone()).detach();
-        second_row.insert_child_after(play_pause.widget(), Some(play_pause_placeholder));
+        second_row.append(play_pause.widget());
         model._play_pause = Some(play_pause);
 
-        let volume = Volume::builder().launch(player.clone()).detach();
-        second_row.insert_child_after(volume.widget(), Some(volume_placeholder));
-        model._volume = Some(volume);
+        // Push remaining controls to end
+        second_row.append(&gtk::Box::builder().hexpand(true).build());
 
-        let subtitles = Subtitles::builder().launch(player).detach();
-        second_row.insert_child_after(subtitles.widget(), Some(subtitles_placeholder));
+        let subtitles = Subtitles::builder().launch(player.clone()).detach();
+        second_row.append(subtitles.widget());
         model.subtitles.set(subtitles).unwrap();
 
+        let audio_tracks = AudioTracks::builder().launch(player.clone()).detach();
+        second_row.append(audio_tracks.widget());
+        model.audio_tracks.set(audio_tracks).unwrap();
+
+        let volume = Volume::builder().launch(player).detach();
+        second_row.append(volume.widget());
+        model._volume = Some(volume);
+
         let fullscreen = Fullscreen::builder().launch(()).detach();
-        second_row.insert_child_after(fullscreen.widget(), Some(fullscreen_placeholder));
+        second_row.append(fullscreen.widget());
         model._fullscreen = Some(fullscreen);
 
         ComponentParts { model, widgets }
@@ -123,6 +117,9 @@ impl SimpleComponent for VideoPlayerControls {
             VideoPlayerControlsInput::SetPlaying(_) => {
                 if let Some(subtitles) = self.subtitles.get() {
                     subtitles.emit(SubtitlesInput::Reset);
+                }
+                if let Some(audio_tracks) = self.audio_tracks.get() {
+                    audio_tracks.emit(AudioTracksInput::Reset);
                 }
             }
         }

@@ -16,7 +16,7 @@ gstgtk4 = { package = "gst-plugin-gtk4", version = "0.10.7" }
 gstplay = { package = "gstreamer-play", version = "0.20.2" }
 relm4 = { version = "0.6.0", features = ["libadwaita"] }
 relm4-components = { version = "0.6.0", features = ["web"] }
-relm4-icons = { version = "0.6.0", features = ["check-round-outline", "video-clip-multiple-filled", "play-multiple-filled", "tag-multiple-filled", "home-filled", "closed-captioning"] }
+relm4-icons = { version = "0.6.0", features = ["check-round-outline", "video-clip-multiple-filled", "play-multiple-filled", "tag-multiple-filled", "home-filled", "closed-captioning", "music-note-single"] }
 reqwest = { version = "0.11.18", features = ["json"] }
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.96"

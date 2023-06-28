@@ -29,6 +29,8 @@ impl SimpleComponent for Volume {
 
     view! {
         gtk::Box {
+            gtk::Separator { add_css_class: "spacer" },
+
             gtk::Button {
                 #[watch]
                 // TODO: icon is oddly bright
@@ -43,8 +45,8 @@ impl SimpleComponent for Volume {
                 } else {
                     "Mute"
                 }),
-                set_halign: gtk::Align::End,
-                set_hexpand: true,
+                // set_halign: gtk::Align::End,
+                // set_hexpand: true,
                 connect_clicked[sender] => move |_| {
                     sender.input(VolumeInput::ToggleMute);
                 },

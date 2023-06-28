@@ -5,7 +5,7 @@ use std::cell::OnceCell;
 use gst::glib::clone::Downgrade;
 use gst::glib::{Error, SignalHandlerId};
 use gst::{ClockTime, Structure};
-use gstplay::{PlayMediaInfo, PlaySubtitleInfo};
+use gstplay::{PlayAudioInfo, PlayMediaInfo, PlaySubtitleInfo};
 use gtk::glib;
 use gtk::subclass::prelude::*;
 use relm4::gtk;
@@ -104,6 +104,24 @@ impl GstVideoPlayer {
         let imp = self.imp();
         let player = imp.player.get().unwrap();
         player.set_subtitle_track(stream_index)
+    }
+
+    pub fn current_audio_track(&self) -> Option<PlayAudioInfo> {
+        let imp = self.imp();
+        let player = imp.player.get().unwrap();
+        player.current_audio_track()
+    }
+
+    pub fn set_audio_track_enabled(&self, enabled: bool) {
+        let imp = self.imp();
+        let player = imp.player.get().unwrap();
+        player.set_audio_track_enabled(enabled);
+    }
+
+    pub fn set_audio_track(&self, stream_index: i32) -> Result<(), glib::error::BoolError> {
+        let imp = self.imp();
+        let player = imp.player.get().unwrap();
+        player.set_audio_track(stream_index)
     }
 
     pub fn connect_end_of_stream<F>(&self, callback: F) -> SignalHandlerId
