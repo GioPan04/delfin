@@ -5,6 +5,7 @@ use std::cell::OnceCell;
 use gst::glib::clone::Downgrade;
 use gst::glib::{Error, SignalHandlerId};
 use gst::{ClockTime, Structure};
+use gstplay::{PlayMediaInfo, PlaySubtitleInfo};
 use gtk::glib;
 use gtk::subclass::prelude::*;
 use relm4::gtk;
@@ -87,6 +88,24 @@ impl GstVideoPlayer {
         player.position()
     }
 
+    pub fn current_subtitle_track(&self) -> Option<PlaySubtitleInfo> {
+        let imp = self.imp();
+        let player = imp.player.get().unwrap();
+        player.current_subtitle_track()
+    }
+
+    pub fn set_subtitle_track_enabled(&self, enabled: bool) {
+        let imp = self.imp();
+        let player = imp.player.get().unwrap();
+        player.set_subtitle_track_enabled(enabled);
+    }
+
+    pub fn set_subtitle_track(&self, stream_index: i32) -> Result<(), glib::error::BoolError> {
+        let imp = self.imp();
+        let player = imp.player.get().unwrap();
+        player.set_subtitle_track(stream_index)
+    }
+
     pub fn connect_end_of_stream<F>(&self, callback: F) -> SignalHandlerId
     where
         F: Fn() + Send + 'static,
@@ -166,6 +185,19 @@ impl GstVideoPlayer {
 
         signal_adapter.connect_volume_changed(move |_, volume| {
             callback(volume);
+        })
+    }
+
+    pub fn connect_media_info_updated<F>(&self, callback: F) -> SignalHandlerId
+    where
+        F: Fn(&PlayMediaInfo) + Send + 'static,
+    {
+        let imp = self.imp();
+
+        let signal_adapter = imp.signal_adapter.get().unwrap();
+
+        signal_adapter.connect_media_info_updated(move |_, media_info| {
+            callback(media_info);
         })
     }
 }

@@ -190,6 +190,10 @@ impl Component for VideoPlayer {
                 let playback_position = ticks_to_seconds(media.user_data.playback_position_ticks);
                 video_player.seek(playback_position);
 
+                if let Some(controls) = self.controls.get() {
+                    controls.emit(VideoPlayerControlsInput::SetPlaying(media.clone()));
+                }
+
                 // Report start of playback
                 relm4::spawn({
                     let api_client = api_client.clone();
