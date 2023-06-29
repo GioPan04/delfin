@@ -54,11 +54,9 @@ impl Component for MediaGrid {
         gtk::Box {
             #[name = "media_grid"]
             gtk::Grid {
-                set_column_spacing: 16,
+                set_column_spacing: 32,
                 set_column_homogeneous: true,
                 set_halign: gtk::Align::Start,
-                set_margin_bottom: 12,
-                set_height_request: 200,
             },
         }
     }
@@ -111,7 +109,7 @@ impl Component for MediaGrid {
                     let media_tile = MediaTile::builder()
                         .launch((media, media_tile_display))
                         .detach();
-                    media_grid.attach(media_tile.widget(), column as i32, 1, 1, 1);
+                    media_grid.attach(media_tile.widget(), column as i32, 0, 1, 1);
                     self.media_tiles.push(media_tile);
                 }
             }

@@ -30,6 +30,13 @@ impl MediaTileDisplay {
             Self::Wide => 150,
         }
     }
+
+    fn label_halign(&self) -> gtk::Align {
+        match self {
+            Self::Cover => gtk::Align::Center,
+            Self::Wide => gtk::Align::Start,
+        }
+    }
 }
 
 pub struct MediaTile {
@@ -46,6 +53,8 @@ impl AsyncComponent for MediaTile {
     view! {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
+            set_halign: gtk::Align::Start,
+            set_spacing: 8,
             add_css_class: "media-tile",
 
             add_controller = gtk::GestureClick {
@@ -54,22 +63,23 @@ impl AsyncComponent for MediaTile {
                 },
             },
 
-            add_controller = gtk::EventControllerMotion {
-                connect_enter[root] => move |_, _, _| {
-                    root.add_css_class("hover");
-                },
-                connect_leave[root] => move |_| {
-                    root.remove_css_class("hover");
-                },
-            },
-
+            #[name = "overlay"]
             gtk::Overlay {
-                set_halign: gtk::Align::Center,
+                set_halign: gtk::Align::Start,
+
+                add_controller = gtk::EventControllerMotion {
+                    connect_enter[image] => move |_, _, _| {
+                        image.add_css_class("hover");
+                    },
+                    connect_leave[image] => move |_| {
+                        image.remove_css_class("hover");
+                    },
+                },
 
                 #[name = "image"]
                 gtk::Picture {
                     set_content_fit: gtk::ContentFit::Cover,
-                    set_can_shrink: true,
+                    // set_can_shrink: true,
 
                     set_width_request: tile_display.width(),
                     set_height_request: tile_display.height(),
@@ -84,6 +94,7 @@ impl AsyncComponent for MediaTile {
             },
 
             gtk::Label {
+                set_halign: tile_display.label_halign(),
                 set_ellipsize: gtk::pango::EllipsizeMode::End,
                 #[watch]
                 set_label: &model.media.name,
