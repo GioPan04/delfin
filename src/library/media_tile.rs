@@ -39,6 +39,24 @@ impl MediaTileDisplay {
     }
 }
 
+impl Media {
+    fn label(&self) -> String {
+        if let (Some(series_name), Some(index_number), Some(parent_index_number)) = (
+            &self.series_name,
+            &self.index_number,
+            &self.parent_index_number,
+        ) {
+            return format!(
+                r#"{series_name}
+<span size="small">S{parent_index_number}:E{index_number} - {}</span>"#,
+                self.name
+            );
+        }
+
+        format!("{}\n", self.name.clone())
+    }
+}
+
 pub struct MediaTile {
     media: Media,
 }
@@ -97,7 +115,7 @@ impl AsyncComponent for MediaTile {
                 set_halign: tile_display.label_halign(),
                 set_ellipsize: gtk::pango::EllipsizeMode::End,
                 #[watch]
-                set_label: &model.media.name,
+                set_markup: &model.media.label(),
             },
         }
     }
