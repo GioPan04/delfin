@@ -29,7 +29,7 @@ pub struct VideoPlayer {
 #[derive(Debug)]
 pub enum VideoPlayerInput {
     Toast(String),
-    PlayVideo(Arc<ApiClient>, Server, Media),
+    PlayVideo(Arc<ApiClient>, Server, Box<Media>),
     ToggleControls,
     SetBuffering(bool),
     ExitPlayer,
@@ -183,7 +183,7 @@ impl Component for VideoPlayer {
             VideoPlayerInput::PlayVideo(api_client, server, media) => {
                 let video_player = &widgets.video_player;
 
-                self.media = Some(media.clone());
+                self.media = Some(*media.clone());
                 let url = get_stream_url(&server, &media.id);
                 video_player.play_uri(&url);
 
@@ -191,7 +191,7 @@ impl Component for VideoPlayer {
                 video_player.seek(playback_position);
 
                 if let Some(controls) = self.controls.get() {
-                    controls.emit(VideoPlayerControlsInput::SetPlaying(media.clone()));
+                    controls.emit(VideoPlayerControlsInput::SetPlaying(*media.clone()));
                 }
 
                 // Report start of playback

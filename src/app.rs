@@ -222,7 +222,7 @@ impl Component for App {
                     self.video_player.emit(VideoPlayerInput::PlayVideo(
                         api_client.clone(),
                         server.clone(),
-                        media,
+                        Box::new(media),
                     ));
                     sender.input(AppInput::SetPage(AppPage::VideoPlayer));
                 }
