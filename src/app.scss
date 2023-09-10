@@ -6,6 +6,10 @@ $col-dark-4: #241f31;
 .media-tile {
   $media-tile-br: 10px;
 
+  overlay {
+    border-radius: $media-tile-br;
+  }
+
   .hover-overlay {
     border-radius: $media-tile-br;
     background: rgba(black, 33%);

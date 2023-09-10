@@ -85,6 +85,9 @@ impl AsyncComponent for MediaTile {
             #[name = "overlay"]
             gtk::Overlay {
                 set_halign: gtk::Align::Start,
+                // TODO: progress bar overflows media tile. Hiding the overflow is a workaround, but it makes the
+                // progress bar percentage look wrong.
+                set_overflow: gtk::Overflow::Hidden,
 
                 add_controller = gtk::EventControllerMotion {
                     connect_enter[root] => move |_, _, _| {
@@ -124,6 +127,7 @@ impl AsyncComponent for MediaTile {
                     set_visible: model.media.user_data.played_percentage.is_some(),
                     set_fraction?: model.media.user_data.played_percentage.map(|p| p / 100.0),
                     set_overflow: gtk::Overflow::Hidden,
+                    set_width_request: tile_display.width(),
                 },
             },
 
