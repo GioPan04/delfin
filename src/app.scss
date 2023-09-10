@@ -1,12 +1,33 @@
+// From GNOME colour palette provided by libadwaita
+// https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/named-colors.html#palette-colors
+// TODO: find out how to get SASS to just output the @ variable without errors
+$col-dark-4: #241f31;
+
 .media-tile {
+  $media-tile-br: 10px;
+
+  .hover-overlay {
+    border-radius: $media-tile-br;
+    background: rgba(black, 33%);
+
+    // Only shows on hover
+    opacity: 0;
+    transition: all 150ms;
+
+    image {
+      background: rgba($col-dark-4, 80%);
+      border-radius: 100px;
+      $padding: 6px;
+      padding: $padding;
+      // TODO: There's a bit of empty space on the right for some reason
+      padding-left: $padding + 1px;
+    }
+  }
+
   picture {
-    border-radius: 10px;
+    border-radius: $media-tile-br;
     box-shadow: none;
     transition: all 300ms;
-
-    &.hover {
-      box-shadow: 0px 10px 10px -3px rgba(0, 0, 0, 1);
-    }
   }
 
   progressbar {
@@ -14,12 +35,22 @@
       border-radius: 0;
     }
 
-    border-bottom-left-radius: 10px;
-	  border-bottom-right-radius: 10px;
+    border-bottom-left-radius: $media-tile-br;
+    border-bottom-right-radius: $media-tile-br;
   }
 
   label {
     line-height: 20px;
+  }
+
+  &.hover {
+    picture {
+      box-shadow: 0px 5px 5px -3px rgba(0, 0, 0, 33%);
+    }
+
+    .hover-overlay {
+      opacity: 1;
+    }
   }
 }
 

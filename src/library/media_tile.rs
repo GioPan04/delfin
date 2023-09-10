@@ -74,6 +74,7 @@ impl AsyncComponent for MediaTile {
             set_halign: gtk::Align::Start,
             set_spacing: 8,
             add_css_class: "media-tile",
+            set_cursor_from_name: Some("pointer"),
 
             add_controller = gtk::GestureClick {
                 connect_pressed[media] => move |_, _, _, _| {
@@ -86,11 +87,11 @@ impl AsyncComponent for MediaTile {
                 set_halign: gtk::Align::Start,
 
                 add_controller = gtk::EventControllerMotion {
-                    connect_enter[image] => move |_, _, _| {
-                        image.add_css_class("hover");
+                    connect_enter[root] => move |_, _, _| {
+                        root.add_css_class("hover");
                     },
-                    connect_leave[image] => move |_| {
-                        image.remove_css_class("hover");
+                    connect_leave[root] => move |_| {
+                        root.remove_css_class("hover");
                     },
                 },
 
@@ -101,6 +102,21 @@ impl AsyncComponent for MediaTile {
 
                     set_width_request: tile_display.width(),
                     set_height_request: tile_display.height(),
+                },
+
+                add_overlay = &gtk::CenterBox {
+                    add_css_class: "hover-overlay",
+
+                    set_halign: gtk::Align::Fill,
+                    set_valign: gtk::Align::Fill,
+
+                    #[wrap(Some)]
+                    set_center_widget = &gtk::Image {
+                        set_from_icon_name: Some("media-playback-start"),
+
+                        set_halign: gtk::Align::Center,
+                        set_valign: gtk::Align::Center,
+                    }
                 },
 
                 add_overlay = &gtk::ProgressBar {
