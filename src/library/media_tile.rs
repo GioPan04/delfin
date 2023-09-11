@@ -8,7 +8,10 @@ use relm4::{
     view, AsyncComponentSender,
 };
 
-use crate::{app::APP_BROKER, jellyfin_api::models::media::Media};
+use crate::{
+    app::{AppInput, APP_BROKER},
+    jellyfin_api::models::media::Media,
+};
 
 #[derive(Clone, Copy)]
 pub enum MediaTileDisplay {
@@ -74,20 +77,22 @@ impl AsyncComponent for MediaTile {
             set_halign: gtk::Align::Start,
             set_spacing: 8,
             add_css_class: "media-tile",
-            set_cursor_from_name: Some("pointer"),
-
-            add_controller = gtk::GestureClick {
-                connect_pressed[media] => move |_, _, _, _| {
-                    APP_BROKER.send(crate::app::AppInput::PlayVideo(media.clone()));
-                },
-            },
 
             #[name = "overlay"]
             gtk::Overlay {
                 set_halign: gtk::Align::Start,
+                set_cursor_from_name: Some("pointer"),
+
                 // TODO: progress bar overflows media tile. Hiding the overflow is a workaround, but it makes the
                 // progress bar percentage look wrong.
                 set_overflow: gtk::Overflow::Hidden,
+
+
+                add_controller = gtk::GestureClick {
+                    connect_pressed[media] => move |_, _, _, _| {
+                        APP_BROKER.send(AppInput::PlayVideo(media.clone()));
+                    },
+                },
 
                 add_controller = gtk::EventControllerMotion {
                     connect_enter[root] => move |_, _, _| {
@@ -133,9 +138,16 @@ impl AsyncComponent for MediaTile {
 
             gtk::Label {
                 set_halign: tile_display.label_halign(),
+                set_cursor_from_name: Some("pointer"),
                 set_ellipsize: gtk::pango::EllipsizeMode::End,
                 #[watch]
                 set_markup: &model.media.label(),
+
+                add_controller = gtk::GestureClick {
+                    connect_pressed => move |_, _, _, _| {
+                        APP_BROKER.send(AppInput::ShowDetails(media.clone()));
+                    },
+                },
             },
         }
     }

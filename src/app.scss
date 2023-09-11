@@ -45,6 +45,10 @@ $col-dark-4: #241f31;
 
   label {
     line-height: 20px;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 
   &.hover {

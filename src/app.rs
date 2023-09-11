@@ -8,6 +8,7 @@ use crate::{
     config::{self, Config},
     jellyfin_api::{api_client::ApiClient, models::media::Media},
     library::library_component::{Library, LibraryOutput},
+    media_details::{MediaDetails, MediaDetailsOutput},
     servers::server_list::{ServerList, ServerListOutput},
     utils::main_window::MAIN_APP_WINDOW_NAME,
     video_player::video_player_component::{VideoPlayer, VideoPlayerInput, VideoPlayerOutput},
@@ -25,6 +26,7 @@ pub enum AppPage {
     Servers,
     Accounts,
     Library,
+    MediaDetails,
     VideoPlayer,
 }
 
@@ -34,6 +36,7 @@ impl AppPage {
             AppPage::Servers => AppPage::Servers,
             AppPage::Accounts => AppPage::Servers,
             AppPage::Library => AppPage::Accounts,
+            AppPage::MediaDetails => AppPage::Library,
             AppPage::VideoPlayer => AppPage::Library,
         }
     }
@@ -45,6 +48,7 @@ impl fmt::Display for AppPage {
             AppPage::Servers => write!(f, "servers"),
             AppPage::Accounts => write!(f, "accounts"),
             AppPage::Library => write!(f, "library"),
+            AppPage::MediaDetails => write!(f, "media_details"),
             AppPage::VideoPlayer => write!(f, "video_player"),
         }
     }
@@ -57,6 +61,7 @@ pub struct App {
     servers: Controller<ServerList>,
     account_list: Controller<AccountList>,
     library: Option<Controller<Library>>,
+    media_details: Option<Controller<MediaDetails>>,
     video_player: Controller<VideoPlayer>,
     server: Option<config::Server>,
 }
@@ -67,6 +72,7 @@ pub enum AppInput {
     NavigateBack,
     ServerSelected(config::Server),
     AccountSelected(config::Server, config::Account),
+    ShowDetails(Media),
     PlayVideo(Media),
 }
 
@@ -155,6 +161,7 @@ impl Component for App {
             servers,
             account_list,
             library: None,
+            media_details: None,
             video_player,
             server: None,
         };
@@ -217,6 +224,26 @@ impl Component for App {
 
                 sender.input(AppInput::SetPage(AppPage::Library));
             }
+            AppInput::ShowDetails(media) => {
+                let stack = &widgets.stack;
+
+                if let Some(previous) = &self.media_details {
+                    stack.remove(previous.widget());
+                }
+
+                if let Some(api_client) = &self.api_client {
+                    let media_details = MediaDetails::builder()
+                        .launch((Arc::clone(&self.config), api_client.clone(), media))
+                        .forward(sender.input_sender(), convert_media_details_output);
+                    stack.add_named(
+                        media_details.widget(),
+                        Some(&AppPage::MediaDetails.to_string()),
+                    );
+                    self.media_details = Some(media_details);
+
+                    sender.input(AppInput::SetPage(AppPage::MediaDetails));
+                }
+            }
             AppInput::PlayVideo(media) => {
                 if let (Some(api_client), Some(server)) = (&self.api_client, &self.server) {
                     self.video_player.emit(VideoPlayerInput::PlayVideo(
@@ -257,5 +284,11 @@ fn convert_library_output(output: LibraryOutput) -> AppInput {
     match output {
         LibraryOutput::NavigateBack => AppInput::NavigateBack,
         LibraryOutput::PlayVideo(media) => AppInput::PlayVideo(media),
+    }
+}
+
+fn convert_media_details_output(output: MediaDetailsOutput) -> AppInput {
+    match output {
+        MediaDetailsOutput::NavigateBack => AppInput::NavigateBack,
     }
 }
