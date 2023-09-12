@@ -233,7 +233,7 @@ impl Component for App {
 
                 if let Some(api_client) = &self.api_client {
                     let media_details = MediaDetails::builder()
-                        .launch((Arc::clone(&self.config), api_client.clone(), media))
+                        .launch((api_client.clone(), media))
                         .forward(sender.input_sender(), convert_media_details_output);
                     stack.add_named(
                         media_details.widget(),

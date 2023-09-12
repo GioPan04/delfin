@@ -1,10 +1,12 @@
 use anyhow::Result;
 use reqwest::Url;
 use serde::Deserialize;
+use speedate::DateTime;
 
 use crate::{
     config,
     jellyfin_api::{api_client::ApiClient, util::url::httpify},
+    utils::datetime_serde::deserialize_datetime_opt,
 };
 
 pub fn get_stream_url(server: &config::Server, item_id: &str) -> String {
@@ -18,7 +20,62 @@ pub fn get_stream_url(server: &config::Server, item_id: &str) -> String {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct GetItemRes {
-    pub media_sources: Vec<MediaSource>,
+    #[serde(rename = "Type")]
+    pub item_type: ItemType,
+    pub media_sources: Option<Vec<MediaSource>>,
+    pub overview: Option<String>,
+    pub community_rating: Option<f32>,
+    pub official_rating: Option<String>,
+    pub genres: Option<Vec<String>>,
+    pub status: Option<String>,
+    pub production_year: Option<isize>,
+    #[serde(default)]
+    #[serde(deserialize_with = "deserialize_datetime_opt")]
+    pub premiere_date: Option<DateTime>,
+    #[serde(default)]
+    #[serde(deserialize_with = "deserialize_datetime_opt")]
+    pub end_date: Option<DateTime>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub enum ItemType {
+    AggregateFolder,
+    Audio,
+    AudioBook,
+    BasePluginFolder,
+    Book,
+    BoxSet,
+    Channel,
+    ChannelFolderItem,
+    CollectionFolder,
+    Episode,
+    Folder,
+    Genre,
+    ManualPlaylistsFolder,
+    Movie,
+    LiveTvChannel,
+    LiveTvProgram,
+    MusicAlbum,
+    MusicArtist,
+    MusicGenre,
+    MusicVideo,
+    Person,
+    Photo,
+    PhotoAlbum,
+    Playlist,
+    PlaylistsFolder,
+    Program,
+    Recording,
+    Season,
+    Series,
+    Studio,
+    Trailer,
+    TvChannel,
+    TvProgram,
+    UserRootFolder,
+    UserView,
+    Video,
+    Year,
 }
 
 #[derive(Clone, Debug, Deserialize)]

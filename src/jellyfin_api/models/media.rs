@@ -9,8 +9,10 @@ pub struct Media {
     pub user_data: UserData,
     pub parent_backdrop_item_id: Option<String>,
     pub series_name: Option<String>,
+    pub series_id: Option<String>,
     pub index_number: Option<usize>,
     pub parent_index_number: Option<usize>,
+    pub overview: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize)]

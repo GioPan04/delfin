@@ -1,25 +1,22 @@
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use gtk::prelude::*;
-use relm4::prelude::*;
+use relm4::{
+    component::{AsyncComponent, AsyncComponentController, AsyncController},
+    prelude::*,
+};
 
 use crate::{
     app::{AppInput, APP_BROKER},
-    config::Config,
     jellyfin_api::{api_client::ApiClient, models::media::Media},
+    media_details::media_details_contents::MediaDetailsContents,
 };
 
-pub struct MediaDetails {
-    #[allow(dead_code)]
-    config: Arc<RwLock<Config>>,
-    media: Media,
-    #[allow(dead_code)]
-    api_client: Arc<ApiClient>,
-}
+mod display_years;
+mod media_details_contents;
 
-#[derive(Debug)]
-pub enum MediaDetailsInput {
-    ShowDetails(Arc<ApiClient>, Box<Media>),
+pub struct MediaDetails {
+    _media_details_contents: AsyncController<MediaDetailsContents>,
 }
 
 #[derive(Debug)]
@@ -28,26 +25,22 @@ pub enum MediaDetailsOutput {
 }
 
 #[relm4::component(pub)]
-impl Component for MediaDetails {
-    type Init = (Arc<RwLock<Config>>, Arc<ApiClient>, Media);
-    type Input = MediaDetailsInput;
+impl SimpleComponent for MediaDetails {
+    type Init = (Arc<ApiClient>, Media);
+    type Input = ();
     type Output = MediaDetailsOutput;
-    type CommandOutput = ();
 
     view! {
+        #[root]
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
+            add_css_class: "media-details",
 
             adw::HeaderBar {
                 set_valign: gtk::Align::Start,
                 #[wrap(Some)]
                 set_title_widget = &adw::WindowTitle {
-                    #[watch]
-                    set_title: if let Some(series_name) = &model.media.series_name {
-                        series_name
-                    } else {
-                        &model.media.name
-                    },
+                    set_title: title,
                 },
                 pack_start = &gtk::Button {
                     set_icon_name: "go-previous",
@@ -57,7 +50,10 @@ impl Component for MediaDetails {
                 },
             },
 
-            gtk::Label::new(Some("media details")),
+            #[name = "container"]
+            adw::Clamp {
+                set_maximum_size: 500,
+            },
         }
     }
 
@@ -66,15 +62,21 @@ impl Component for MediaDetails {
         root: &Self::Root,
         _sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let (config, api_client, media) = init;
+        let (api_client, media) = init;
 
-        let model = MediaDetails {
-            config,
-            media,
-            api_client,
-        };
+        let title = &media.series_name.as_ref().unwrap_or(&media.name);
 
         let widgets = view_output!();
+        let container = &widgets.container;
+
+        let media_details_contents = MediaDetailsContents::builder()
+            .launch((api_client, media))
+            .detach();
+        container.set_child(Some(media_details_contents.widget()));
+
+        let model = MediaDetails {
+            _media_details_contents: media_details_contents,
+        };
 
         ComponentParts { model, widgets }
     }
