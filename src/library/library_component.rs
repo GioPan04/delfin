@@ -50,51 +50,60 @@ impl Component for Library {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
 
+            adw::HeaderBar {
+                    set_centering_policy: adw::CenteringPolicy::Strict,
+
+                    #[wrap(Some)]
+                    #[transition = "Crossfade"]
+                    set_title_widget = if matches!(model.state, LibraryState::Loading) {
+                        &adw::WindowTitle {}
+                    } else {
+                        #[name = "view_switcher_title"]
+                        &adw::ViewSwitcherTitle {
+                            set_title: "Jellything",
+                            set_stack: Some(&view_stack),
+                        }
+                    },
+
+                    pack_start = &gtk::Button {
+                        set_icon_name: "go-previous",
+                        #[watch]
+                        set_visible: true,
+                        connect_clicked[sender] => move |_| {
+                            sender.output(LibraryOutput::NavigateBack).unwrap();
+                        },
+                    },
+            },
+
             #[transition = "Crossfade"]
             append = if matches!(model.state, LibraryState::Loading) {
-                adw::Clamp {
-                    gtk::Box {
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_hexpand: true,
-                        set_vexpand: true,
-                        set_halign: gtk::Align::Center,
-                        set_valign: gtk::Align::Center,
-                        set_spacing: 20,
+                gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
 
-                        gtk::Spinner {
-                            set_spinning: true,
-                            set_size_request: (64, 64),
-                        },
+                    adw::Clamp {
+                        gtk::Box {
+                            set_orientation: gtk::Orientation::Vertical,
+                            set_hexpand: true,
+                            set_vexpand: true,
+                            set_halign: gtk::Align::Center,
+                            set_valign: gtk::Align::Center,
+                            set_spacing: 20,
 
-                        gtk::Label {
-                            set_label: "Loading your library...",
-                            add_css_class: "title-2",
-                        },
+                            gtk::Spinner {
+                                set_spinning: true,
+                                set_size_request: (64, 64),
+                            },
+
+                            gtk::Label {
+                                set_label: "Loading your library...",
+                                add_css_class: "title-2",
+                            },
+                        }
                     }
                 }
             } else {
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
-
-                    adw::HeaderBar {
-                            set_centering_policy: adw::CenteringPolicy::Strict,
-
-                            #[wrap(Some)]
-                            #[name = "view_switcher_title"]
-                            set_title_widget = &adw::ViewSwitcherTitle {
-                                set_title: "Jellything",
-                                set_stack: Some(&view_stack),
-                            },
-
-                            pack_start = &gtk::Button {
-                                set_icon_name: "go-previous",
-                                #[watch]
-                                set_visible: true,
-                                connect_clicked[sender] => move |_| {
-                                    sender.output(LibraryOutput::NavigateBack).unwrap();
-                                },
-                            },
-                    },
 
                     gtk::ScrolledWindow {
                         #[local_ref]
