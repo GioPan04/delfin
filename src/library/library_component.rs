@@ -55,6 +55,9 @@ impl Component for Library {
                 adw::Clamp {
                     gtk::Box {
                         set_orientation: gtk::Orientation::Vertical,
+                        set_hexpand: true,
+                        set_vexpand: true,
+                        set_halign: gtk::Align::Center,
                         set_valign: gtk::Align::Center,
                         set_spacing: 20,
 
