@@ -283,7 +283,7 @@ fn convert_video_player_output(output: VideoPlayerOutput) -> AppInput {
 fn convert_library_output(output: LibraryOutput) -> AppInput {
     match output {
         LibraryOutput::NavigateBack => AppInput::NavigateBack,
-        LibraryOutput::PlayVideo(media) => AppInput::PlayVideo(media),
+        LibraryOutput::PlayVideo(media) => AppInput::PlayVideo(*media),
     }
 }
 

@@ -32,7 +32,7 @@ pub struct VideoPlayerControlsInit {
 #[derive(Debug)]
 pub enum VideoPlayerControlsInput {
     SetShowControls(bool),
-    SetPlaying(Media),
+    SetPlaying(Box<Media>),
 }
 
 #[relm4::component(pub)]

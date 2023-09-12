@@ -191,7 +191,9 @@ impl Component for VideoPlayer {
                 video_player.seek(playback_position);
 
                 if let Some(controls) = self.controls.get() {
-                    controls.emit(VideoPlayerControlsInput::SetPlaying(*media.clone()));
+                    controls.emit(VideoPlayerControlsInput::SetPlaying(Box::new(
+                        *media.clone(),
+                    )));
                 }
 
                 // Report start of playback
