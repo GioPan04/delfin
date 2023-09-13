@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use gtk::prelude::*;
 use relm4::{
-    component::{AsyncComponent, AsyncComponentParts},
+    component::{AsyncComponent, AsyncComponentController, AsyncComponentParts, AsyncController},
     loading_widgets::LoadingWidgets,
     prelude::*,
     view, AsyncComponentSender,
@@ -10,13 +10,14 @@ use relm4::{
 
 use crate::{
     jellyfin_api::{api::item::GetItemRes, api_client::ApiClient, models::media::Media},
-    media_details::display_years::DisplayYears,
+    media_details::{display_years::DisplayYears, seasons::SeasonsInit},
 };
 
-use super::MediaDetailsOutput;
+use super::{seasons::Seasons, MediaDetailsOutput};
 
 pub struct MediaDetailsContents {
     item: GetItemRes,
+    seasons: Option<AsyncController<Seasons>>,
 }
 
 #[relm4::component(pub async)]
@@ -72,19 +73,33 @@ impl AsyncComponent for MediaDetailsContents {
     ) -> AsyncComponentParts<Self> {
         let (api_client, media) = init;
 
+        let mut seasons = None;
+
         let mut id = &media.id;
         if let Some(series_id) = &media.series_id {
             id = series_id;
+            seasons = Some(
+                Seasons::builder()
+                    .launch(SeasonsInit {
+                        api_client: api_client.clone(),
+                        series_id: series_id.clone(),
+                    })
+                    .detach(),
+            );
         }
 
         let item = api_client.get_item(id).await.unwrap();
 
-        let model = MediaDetailsContents { item };
+        let model = MediaDetailsContents { item, seasons };
 
         let widgets = view_output!();
         let info_box = &widgets.info_box;
 
         add_info(info_box, &model.item);
+
+        if let Some(seasons) = &model.seasons {
+            root.append(seasons.widget());
+        }
 
         AsyncComponentParts { model, widgets }
     }

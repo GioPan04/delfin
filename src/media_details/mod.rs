@@ -14,6 +14,8 @@ use crate::{
 
 mod display_years;
 mod media_details_contents;
+mod season_buttons;
+mod seasons;
 
 pub struct MediaDetails {
     _media_details_contents: AsyncController<MediaDetailsContents>,
