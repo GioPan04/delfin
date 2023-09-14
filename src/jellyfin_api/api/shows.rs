@@ -2,7 +2,10 @@ use anyhow::Result;
 use serde::Deserialize;
 
 use crate::{
-    jellyfin_api::{api_client::ApiClient, models::media::Media},
+    jellyfin_api::{
+        api_client::ApiClient,
+        models::media::{Media, UserData},
+    },
     media_details::episode::EPISODE_THUMBNAIL_SIZE,
 };
 
@@ -11,6 +14,7 @@ use crate::{
 pub struct Season {
     pub id: String,
     pub name: String,
+    pub user_data: UserData,
 }
 
 #[derive(Clone, Debug, Deserialize)]

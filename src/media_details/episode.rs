@@ -73,6 +73,7 @@ impl SimpleComponent for Episode {
 
 #[derive(Debug)]
 struct EpisodeThumbnail {
+    media: Media,
     thumbnail: Option<Texture>,
 }
 #[derive(Debug)]
@@ -103,6 +104,17 @@ impl Component for EpisodeThumbnail {
                     set_width_request: EPISODE_THUMBNAIL_SIZE,
                     set_height_request: EPISODE_THUMBNAIL_SIZE,
                     set_content_fit: gtk::ContentFit::Cover,
+                },
+
+                add_overlay = &gtk::Box {
+                    #[watch]
+                    set_visible: !model.media.user_data.played,
+
+                    add_css_class: "episode-unplayed-indicator",
+                    set_halign: gtk::Align::End,
+                    set_valign: gtk::Align::Start,
+                    set_width_request: 12,
+                    set_height_request: 12,
                 },
 
                 add_overlay = &gtk::Spinner {
@@ -137,7 +149,10 @@ impl Component for EpisodeThumbnail {
             EpisodeThumbnailCommandOutput::LoadThumbnail(img_bytes)
         });
 
-        let model = Self { thumbnail: None };
+        let model = Self {
+            media,
+            thumbnail: None,
+        };
 
         let widgets = view_output!();
 

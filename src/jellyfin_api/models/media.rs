@@ -27,4 +27,5 @@ pub struct UserData {
     pub played: bool,
     pub playback_position_ticks: usize,
     pub played_percentage: Option<f64>,
+    pub unplayed_item_count: Option<usize>,
 }

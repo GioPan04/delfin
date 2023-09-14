@@ -82,9 +82,27 @@
   .seasons-box {
     background: "@headerbar_bg_color";
     border-radius: 8px;
+
+    .season-unplayed-indicator {
+      background: "@accent_bg_color";
+      border-radius: 100%;
+    }
   }
 
   .episode-thumbnail {
     border-radius: 6px;
+  }
+
+  .episode-unplayed-indicator {
+    background: "@accent_bg_color";
+    border-radius: 100%;
+    box-shadow: 2px 2px 5px 0px #00000032;
+
+    // Position indicator a bit outside .episode-thumbnail
+    $outer-margin: 6px;
+    margin-left: $outer-margin;
+    margin-right: -$outer-margin;
+    margin-top: -$outer-margin;
+    margin-bottom: $outer-margin;
   }
 }
