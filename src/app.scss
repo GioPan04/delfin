@@ -1,8 +1,3 @@
-// From GNOME colour palette provided by libadwaita
-// https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/named-colors.html#palette-colors
-// TODO: find out how to get SASS to just output the @ variable without errors
-$col-dark-4: #241f31;
-
 .media-tile {
   $media-tile-br: 10px;
 
@@ -19,7 +14,7 @@ $col-dark-4: #241f31;
     transition: all 150ms;
 
     image {
-      background: rgba($col-dark-4, 80%);
+      background: "--gtk-alpha(@dark_4, 0.8)";
       border-radius: 100px;
       $padding: 6px;
       padding: $padding;
@@ -85,8 +80,7 @@ $col-dark-4: #241f31;
   }
 
   .seasons-box {
-    // @headerbar_bg_color
-    background: #303030;
+    background: "@headerbar_bg_color";
     border-radius: 8px;
   }
 
