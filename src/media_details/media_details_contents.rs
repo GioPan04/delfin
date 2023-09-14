@@ -69,7 +69,7 @@ impl AsyncComponent for MediaDetailsContents {
     async fn init(
         init: Self::Init,
         root: Self::Root,
-        _sender: AsyncComponentSender<Self>,
+        sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
         let (api_client, media) = init;
 
@@ -84,7 +84,7 @@ impl AsyncComponent for MediaDetailsContents {
                         api_client: api_client.clone(),
                         series_id: series_id.clone(),
                     })
-                    .detach(),
+                    .forward(sender.input_sender(), |e| e),
             );
         }
 
