@@ -8,7 +8,10 @@ use relm4::{
     prelude::*,
 };
 
-use crate::jellyfin_api::models::media::Media;
+use crate::{
+    app::{AppInput, APP_BROKER},
+    jellyfin_api::models::media::Media,
+};
 
 pub const EPISODE_THUMBNAIL_SIZE: i32 = 75;
 
@@ -41,8 +44,8 @@ impl SimpleComponent for Episode {
             },
 
             set_activatable: true,
-            connect_activated => move |_| {
-                println!("play episode");
+            connect_activated[media] => move |_| {
+                APP_BROKER.send(AppInput::PlayVideo(media.clone()));
             },
         }
     }
