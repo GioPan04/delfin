@@ -20,6 +20,7 @@ pub fn get_stream_url(server: &config::Server, item_id: &str) -> String {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct GetItemRes {
+    pub id: String,
     #[serde(rename = "Type")]
     pub item_type: ItemType,
     pub media_sources: Option<Vec<MediaSource>>,
@@ -35,6 +36,8 @@ pub struct GetItemRes {
     #[serde(default)]
     #[serde(deserialize_with = "deserialize_datetime_opt")]
     pub end_date: Option<DateTime>,
+    #[serde(rename = "BackdropImageTags")]
+    pub backdrop_image_urls: Option<Vec<String>>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -119,8 +122,29 @@ impl ApiClient {
             .root
             .join(&format!("Users/{}/Items/{item_id}", self.account.id))?;
 
-        let res = self.client.get(url).send().await?.json().await?;
+        let mut res: GetItemRes = self.client.get(url).send().await?.json().await?;
+
+        self.backdrop_image_tags_to_urls(&mut res)?;
 
         Ok(res)
+    }
+
+    fn backdrop_image_tags_to_urls(&self, item: &mut GetItemRes) -> Result<()> {
+        let item_id = &item.id;
+
+        for backdrop in item.backdrop_image_urls.iter_mut().flatten() {
+            let mut url = self
+                .root
+                .join(&format!("Items/{item_id}/Images/Backdrop"))?;
+
+            url.query_pairs_mut()
+                .append_pair("tag", backdrop)
+                .append_pair("maxWidth", "1440")
+                .append_pair("quality", "80");
+
+            *backdrop = url.to_string();
+        }
+
+        Ok(())
     }
 }

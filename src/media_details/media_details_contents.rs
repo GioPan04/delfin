@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{cell::OnceCell, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::{
@@ -10,13 +10,17 @@ use relm4::{
 
 use crate::{
     jellyfin_api::{api::item::GetItemRes, api_client::ApiClient, models::media::Media},
-    media_details::{display_years::DisplayYears, seasons::SeasonsInit},
+    media_details::{
+        display_years::DisplayYears, media_details_header::MediaDetailsHeaderInit,
+        seasons::SeasonsInit,
+    },
 };
 
-use super::{seasons::Seasons, MediaDetailsOutput};
+use super::{media_details_header::MediaDetailsHeader, seasons::Seasons, MediaDetailsOutput};
 
 pub struct MediaDetailsContents {
     item: GetItemRes,
+    header: OnceCell<Controller<MediaDetailsHeader>>,
     seasons: Option<AsyncController<Seasons>>,
 }
 
@@ -32,17 +36,28 @@ impl AsyncComponent for MediaDetailsContents {
             set_orientation: gtk::Orientation::Vertical,
             set_spacing: 16,
 
-            #[name = "info_box"]
-            gtk::Box {
-                set_orientation: gtk::Orientation::Horizontal,
-                set_halign: gtk::Align::Center,
-                set_spacing: 8,
-            },
+            adw::Clamp {
+                set_maximum_size: 500,
+                set_margin_bottom: 32,
 
-            gtk::Label::new(model.item.overview.as_deref()) {
-                set_halign: gtk::Align::Fill,
-                set_justify: gtk::Justification::Fill,
-                set_wrap: true,
+                #[name = "container"]
+                gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_spacing: 16,
+
+                    #[name = "info_box"]
+                    gtk::Box {
+                        set_orientation: gtk::Orientation::Horizontal,
+                        set_halign: gtk::Align::Center,
+                        set_spacing: 8,
+                    },
+
+                    gtk::Label::new(model.item.overview.as_deref()) {
+                        set_halign: gtk::Align::Fill,
+                        set_justify: gtk::Justification::Fill,
+                        set_wrap: true,
+                    },
+                }
             },
         }
     }
@@ -90,15 +105,26 @@ impl AsyncComponent for MediaDetailsContents {
 
         let item = api_client.get_item(id).await.unwrap();
 
-        let model = MediaDetailsContents { item, seasons };
+        let model = MediaDetailsContents {
+            item: item.clone(),
+            header: OnceCell::new(),
+            seasons,
+        };
 
         let widgets = view_output!();
+        let container = &widgets.container;
         let info_box = &widgets.info_box;
+
+        let header = MediaDetailsHeader::builder()
+            .launch(MediaDetailsHeaderInit { media, item })
+            .detach();
+        root.prepend(header.widget());
+        model.header.set(header).unwrap();
 
         add_info(info_box, &model.item);
 
         if let Some(seasons) = &model.seasons {
-            root.append(seasons.widget());
+            container.append(seasons.widget());
         }
 
         AsyncComponentParts { model, widgets }

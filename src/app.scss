@@ -73,6 +73,30 @@
 }
 
 .media-details {
+  .media-details-header {
+    .media-details-header-overlay {
+      background: linear-gradient(180deg, transparent, "@window_bg_color");
+      padding: 0 32px;
+    }
+
+    .media-details-backdrop-overlay-left {
+      background: linear-gradient(0.75turn, transparent, "@window_bg_color");
+    }
+
+    .media-details-backdrop-overlay-right {
+      background: linear-gradient(0.25turn, transparent, "@window_bg_color");
+    }
+
+    .media-details-backdrop-blur {
+      filter: blur(100px);
+    }
+
+    .media-details-header-title {
+      font-size: 24px;
+      padding: 32px 0;
+    }
+  }
+
   .official-rating {
     padding: 0 4px;
     border: solid 1px white;

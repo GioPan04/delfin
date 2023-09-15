@@ -16,6 +16,7 @@ mod display_years;
 pub mod episode;
 mod episodes;
 mod media_details_contents;
+mod media_details_header;
 mod season_buttons;
 mod seasons;
 
@@ -54,15 +55,10 @@ impl SimpleComponent for MediaDetails {
                 },
             },
 
+            #[name = "container"]
             gtk::ScrolledWindow {
                 set_hexpand: true,
                 set_vexpand: true,
-
-                #[name = "container"]
-                adw::Clamp {
-                    set_maximum_size: 500,
-                    set_margin_bottom: 32,
-                },
             },
         }
     }
