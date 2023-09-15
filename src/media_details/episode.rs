@@ -28,7 +28,11 @@ impl SimpleComponent for Episode {
 
     view! {
         adw::ActionRow {
-            set_title: &model.media.name,
+            set_title: if let Some(index_number) = &model.media.index_number {
+                format!("{index_number}. {}", &model.media.name)
+            } else {
+                model.media.name.clone()
+            }.as_str(),
             set_title_lines: 1,
             set_use_markup: false,
 
