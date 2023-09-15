@@ -41,6 +41,7 @@ impl SimpleComponent for SeasonButtons {
 
         // First button will be active and is used to group remaining buttons
         let first_btn = create_season_btn(&seasons[0]);
+        first_btn.set_active(true);
         first_btn.connect_toggled(btn_toggle_handler(0));
         seasons_box.append(&first_btn);
 
