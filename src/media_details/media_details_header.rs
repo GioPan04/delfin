@@ -6,10 +6,13 @@ use relm4::{
     prelude::*,
 };
 
-use crate::jellyfin_api::{
-    api::{item::ItemType, latest::GetNextUpOptionsBuilder},
-    api_client::ApiClient,
-    models::media::Media,
+use crate::{
+    app::APP_BROKER,
+    jellyfin_api::{
+        api::{item::ItemType, latest::GetNextUpOptionsBuilder},
+        api_client::ApiClient,
+        models::media::Media,
+    },
 };
 
 pub const MEDIA_DETAILS_BACKDROP_HEIGHT: i32 = 400;
@@ -19,6 +22,7 @@ pub(crate) struct MediaDetailsHeader {
     media: Media,
     backdrop: Option<Texture>,
     play_next_label: Option<String>,
+    play_next_media: Option<Media>,
 }
 
 pub(crate) struct MediaDetailsHeaderInit {
@@ -28,15 +32,20 @@ pub(crate) struct MediaDetailsHeaderInit {
 }
 
 #[derive(Debug)]
+pub enum MediaDetailsHeaderInput {
+    PlayNext,
+}
+
+#[derive(Debug)]
 pub enum MediaDetailsHeaderCommandOutput {
-    PlayNextLoaded(String),
+    PlayNextLoaded(Box<(String, Option<Media>)>),
     BackdropLoaded(VecDeque<u8>),
 }
 
 #[relm4::component(pub(crate))]
 impl Component for MediaDetailsHeader {
     type Init = MediaDetailsHeaderInit;
-    type Input = ();
+    type Input = MediaDetailsHeaderInput;
     type Output = ();
     type CommandOutput = MediaDetailsHeaderCommandOutput;
 
@@ -139,7 +148,11 @@ impl Component for MediaDetailsHeader {
                             set_hexpand: true,
                             set_vexpand: false,
                             #[watch]
-                            set_sensitive: model.play_next_label.is_some(),
+                            set_sensitive: model.play_next_label.is_some() && model.play_next_media.is_some(),
+
+                            connect_clicked[sender] => move |_| {
+                                sender.input(MediaDetailsHeaderInput::PlayNext);
+                            },
 
                             #[wrap(Some)]
                             set_child = &gtk::Box {
@@ -201,8 +214,8 @@ impl Component for MediaDetailsHeader {
         sender.oneshot_command({
             let media = media.clone();
             async move {
-                let play_next_label = get_next_episode_btn_label(&api_client, &item, &media).await;
-                MediaDetailsHeaderCommandOutput::PlayNextLoaded(play_next_label)
+                let play_next = get_play_next(&api_client, &item, &media).await;
+                MediaDetailsHeaderCommandOutput::PlayNextLoaded(Box::new(play_next))
             }
         });
 
@@ -210,6 +223,7 @@ impl Component for MediaDetailsHeader {
             media,
             backdrop: None,
             play_next_label: None,
+            play_next_media: None,
         };
 
         let title = &model
@@ -223,6 +237,16 @@ impl Component for MediaDetailsHeader {
         ComponentParts { model, widgets }
     }
 
+    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
+        match message {
+            MediaDetailsHeaderInput::PlayNext => {
+                if let Some(play_next_media) = &self.play_next_media {
+                    APP_BROKER.send(crate::app::AppInput::PlayVideo(play_next_media.clone()));
+                }
+            }
+        }
+    }
+
     fn update_cmd(
         &mut self,
         message: Self::CommandOutput,
@@ -231,7 +255,9 @@ impl Component for MediaDetailsHeader {
     ) {
         match message {
             MediaDetailsHeaderCommandOutput::PlayNextLoaded(play_next) => {
-                self.play_next_label = Some(play_next);
+                let (play_next_label, play_next_media) = *play_next;
+                self.play_next_label = Some(play_next_label);
+                self.play_next_media = play_next_media;
             }
             MediaDetailsHeaderCommandOutput::BackdropLoaded(img_bytes) => {
                 let pixbuf = Pixbuf::from_read(img_bytes)
@@ -243,11 +269,11 @@ impl Component for MediaDetailsHeader {
 }
 
 // Keep away from this accursed function
-async fn get_next_episode_btn_label(
+async fn get_play_next(
     api_client: &Arc<ApiClient>,
     item: &Media,
     media: &Media,
-) -> String {
+) -> (String, Option<Media>) {
     let verb = if media.user_data.playback_position_ticks == 0 {
         "Play"
     } else {
@@ -258,13 +284,16 @@ async fn get_next_episode_btn_label(
     if !(matches!(media.item_type, ItemType::Episode)
         || matches!(media.item_type, ItemType::Series))
     {
-        return verb;
+        return (verb, Some(media.clone()));
     }
 
     if let (Some(parent_index_number), Some(index_number)) =
         (&media.parent_index_number, &media.index_number)
     {
-        return format!("{verb} S{parent_index_number}:E{index_number}");
+        return (
+            format!("{verb} S{parent_index_number}:E{index_number}"),
+            Some(media.clone()),
+        );
     }
 
     let next_up = match api_client
@@ -281,15 +310,20 @@ async fn get_next_episode_btn_label(
             }
             None
         }) {
-        Ok(Some(next_up)) => next_up,
-        _ => return verb,
+        Ok(Some(next_up)) => Some(next_up),
+        _ => None,
     };
 
-    if let (Some(parent_index_number), Some(index_number)) =
-        (&next_up.parent_index_number, &next_up.index_number)
-    {
-        return format!("{verb} S{parent_index_number}:E{index_number}");
+    if let Some(next_up) = next_up {
+        if let (Some(parent_index_number), Some(index_number)) =
+            (&next_up.parent_index_number, &next_up.index_number)
+        {
+            return (
+                format!("{verb} S{parent_index_number}:E{index_number}"),
+                Some(next_up),
+            );
+        }
     }
 
-    "Play next episode".to_string()
+    ("Play next episode".to_string(), None)
 }
