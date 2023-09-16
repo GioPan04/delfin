@@ -9,21 +9,17 @@ use relm4::{
 };
 
 use crate::{
-    jellyfin_api::{
-        api::item::{GetItemRes, ItemType},
-        api_client::ApiClient,
-        models::media::Media,
-    },
-    media_details::{
-        display_years::DisplayYears, media_details_header::MediaDetailsHeaderInit,
-        seasons::SeasonsInit,
-    },
+    jellyfin_api::{api::item::ItemType, api_client::ApiClient, models::media::Media},
+    media_details::{media_details_header::MediaDetailsHeaderInit, seasons::SeasonsInit},
 };
 
-use super::{media_details_header::MediaDetailsHeader, seasons::Seasons, MediaDetailsOutput};
+use super::{
+    display_years::DisplayYears, media_details_header::MediaDetailsHeader, seasons::Seasons,
+    MediaDetailsOutput,
+};
 
 pub struct MediaDetailsContents {
-    item: GetItemRes,
+    item: Media,
     header: OnceCell<Controller<MediaDetailsHeader>>,
     seasons: Option<AsyncController<Seasons>>,
 }
@@ -98,7 +94,7 @@ impl AsyncComponent for MediaDetailsContents {
             media
                 .series_id
                 .clone()
-                .or(if matches!(media.media_type, ItemType::Series) {
+                .or(if matches!(media.item_type, ItemType::Series) {
                     Some(media.id.clone())
                 } else {
                     None
@@ -150,7 +146,7 @@ impl AsyncComponent for MediaDetailsContents {
     }
 }
 
-fn add_info(info_box: &gtk::Box, item: &GetItemRes) {
+fn add_info(info_box: &gtk::Box, item: &Media) {
     let mut first = true;
 
     let mut add_separator = move |skip_separator: bool| {

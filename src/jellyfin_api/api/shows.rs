@@ -2,29 +2,18 @@ use anyhow::Result;
 use serde::Deserialize;
 
 use crate::{
-    jellyfin_api::{
-        api_client::ApiClient,
-        models::media::{Media, UserData},
-    },
+    jellyfin_api::{api_client::ApiClient, models::media::Media},
     media_details::episode::EPISODE_THUMBNAIL_SIZE,
 };
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-pub struct Season {
-    pub id: String,
-    pub name: String,
-    pub user_data: UserData,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
 pub struct GetSeasonsRes {
-    items: Vec<Season>,
+    items: Vec<Media>,
 }
 
 impl ApiClient {
-    pub async fn get_seasons(&self, series_id: &str) -> Result<Vec<Season>> {
+    pub async fn get_seasons(&self, series_id: &str) -> Result<Vec<Media>> {
         let mut url = self.root.join(&format!("Shows/{series_id}/Seasons"))?;
 
         url.query_pairs_mut()

@@ -10,7 +10,7 @@ use relm4::{
 };
 
 use crate::{
-    jellyfin_api::{api::shows::Season, api_client::ApiClient},
+    jellyfin_api::{api_client::ApiClient, models::media::Media},
     media_details::season_buttons::SeasonButtons,
 };
 
@@ -19,7 +19,7 @@ use super::episodes::{Episodes, EpisodesInit};
 pub struct Seasons {
     api_client: Arc<ApiClient>,
     series_id: String,
-    seasons: Vec<Season>,
+    seasons: Vec<Media>,
     season_buttons: Option<Controller<SeasonButtons>>,
     episodes: Option<AsyncController<Episodes>>,
 }

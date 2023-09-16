@@ -7,10 +7,7 @@ use relm4::{
 };
 
 use crate::jellyfin_api::{
-    api::{
-        item::{GetItemRes, ItemType},
-        latest::GetNextUpOptionsBuilder,
-    },
+    api::{item::ItemType, latest::GetNextUpOptionsBuilder},
     api_client::ApiClient,
     models::media::Media,
 };
@@ -27,7 +24,7 @@ pub(crate) struct MediaDetailsHeader {
 pub(crate) struct MediaDetailsHeaderInit {
     pub(crate) api_client: Arc<ApiClient>,
     pub(crate) media: Media,
-    pub(crate) item: GetItemRes,
+    pub(crate) item: Media,
 }
 
 #[derive(Debug)]
@@ -248,7 +245,7 @@ impl Component for MediaDetailsHeader {
 // Keep away from this accursed function
 async fn get_next_episode_btn_label(
     api_client: &Arc<ApiClient>,
-    item: &GetItemRes,
+    item: &Media,
     media: &Media,
 ) -> String {
     let verb = if media.user_data.playback_position_ticks == 0 {
@@ -258,8 +255,8 @@ async fn get_next_episode_btn_label(
     }
     .to_string();
 
-    if !(matches!(media.media_type, ItemType::Episode)
-        || matches!(media.media_type, ItemType::Series))
+    if !(matches!(media.item_type, ItemType::Episode)
+        || matches!(media.item_type, ItemType::Series))
     {
         return verb;
     }

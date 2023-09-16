@@ -1,7 +1,7 @@
 use gtk::prelude::*;
 use relm4::prelude::*;
 
-use crate::jellyfin_api::api::shows::Season;
+use crate::jellyfin_api::models::media::Media;
 
 use super::seasons::SeasonsInput;
 
@@ -9,7 +9,7 @@ pub(crate) struct SeasonButtons;
 
 #[relm4::component(pub(crate))]
 impl SimpleComponent for SeasonButtons {
-    type Init = Vec<Season>;
+    type Init = Vec<Media>;
     type Input = ();
     type Output = SeasonsInput;
 
@@ -56,7 +56,7 @@ impl SimpleComponent for SeasonButtons {
     }
 }
 
-fn create_season_btn(season: &Season) -> gtk::ToggleButton {
+fn create_season_btn(season: &Media) -> gtk::ToggleButton {
     let btn_contents = gtk::Overlay::new();
 
     btn_contents.set_child(Some(

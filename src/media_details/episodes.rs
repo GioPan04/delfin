@@ -8,7 +8,7 @@ use relm4::{
     view, AsyncComponentSender,
 };
 
-use crate::jellyfin_api::{api::shows::Season, api_client::ApiClient, models::media::Media};
+use crate::jellyfin_api::{api_client::ApiClient, models::media::Media};
 
 use super::episode::Episode;
 
@@ -20,7 +20,7 @@ pub(crate) struct Episodes {
 pub(crate) struct EpisodesInit {
     pub(crate) api_client: Arc<ApiClient>,
     pub(crate) series_id: String,
-    pub(crate) season: Season,
+    pub(crate) season: Media,
 }
 
 #[relm4::component(pub(crate) async)]

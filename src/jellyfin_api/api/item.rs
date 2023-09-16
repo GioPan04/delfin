@@ -1,12 +1,10 @@
 use anyhow::Result;
 use reqwest::Url;
 use serde::Deserialize;
-use speedate::DateTime;
 
 use crate::{
     config,
-    jellyfin_api::{api_client::ApiClient, models::media::UserData, util::url::httpify},
-    utils::datetime_serde::deserialize_datetime_opt,
+    jellyfin_api::{api_client::ApiClient, models::media::Media, util::url::httpify},
 };
 
 pub fn get_stream_url(server: &config::Server, item_id: &str) -> String {
@@ -15,32 +13,6 @@ pub fn get_stream_url(server: &config::Server, item_id: &str) -> String {
         .join(&format!("Videos/{}/stream?static=true", item_id))
         .unwrap()
         .to_string()
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct GetItemRes {
-    pub id: String,
-    #[serde(rename = "Type")]
-    pub item_type: ItemType,
-    pub media_sources: Option<Vec<MediaSource>>,
-    pub overview: Option<String>,
-    pub community_rating: Option<f32>,
-    pub official_rating: Option<String>,
-    pub genres: Option<Vec<String>>,
-    pub status: Option<String>,
-    pub production_year: Option<isize>,
-    #[serde(default)]
-    #[serde(deserialize_with = "deserialize_datetime_opt")]
-    pub premiere_date: Option<DateTime>,
-    #[serde(default)]
-    #[serde(deserialize_with = "deserialize_datetime_opt")]
-    pub end_date: Option<DateTime>,
-    #[serde(rename = "BackdropImageTags")]
-    pub backdrop_image_urls: Option<Vec<String>>,
-    pub parent_index_number: Option<usize>,
-    pub index_number: Option<usize>,
-    pub user_data: Option<UserData>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -120,19 +92,19 @@ impl TryFrom<String> for MediaStreamType {
 }
 
 impl ApiClient {
-    pub async fn get_item(&self, item_id: &str) -> Result<GetItemRes> {
+    pub async fn get_item(&self, item_id: &str) -> Result<Media> {
         let url = self
             .root
             .join(&format!("Users/{}/Items/{item_id}", self.account.id))?;
 
-        let mut res: GetItemRes = self.client.get(url).send().await?.json().await?;
+        let mut res: Media = self.client.get(url).send().await?.json().await?;
 
         self.backdrop_image_tags_to_urls(&mut res)?;
 
         Ok(res)
     }
 
-    fn backdrop_image_tags_to_urls(&self, item: &mut GetItemRes) -> Result<()> {
+    fn backdrop_image_tags_to_urls(&self, item: &mut Media) -> Result<()> {
         let item_id = &item.id;
 
         for backdrop in item.backdrop_image_urls.iter_mut().flatten() {

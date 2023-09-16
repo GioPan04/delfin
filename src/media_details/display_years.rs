@@ -1,4 +1,4 @@
-use crate::jellyfin_api::api::item::{GetItemRes, ItemType};
+use crate::jellyfin_api::{api::item::ItemType, models::media::Media};
 
 pub(crate) trait DisplayYears {
     fn display_years(&self) -> Option<String>;
@@ -6,7 +6,7 @@ pub(crate) trait DisplayYears {
 
 // Displays years show was in production.
 // Should more or less match Jellyfin's web client behaviour: https://github.com/jellyfin/jellyfin-web/blob/c5520bb5ac72d02e49ac60e47bdb2ac33940c2d5/src/components/mediainfo/mediainfo.js#L177-L197
-impl DisplayYears for GetItemRes {
+impl DisplayYears for Media {
     fn display_years(&self) -> Option<String> {
         let production_year = self.production_year.map(|y| y.to_string());
         let premiere_year = self.premiere_date.as_ref().map(|d| d.date.year.to_string());
