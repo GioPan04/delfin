@@ -1,9 +1,13 @@
 use serde::Deserialize;
 
+use crate::jellyfin_api::api::item::ItemType;
+
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Media {
     pub id: String,
+    #[serde(rename = "Type")]
+    pub media_type: ItemType,
     pub name: String,
     pub image_tags: ImageTags,
     pub user_data: UserData,

@@ -6,7 +6,9 @@ use relm4::{
     gtk, Component, ComponentParts, ComponentSender,
 };
 
-use crate::jellyfin_api::{api_client::ApiClient, models::media::Media};
+use crate::jellyfin_api::{
+    api::latest::GetNextUpOptions, api_client::ApiClient, models::media::Media,
+};
 
 use super::media_tile::{MediaTile, MediaTileDisplay};
 
@@ -134,7 +136,7 @@ impl MediaGrid {
                     .await
                     .expect("Error getting latest media."),
                 MediaGridType::NextUp => api_client
-                    .get_next_up(None)
+                    .get_next_up(GetNextUpOptions::default())
                     .await
                     .expect("Error getting continue watching."),
             };

@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use anyhow::Result;
+use derive_builder::Builder;
 use serde::Deserialize;
 
 use crate::jellyfin_api::{api_client::ApiClient, models::media::Media};
@@ -29,6 +30,24 @@ impl ApiClient {
     }
 }
 
+#[derive(Builder)]
+pub struct GetNextUpOptions {
+    #[builder(default = "16")]
+    limit: usize,
+    #[builder(setter(into, strip_option))]
+    #[builder(default = "None")]
+    series_id: Option<String>,
+}
+
+impl Default for GetNextUpOptions {
+    fn default() -> Self {
+        Self {
+            limit: 16,
+            series_id: None,
+        }
+    }
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 struct GetContinueWatchingRes {
@@ -45,7 +64,7 @@ impl ApiClient {
             .join(&format!("Users/{}/Items/Resume", self.account.id))?;
 
         url.query_pairs_mut()
-            .append_pair("limit", &limit.to_string());
+            .append_pair("Limit", &limit.to_string());
 
         let res: GetContinueWatchingRes = self.client.get(url).send().await?.json().await?;
 
@@ -57,14 +76,16 @@ impl ApiClient {
     }
 
     // TODO: this can probably be combined with get_latest_media
-    pub async fn get_next_up(&self, limit: Option<usize>) -> Result<Vec<Media>> {
-        let limit = limit.unwrap_or(16);
-
+    pub async fn get_next_up(&self, options: GetNextUpOptions) -> Result<Vec<Media>> {
         let mut url = self.root.join("Shows/NextUp")?;
 
         url.query_pairs_mut()
-            .append_pair("limit", &limit.to_string())
-            .append_pair("UserId", &self.account.id);
+            .append_pair("UserId", &self.account.id)
+            .append_pair("Limit", &options.limit.to_string());
+
+        if let Some(series_id) = &options.series_id {
+            url.query_pairs_mut().append_pair("SeriesId", series_id);
+        }
 
         let res: GetContinueWatchingRes = self.client.get(url).send().await?.json().await?;
 

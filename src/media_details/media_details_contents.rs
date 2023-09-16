@@ -9,7 +9,11 @@ use relm4::{
 };
 
 use crate::{
-    jellyfin_api::{api::item::GetItemRes, api_client::ApiClient, models::media::Media},
+    jellyfin_api::{
+        api::item::{GetItemRes, ItemType},
+        api_client::ApiClient,
+        models::media::Media,
+    },
     media_details::{
         display_years::DisplayYears, media_details_header::MediaDetailsHeaderInit,
         seasons::SeasonsInit,
@@ -90,20 +94,31 @@ impl AsyncComponent for MediaDetailsContents {
 
         let mut seasons = None;
 
-        let mut id = &media.id;
-        if let Some(series_id) = &media.series_id {
-            id = series_id;
+        let series_id =
+            media
+                .series_id
+                .clone()
+                .or(if matches!(media.media_type, ItemType::Series) {
+                    Some(media.id.clone())
+                } else {
+                    None
+                });
+
+        if let Some(series_id) = series_id {
             seasons = Some(
                 Seasons::builder()
                     .launch(SeasonsInit {
                         api_client: api_client.clone(),
-                        series_id: series_id.clone(),
+                        series_id,
                     })
                     .forward(sender.input_sender(), |e| e),
             );
         }
 
-        let item = api_client.get_item(id).await.unwrap();
+        let item = api_client
+            .get_item(&media.series_id.clone().unwrap_or(media.id.clone()))
+            .await
+            .unwrap();
 
         let model = MediaDetailsContents {
             item: item.clone(),
@@ -116,7 +131,11 @@ impl AsyncComponent for MediaDetailsContents {
         let info_box = &widgets.info_box;
 
         let header = MediaDetailsHeader::builder()
-            .launch(MediaDetailsHeaderInit { media, item })
+            .launch(MediaDetailsHeaderInit {
+                api_client,
+                media,
+                item,
+            })
             .detach();
         root.prepend(header.widget());
         model.header.set(header).unwrap();

@@ -5,7 +5,7 @@ use speedate::DateTime;
 
 use crate::{
     config,
-    jellyfin_api::{api_client::ApiClient, util::url::httpify},
+    jellyfin_api::{api_client::ApiClient, models::media::UserData, util::url::httpify},
     utils::datetime_serde::deserialize_datetime_opt,
 };
 
@@ -38,6 +38,9 @@ pub struct GetItemRes {
     pub end_date: Option<DateTime>,
     #[serde(rename = "BackdropImageTags")]
     pub backdrop_image_urls: Option<Vec<String>>,
+    pub parent_index_number: Option<usize>,
+    pub index_number: Option<usize>,
+    pub user_data: Option<UserData>,
 }
 
 #[derive(Clone, Debug, Deserialize)]

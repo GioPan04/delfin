@@ -1,13 +1,19 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, matches, sync::Arc};
 
 use adw::{prelude::*, SqueezerTransitionType};
 use relm4::{
     gtk::{gdk::Texture, gdk_pixbuf::Pixbuf},
     prelude::*,
-    Component, ComponentParts,
 };
 
-use crate::jellyfin_api::{api::item::GetItemRes, models::media::Media};
+use crate::jellyfin_api::{
+    api::{
+        item::{GetItemRes, ItemType},
+        latest::GetNextUpOptionsBuilder,
+    },
+    api_client::ApiClient,
+    models::media::Media,
+};
 
 pub const MEDIA_DETAILS_BACKDROP_HEIGHT: i32 = 400;
 
@@ -15,15 +21,18 @@ pub const MEDIA_DETAILS_BACKDROP_HEIGHT: i32 = 400;
 pub(crate) struct MediaDetailsHeader {
     media: Media,
     backdrop: Option<Texture>,
+    play_next_label: Option<String>,
 }
 
 pub(crate) struct MediaDetailsHeaderInit {
+    pub(crate) api_client: Arc<ApiClient>,
     pub(crate) media: Media,
     pub(crate) item: GetItemRes,
 }
 
 #[derive(Debug)]
 pub enum MediaDetailsHeaderCommandOutput {
+    PlayNextLoaded(String),
     BackdropLoaded(VecDeque<u8>),
 }
 
@@ -132,13 +141,21 @@ impl Component for MediaDetailsHeader {
                             set_valign: gtk::Align::Center,
                             set_hexpand: true,
                             set_vexpand: false,
+                            #[watch]
+                            set_sensitive: model.play_next_label.is_some(),
 
                             #[wrap(Some)]
                             set_child = &gtk::Box {
                                 set_orientation: gtk::Orientation::Horizontal,
                                 set_spacing: 8,
 
-                                gtk::Label::new(Some("Play next episode")),
+                                if model.play_next_label.is_some() {
+                                    gtk::Label {
+                                        #[watch]
+                                        set_label: model.play_next_label.as_ref().unwrap(),
+                                    }
+                                } else { gtk::Spinner { set_spinning: true } },
+
                                 gtk::Image::from_icon_name("play-filled"),
                             },
                         },
@@ -152,13 +169,25 @@ impl Component for MediaDetailsHeader {
     fn init(
         init: Self::Init,
         root: &Self::Root,
-        sender: relm4::ComponentSender<Self>,
-    ) -> relm4::ComponentParts<Self> {
-        let MediaDetailsHeaderInit { media, item } = init;
+        sender: ComponentSender<Self>,
+    ) -> ComponentParts<Self> {
+        let MediaDetailsHeaderInit {
+            api_client,
+            media,
+            item,
+        } = init;
 
-        let backdrop_image_urls = item.backdrop_image_urls.unwrap_or(vec![]);
-        if !backdrop_image_urls.is_empty() {
-            let img_url = backdrop_image_urls[0].clone();
+        let img_url = match &item.backdrop_image_urls {
+            Some(backdrop_image_urls) => {
+                if !backdrop_image_urls.is_empty() {
+                    Some(backdrop_image_urls[0].clone())
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        };
+        if let Some(img_url) = img_url {
             sender.oneshot_command(async {
                 let img_bytes: VecDeque<u8> = reqwest::get(img_url)
                     .await
@@ -172,9 +201,18 @@ impl Component for MediaDetailsHeader {
             });
         }
 
+        sender.oneshot_command({
+            let media = media.clone();
+            async move {
+                let play_next_label = get_next_episode_btn_label(&api_client, &item, &media).await;
+                MediaDetailsHeaderCommandOutput::PlayNextLoaded(play_next_label)
+            }
+        });
+
         let model = MediaDetailsHeader {
             media,
             backdrop: None,
+            play_next_label: None,
         };
 
         let title = &model
@@ -195,6 +233,9 @@ impl Component for MediaDetailsHeader {
         _root: &Self::Root,
     ) {
         match message {
+            MediaDetailsHeaderCommandOutput::PlayNextLoaded(play_next) => {
+                self.play_next_label = Some(play_next);
+            }
             MediaDetailsHeaderCommandOutput::BackdropLoaded(img_bytes) => {
                 let pixbuf = Pixbuf::from_read(img_bytes)
                     .expect("Error creating media tile pixbuf: {img_url}");
@@ -202,4 +243,56 @@ impl Component for MediaDetailsHeader {
             }
         }
     }
+}
+
+// Keep away from this accursed function
+async fn get_next_episode_btn_label(
+    api_client: &Arc<ApiClient>,
+    item: &GetItemRes,
+    media: &Media,
+) -> String {
+    let verb = if media.user_data.playback_position_ticks == 0 {
+        "Play"
+    } else {
+        "Resume"
+    }
+    .to_string();
+
+    if !(matches!(media.media_type, ItemType::Episode)
+        || matches!(media.media_type, ItemType::Series))
+    {
+        return verb;
+    }
+
+    if let (Some(parent_index_number), Some(index_number)) =
+        (&media.parent_index_number, &media.index_number)
+    {
+        return format!("{verb} S{parent_index_number}:E{index_number}");
+    }
+
+    let next_up = match api_client
+        .get_next_up(
+            GetNextUpOptionsBuilder::default()
+                .series_id(&item.id)
+                .build()
+                .unwrap(),
+        )
+        .await
+        .map(|next_up| {
+            if !next_up.is_empty() {
+                return Some(next_up[0].clone());
+            }
+            None
+        }) {
+        Ok(Some(next_up)) => next_up,
+        _ => return verb,
+    };
+
+    if let (Some(parent_index_number), Some(index_number)) =
+        (&next_up.parent_index_number, &next_up.index_number)
+    {
+        return format!("{verb} S{parent_index_number}:E{index_number}");
+    }
+
+    "Play next episode".to_string()
 }
