@@ -159,14 +159,14 @@ impl Component for MediaDetailsHeader {
                                 set_orientation: gtk::Orientation::Horizontal,
                                 set_spacing: 8,
 
+                                gtk::Image::from_icon_name("play-filled"),
+
                                 if model.play_next_label.is_some() {
                                     gtk::Label {
                                         #[watch]
                                         set_label: model.play_next_label.as_ref().unwrap(),
                                     }
                                 } else { gtk::Spinner { set_spinning: true } },
-
-                                gtk::Image::from_icon_name("play-filled"),
                             },
                         },
                     },
