@@ -50,6 +50,9 @@ impl SimpleComponent for VideoPlayerControls {
             add_css_class: "toolbar",
             add_css_class: "osd",
             add_css_class: "video-player-controls",
+            set_margin_start: 24,
+            set_margin_end: 24,
+            set_margin_bottom: 24,
 
             #[name = "second_row"]
             gtk::Box {},
