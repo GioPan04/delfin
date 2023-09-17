@@ -1224,7 +1224,6 @@ dependencies = [
  "gstreamer-play",
  "regex",
  "relm4",
- "relm4-components",
  "relm4-icons",
  "reqwest",
  "serde",
@@ -1819,18 +1818,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "relm4-components"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "29a7265580b2a185254b9f129bff5fdca11a00730a6e075628c93502a4eced81"
-dependencies = [
- "once_cell",
- "relm4",
- "reqwest",
- "tracker",
-]
-
-[[package]]
 name = "relm4-icons"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2339,26 +2326,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0955b8137a1df6f1a2e9a37d8a6656291ff0297c1a97c24e0d8425fe2312f79a"
 dependencies = [
  "once_cell",
-]
-
-[[package]]
-name = "tracker"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff9636d15e370187f6bf55b79ce62ebf4221998bc0ba1774d7fa208b007f6bf8"
-dependencies = [
- "tracker-macros",
-]
-
-[[package]]
-name = "tracker-macros"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca029746fbe0efda3298205de77bf759d7fef23ac97902641e0b49a623b0455f"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.18",
 ]
 
 [[package]]
