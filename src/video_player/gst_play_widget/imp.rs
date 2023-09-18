@@ -35,6 +35,7 @@ impl ObjectImpl for GstVideoPlayer {
 
         self.parent_constructed();
         let obj = self.obj();
+        obj.add_css_class("gst-video-player");
         obj.set_hexpand(true);
         obj.set_vexpand(true);
 
@@ -75,8 +76,12 @@ fn load_css() {
     let provider = gtk::CssProvider::new();
     provider.load_from_data(
         r#"
-        .gst-video-player__video-out {
+        .gst-video-player {
             background: black;
+        }
+
+        .gst-video-player__video-out {
+            border-radius: 12px;
         }
     "#,
     );
