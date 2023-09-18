@@ -25,9 +25,9 @@ impl SimpleComponent for PlayPause {
         gtk::Button {
             #[watch]
             set_icon_name: if model.playing {
-                "media-playback-pause"
+                "pause-filled"
             } else {
-                "media-playback-start"
+                "play-filled"
             },
             #[watch]
             set_tooltip_text: Some(if model.playing {

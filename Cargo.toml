@@ -27,6 +27,7 @@ relm4-icons = { version = "0.7.0-alpha.2", features = [
   "music-note-single",
   "star-large",
   "play-filled",
+  "pause-filled",
 ] }
 reqwest = { version = "0.11.20", features = ["json"] }
 serde = { version = "1.0.188", features = ["derive"] }

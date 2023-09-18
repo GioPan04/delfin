@@ -120,7 +120,7 @@ impl AsyncComponent for MediaTile {
 
                     #[wrap(Some)]
                     set_center_widget = &gtk::Image {
-                        set_from_icon_name: Some("media-playback-start"),
+                        set_from_icon_name: Some("play-filled"),
 
                         set_halign: gtk::Align::Center,
                         set_valign: gtk::Align::Center,
