@@ -1,5 +1,7 @@
+use std::collections::VecDeque;
+
 use anyhow::Result;
-use reqwest::StatusCode;
+use reqwest::{StatusCode, Url};
 use serde::{Deserialize, Serialize};
 
 use crate::jellyfin_api::{
@@ -62,4 +64,20 @@ pub async fn authenticate_by_name(
             anyhow::bail!("Error signing in.");
         }
     }
+}
+
+pub async fn get_user_avatar(url: &str, user_id: &str) -> Result<VecDeque<u8>> {
+    let client = get_unauthed_client();
+
+    let url = httpify(url);
+    let url = Url::parse(&url)?.join(&format!("Users/{user_id}/Images/Primary?width=40"))?;
+
+    Ok(client
+        .get(url)
+        .send()
+        .await?
+        .bytes()
+        .await?
+        .into_iter()
+        .collect())
 }

@@ -112,7 +112,9 @@ impl Component for AccountList {
 
                 self.accounts.guard().clear();
                 for account in &server.accounts {
-                    self.accounts.guard().push_back(account.clone());
+                    self.accounts
+                        .guard()
+                        .push_back((self.server.url.clone(), account.clone()));
                 }
             }
             AccountListInput::AddAccount => {
@@ -130,7 +132,9 @@ impl Component for AccountList {
                     username: auth_info.user.name,
                     access_token: auth_info.access_token,
                 };
-                self.accounts.guard().push_front(account.clone());
+                self.accounts
+                    .guard()
+                    .push_front((self.server.url.clone(), account.clone()));
                 let mut config = self.config.write().unwrap();
                 let server = config.servers.iter_mut().find(|s| s.id == self.server.id);
                 if let Some(server) = server {
