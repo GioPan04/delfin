@@ -8,7 +8,9 @@ use relm4::{
     view, AsyncComponentSender,
 };
 
-use crate::jellyfin_api::{api_client::ApiClient, models::media::Media};
+use crate::jellyfin_api::{
+    api::shows::GetEpisodesOptionsBuilder, api_client::ApiClient, models::media::Media,
+};
 
 use super::episode::Episode;
 
@@ -65,7 +67,13 @@ impl AsyncComponent for Episodes {
         } = init;
 
         let episodes = api_client
-            .get_episodes(&series_id, &season.id)
+            .get_episodes(
+                &GetEpisodesOptionsBuilder::default()
+                    .series_id(series_id)
+                    .season_id(season.id)
+                    .build()
+                    .unwrap(),
+            )
             .await
             .unwrap();
 

@@ -6,6 +6,8 @@ use relm4::{gtk, ComponentParts};
 use relm4::{prelude::*, JoinHandle};
 
 use crate::config::{Config, Server};
+use crate::jellyfin_api::api::item::ItemType;
+use crate::jellyfin_api::api::shows::GetEpisodesOptionsBuilder;
 use crate::jellyfin_api::{api::item::get_stream_url, api_client::ApiClient, models::media::Media};
 use crate::utils::ticks::ticks_to_seconds;
 use crate::video_player::controls::video_player_controls::{
@@ -40,12 +42,17 @@ pub enum VideoPlayerOutput {
     NavigateBack,
 }
 
+#[derive(Debug)]
+pub enum VideoPlayerCommandOutput {
+    LoadedNextPrev((Option<Media>, Option<Media>)),
+}
+
 #[relm4::component(pub)]
 impl Component for VideoPlayer {
     type Init = Arc<RwLock<Config>>;
     type Input = VideoPlayerInput;
     type Output = VideoPlayerOutput;
-    type CommandOutput = ();
+    type CommandOutput = VideoPlayerCommandOutput;
 
     view! {
         #[name = "toaster"]
@@ -214,6 +221,8 @@ impl Component for VideoPlayer {
                 ));
 
                 self.api_client = Some(api_client);
+
+                self.fetch_next_prev(&sender, &media);
             }
             VideoPlayerInput::ToggleControls => {
                 self.show_controls = !self.show_controls;
@@ -258,5 +267,72 @@ impl Component for VideoPlayer {
         }
 
         self.update_view(widgets, sender);
+    }
+
+    fn update_cmd(
+        &mut self,
+        message: Self::CommandOutput,
+        _sender: ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match message {
+            VideoPlayerCommandOutput::LoadedNextPrev((prev, next)) => {
+                if let Some(controls) = self.controls.get() {
+                    controls.emit(VideoPlayerControlsInput::SetNextPreviousEpisodes(
+                        Box::new(prev),
+                        Box::new(next),
+                    ));
+                }
+            }
+        }
+    }
+}
+
+impl VideoPlayer {
+    fn fetch_next_prev(&self, sender: &ComponentSender<Self>, media: &Media) {
+        if let (Some(api_client), ItemType::Episode, Some(series_id)) =
+            (&self.api_client, &media.item_type, &media.series_id)
+        {
+            sender.oneshot_command({
+                let api_client = api_client.clone();
+                let series_id = series_id.clone();
+                let episode_id = media.id.clone();
+                async move {
+                    let res = match api_client
+                        .get_episodes(
+                            &GetEpisodesOptionsBuilder::default()
+                                .series_id(series_id)
+                                .adjacent_to(&episode_id)
+                                .is_missing(false)
+                                .is_virtual_unaired(false)
+                                .build()
+                                .unwrap(),
+                        )
+                        .await
+                    {
+                        Ok(res) => res,
+                        _ => {
+                            return VideoPlayerCommandOutput::LoadedNextPrev((None, None));
+                        }
+                    };
+
+                    match &res[..] {
+                        [prev, _, next] => VideoPlayerCommandOutput::LoadedNextPrev((
+                            Some(prev.clone()),
+                            Some(next.clone()),
+                        )),
+                        [prev, cur] if cur.id == episode_id => {
+                            VideoPlayerCommandOutput::LoadedNextPrev((Some(prev.clone()), None))
+                        }
+                        [cur, next] if cur.id == episode_id => {
+                            VideoPlayerCommandOutput::LoadedNextPrev((None, Some(next.clone())))
+                        }
+                        _ => VideoPlayerCommandOutput::LoadedNextPrev((None, None)),
+                    }
+                }
+            });
+        }
+
+        sender.oneshot_command(async { VideoPlayerCommandOutput::LoadedNextPrev((None, None)) });
     }
 }
