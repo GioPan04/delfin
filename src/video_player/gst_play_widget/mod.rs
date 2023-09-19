@@ -57,10 +57,9 @@ impl GstVideoPlayer {
         player.stop();
     }
 
-    pub fn seek(&self, seconds: usize) {
+    pub fn seek(&self, time: ClockTime) {
         let imp = self.imp();
         let player = imp.player.get().unwrap();
-        let time = ClockTime::from_seconds(seconds as u64);
         player.seek(time);
     }
 

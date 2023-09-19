@@ -4,7 +4,11 @@ use crate::{
     app::APP_BROKER,
     jellyfin_api::models::media::Media,
     video_player::{
-        controls::next_prev_episode::NextPrevEpisodeDirection, gst_play_widget::GstVideoPlayer,
+        controls::{
+            next_prev_episode::NextPrevEpisodeDirection,
+            skip_forwards_backwards::SkipForwardsBackwardsDirection,
+        },
+        gst_play_widget::GstVideoPlayer,
     },
 };
 use gtk::prelude::*;
@@ -16,6 +20,7 @@ use super::{
     next_prev_episode::{NextPrevEpisode, NextPrevEpisodeInput, NextPrevEpisodeOutput},
     play_pause::PlayPause,
     scrubber::Scrubber,
+    skip_forwards_backwards::SkipForwardsBackwards,
     subtitles::{Subtitles, SubtitlesInput},
     volume::Volume,
 };
@@ -26,6 +31,10 @@ pub struct VideoPlayerControls {
     // We need to keep these controllers around, even if we don't read them
     _scrubber: Option<Controller<Scrubber>>,
     _play_pause: Option<Controller<PlayPause>>,
+    _skip_forwards_backwards: OnceCell<(
+        Controller<SkipForwardsBackwards>,
+        Controller<SkipForwardsBackwards>,
+    )>,
     next_prev_episode_controls:
         OnceCell<(Controller<NextPrevEpisode>, Controller<NextPrevEpisode>)>,
     _volume: Option<Controller<Volume>>,
@@ -84,6 +93,7 @@ impl SimpleComponent for VideoPlayerControls {
 
         let mut model = VideoPlayerControls {
             show_controls: default_show_controls,
+            _skip_forwards_backwards: OnceCell::new(),
             next_prev_episodes: (None, None),
             _scrubber: None,
             _play_pause: None,
@@ -108,9 +118,23 @@ impl SimpleComponent for VideoPlayerControls {
             });
         second_row.append(prev_episode.widget());
 
+        let skip_backwards = SkipForwardsBackwards::builder()
+            .launch((SkipForwardsBackwardsDirection::Backwards, player.clone()))
+            .detach();
+        second_row.append(skip_backwards.widget());
+
         let play_pause = PlayPause::builder().launch(player.clone()).detach();
         second_row.append(play_pause.widget());
         model._play_pause = Some(play_pause);
+
+        let skip_forwards = SkipForwardsBackwards::builder()
+            .launch((SkipForwardsBackwardsDirection::Forwards, player.clone()))
+            .detach();
+        second_row.append(skip_forwards.widget());
+        model
+            ._skip_forwards_backwards
+            .set((skip_backwards, skip_forwards))
+            .unwrap();
 
         let next_episode = NextPrevEpisode::builder()
             .launch(NextPrevEpisodeDirection::Next)

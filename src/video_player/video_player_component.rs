@@ -1,6 +1,7 @@
 use std::cell::OnceCell;
 use std::sync::{Arc, RwLock};
 
+use gst::ClockTime;
 use gtk::prelude::*;
 use relm4::{gtk, ComponentParts};
 use relm4::{prelude::*, JoinHandle};
@@ -195,7 +196,7 @@ impl Component for VideoPlayer {
                 video_player.play_uri(&url);
 
                 let playback_position = ticks_to_seconds(media.user_data.playback_position_ticks);
-                video_player.seek(playback_position);
+                video_player.seek(ClockTime::from_seconds(playback_position as u64));
 
                 if let Some(controls) = self.controls.get() {
                     controls.emit(VideoPlayerControlsInput::SetPlaying(Box::new(

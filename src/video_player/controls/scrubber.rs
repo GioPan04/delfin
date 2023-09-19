@@ -166,7 +166,7 @@ impl Component for Scrubber {
                     self.scrubber_moving_position_binding = None;
 
                     let video_player = self.video_player.get().unwrap();
-                    video_player.seek(scrubber.value() as usize);
+                    video_player.seek(ClockTime::from_seconds(scrubber.value() as u64));
                 }
             }
 
