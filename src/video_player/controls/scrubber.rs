@@ -29,6 +29,7 @@ impl DurationDisplay {
 
 pub(crate) struct Scrubber {
     video_player: OnceCell<GstVideoPlayer>,
+    loading: bool,
     position: u64,
     duration: u64,
     scrubber_being_moved: bool,
@@ -41,6 +42,7 @@ pub(crate) struct Scrubber {
 #[derive(Debug)]
 pub enum ScrubberInput {
     Reset,
+    SetPlaying,
     SetScrubberBeingMoved(bool),
     ToggleDurationDisplay,
     SetPosition(gst::ClockTime),
@@ -73,6 +75,8 @@ impl Component for Scrubber {
                 set_value: model.position as f64,
                 #[watch]
                 set_range: (0.0, model.duration as f64),
+                #[watch]
+                set_sensitive: !model.loading,
 
                 add_controller = gtk::GestureClick {
                     connect_pressed[sender] => move |_, _, _, _| {
@@ -112,6 +116,7 @@ impl Component for Scrubber {
 
         let model = Scrubber {
             video_player: video_player.clone(),
+            loading: true,
             position: 0,
             duration: 0,
             scrubber_being_moved: false,
@@ -155,9 +160,13 @@ impl Component for Scrubber {
     ) {
         match message {
             ScrubberInput::Reset => {
+                self.loading = true;
                 self.position = 0;
                 self.duration = 0;
                 self.scrubber_being_moved = false;
+            }
+            ScrubberInput::SetPlaying => {
+                self.loading = false;
             }
             ScrubberInput::SetScrubberBeingMoved(scrubber_being_moved) => {
                 self.scrubber_being_moved = scrubber_being_moved;

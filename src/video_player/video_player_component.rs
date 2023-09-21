@@ -344,6 +344,7 @@ impl VideoPlayer {
                 SKIP_BACKWARDS_BROKER.send(SkipForwardsBackwardsInput::SetLoading(true));
             }
             VideoPlayerState::Playing { paused } => {
+                SCRUBBER_BROKER.send(ScrubberInput::SetPlaying);
                 PLAY_PAUSE_BROKER.send(PlayPauseInput::SetPlaying(!paused));
                 SKIP_FORWARDS_BROKER.send(SkipForwardsBackwardsInput::SetLoading(false));
                 SKIP_BACKWARDS_BROKER.send(SkipForwardsBackwardsInput::SetLoading(false));
