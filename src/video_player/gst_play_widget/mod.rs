@@ -4,7 +4,7 @@ use std::cell::OnceCell;
 
 use gst::glib::{Error, SignalHandlerId};
 use gst::{ClockTime, Structure};
-use gstplay::{PlayAudioInfo, PlayMediaInfo, PlaySubtitleInfo};
+use gstplay::{PlayAudioInfo, PlayMediaInfo, PlayState, PlaySubtitleInfo};
 use gtk::glib;
 use gtk::subclass::prelude::*;
 use relm4::gtk;
@@ -122,6 +122,17 @@ impl GstVideoPlayer {
         player.set_audio_track(stream_index)
     }
 
+    pub fn connect_state_changed<F>(&self, callback: F) -> SignalHandlerId
+    where
+        F: Fn(&PlayState) + Send + 'static,
+    {
+        let imp = self.imp();
+        let signal_adapter = imp.signal_adapter.get().unwrap();
+        signal_adapter.connect_state_changed(move |_, play_state| {
+            callback(&play_state);
+        })
+    }
+
     pub fn connect_end_of_stream<F>(&self, callback: F) -> SignalHandlerId
     where
         F: Fn() + Send + 'static,
@@ -145,19 +156,6 @@ impl GstVideoPlayer {
 
         signal_adapter.connect_error(move |_, error, structure| {
             callback(error, structure);
-        })
-    }
-
-    pub fn connect_buffering<F>(&self, callback: F) -> SignalHandlerId
-    where
-        F: Fn(i32) + Send + 'static,
-    {
-        let imp = self.imp();
-
-        let signal_adapter = imp.signal_adapter.get().unwrap();
-
-        signal_adapter.connect_buffering(move |_, progress| {
-            callback(progress);
         })
     }
 

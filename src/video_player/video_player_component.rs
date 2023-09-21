@@ -2,6 +2,7 @@ use std::cell::OnceCell;
 use std::sync::{Arc, RwLock};
 
 use gst::ClockTime;
+use gstplay::PlayState;
 use gtk::prelude::*;
 use relm4::{gtk, ComponentParts};
 use relm4::{prelude::*, JoinHandle};
@@ -26,7 +27,14 @@ pub struct VideoPlayer {
     api_client: Option<Arc<ApiClient>>,
     show_controls: bool,
     session_reporting_handle: Option<JoinHandle<()>>,
-    buffering: bool,
+    player_state: VideoPlayerState,
+}
+
+#[derive(Debug, Clone, Copy)]
+enum VideoPlayerState {
+    Loading,
+    Buffering,
+    Playing { paused: bool },
 }
 
 #[derive(Debug)]
@@ -34,8 +42,8 @@ pub enum VideoPlayerInput {
     Toast(String),
     PlayVideo(Arc<ApiClient>, Server, Box<Media>),
     ToggleControls,
-    SetBuffering(bool),
     ExitPlayer,
+    PlayerStateChanged(PlayState),
 }
 
 #[derive(Debug)]
@@ -96,7 +104,7 @@ impl Component for VideoPlayer {
                 #[name = "spinner"]
                 add_overlay = &gtk::Spinner {
                     #[watch]
-                    set_visible: model.buffering,
+                    set_visible: matches!(model.player_state, VideoPlayerState::Loading | VideoPlayerState::Buffering),
                     set_spinning: true,
                     set_halign: gtk::Align::Center,
                     set_valign: gtk::Align::Center,
@@ -126,15 +134,15 @@ impl Component for VideoPlayer {
             api_client: None,
             show_controls,
             session_reporting_handle: None,
-            buffering: false,
+            player_state: VideoPlayerState::Loading,
         };
 
         let video_player = GstVideoPlayer::new();
 
-        video_player.connect_buffering({
+        video_player.connect_state_changed({
             let sender = sender.clone();
-            move |progress| {
-                sender.input(VideoPlayerInput::SetBuffering(progress != 100));
+            move |play_state| {
+                sender.input(VideoPlayerInput::PlayerStateChanged(*play_state));
             }
         });
 
@@ -191,6 +199,8 @@ impl Component for VideoPlayer {
             VideoPlayerInput::PlayVideo(api_client, server, media) => {
                 let video_player = &widgets.video_player;
 
+                self.set_player_state(VideoPlayerState::Loading);
+
                 self.media = Some(*media.clone());
                 let url = get_stream_url(&server, &media.id);
                 video_player.play_uri(&url);
@@ -232,7 +242,6 @@ impl Component for VideoPlayer {
                     self.show_controls,
                 ));
             }
-            VideoPlayerInput::SetBuffering(buffering) => self.buffering = buffering,
             VideoPlayerInput::ExitPlayer => {
                 widgets.video_player.stop();
                 let position = widgets.video_player.position();
@@ -265,6 +274,20 @@ impl Component for VideoPlayer {
 
                 sender.output(VideoPlayerOutput::NavigateBack).unwrap();
             }
+            VideoPlayerInput::PlayerStateChanged(play_state) => {
+                match (&self.player_state, play_state) {
+                    (_, PlayState::Playing) => {
+                        self.set_player_state(VideoPlayerState::Playing { paused: false });
+                    }
+                    (_, PlayState::Paused) => {
+                        self.set_player_state(VideoPlayerState::Playing { paused: true });
+                    }
+                    (VideoPlayerState::Playing { paused: _ }, PlayState::Buffering) => {
+                        self.set_player_state(VideoPlayerState::Buffering);
+                    }
+                    _ => {}
+                }
+            }
         }
 
         self.update_view(widgets, sender);
@@ -290,6 +313,10 @@ impl Component for VideoPlayer {
 }
 
 impl VideoPlayer {
+    fn set_player_state(&mut self, state: VideoPlayerState) {
+        self.player_state = state;
+    }
+
     fn fetch_next_prev(&self, sender: &ComponentSender<Self>, media: &Media) {
         if let (Some(api_client), ItemType::Episode, Some(series_id)) =
             (&self.api_client, &media.item_type, &media.series_id)
