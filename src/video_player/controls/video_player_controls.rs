@@ -5,7 +5,7 @@ use crate::{
     jellyfin_api::models::media::Media,
     video_player::{
         controls::{
-            next_prev_episode::NextPrevEpisodeDirection,
+            next_prev_episode::NextPrevEpisodeDirection, play_pause::PLAY_PAUSE_BROKER,
             skip_forwards_backwards::SkipForwardsBackwardsDirection,
         },
         gst_play_widget::GstVideoPlayer,
@@ -123,7 +123,9 @@ impl SimpleComponent for VideoPlayerControls {
             .detach();
         second_row.append(skip_backwards.widget());
 
-        let play_pause = PlayPause::builder().launch(player.clone()).detach();
+        let play_pause = PlayPause::builder()
+            .launch_with_broker(player.clone(), &PLAY_PAUSE_BROKER)
+            .detach();
         second_row.append(play_pause.widget());
         model._play_pause = Some(play_pause);
 

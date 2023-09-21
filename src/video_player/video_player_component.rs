@@ -17,6 +17,7 @@ use crate::video_player::controls::video_player_controls::{
 };
 use crate::video_player::gst_play_widget::GstVideoPlayer;
 
+use super::controls::play_pause::{PlayPauseInput, PLAY_PAUSE_BROKER};
 use super::controls::video_player_controls::VideoPlayerControlsInput;
 use super::session::start_session_reporting;
 
@@ -315,6 +316,14 @@ impl Component for VideoPlayer {
 impl VideoPlayer {
     fn set_player_state(&mut self, state: VideoPlayerState) {
         self.player_state = state;
+
+        #[allow(clippy::single_match)]
+        match state {
+            VideoPlayerState::Playing { paused } => {
+                PLAY_PAUSE_BROKER.send(PlayPauseInput::SetPlaying(!paused));
+            }
+            _ => {}
+        }
     }
 
     fn fetch_next_prev(&self, sender: &ComponentSender<Self>, media: &Media) {

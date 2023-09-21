@@ -1,21 +1,24 @@
 use std::cell::OnceCell;
 
 use gtk::prelude::*;
-use relm4::{gtk, ComponentParts, ComponentSender, SimpleComponent};
+use relm4::{gtk, ComponentParts, ComponentSender, MessageBroker, SimpleComponent};
 
 use crate::video_player::gst_play_widget::GstVideoPlayer;
 
-pub struct PlayPause {
+pub(crate) struct PlayPause {
     video_player: OnceCell<GstVideoPlayer>,
     playing: bool,
 }
 
+pub static PLAY_PAUSE_BROKER: MessageBroker<PlayPauseInput> = MessageBroker::new();
+
 #[derive(Debug)]
 pub enum PlayPauseInput {
     TogglePlaying,
+    SetPlaying(bool),
 }
 
-#[relm4::component(pub)]
+#[relm4::component(pub(crate))]
 impl SimpleComponent for PlayPause {
     type Init = OnceCell<GstVideoPlayer>;
     type Input = PlayPauseInput;
@@ -68,6 +71,9 @@ impl SimpleComponent for PlayPause {
                         self.playing = true;
                     }
                 }
+            }
+            PlayPauseInput::SetPlaying(playing) => {
+                self.playing = playing;
             }
         }
     }
