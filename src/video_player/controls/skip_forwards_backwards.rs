@@ -6,6 +6,8 @@ use relm4::{prelude::*, ComponentParts, ComponentSender, MessageBroker, SimpleCo
 
 use crate::video_player::gst_play_widget::GstVideoPlayer;
 
+use super::scrubber::SCRUBBER_BROKER;
+
 pub static SKIP_FORWARDS_BROKER: MessageBroker<SkipForwardsBackwardsInput> = MessageBroker::new();
 pub static SKIP_BACKWARDS_BROKER: MessageBroker<SkipForwardsBackwardsInput> = MessageBroker::new();
 
@@ -85,6 +87,7 @@ impl SimpleComponent for SkipForwardsBackwards {
                                 position.saturating_sub(skip_amount)
                             };
                         player.seek(seek_to);
+                        SCRUBBER_BROKER.send(super::scrubber::ScrubberInput::SetPosition(seek_to));
                     }
                 }
             }
