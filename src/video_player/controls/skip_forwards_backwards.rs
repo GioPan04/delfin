@@ -2,9 +2,12 @@ use std::cell::OnceCell;
 
 use gst::ClockTime;
 use gtk::prelude::*;
-use relm4::{prelude::*, ComponentParts, ComponentSender, SimpleComponent};
+use relm4::{prelude::*, ComponentParts, ComponentSender, MessageBroker, SimpleComponent};
 
 use crate::video_player::gst_play_widget::GstVideoPlayer;
+
+pub static SKIP_FORWARDS_BROKER: MessageBroker<SkipForwardsBackwardsInput> = MessageBroker::new();
+pub static SKIP_BACKWARDS_BROKER: MessageBroker<SkipForwardsBackwardsInput> = MessageBroker::new();
 
 #[derive(Debug)]
 pub(super) enum SkipForwardsBackwardsDirection {
@@ -16,11 +19,13 @@ pub(super) enum SkipForwardsBackwardsDirection {
 pub(super) struct SkipForwardsBackwards {
     direction: SkipForwardsBackwardsDirection,
     player: OnceCell<GstVideoPlayer>,
+    loading: bool,
 }
 
 #[derive(Debug)]
-pub(super) enum SkipForwardsBackwardsInput {
+pub enum SkipForwardsBackwardsInput {
     Skip,
+    SetLoading(bool),
 }
 
 #[relm4::component(pub(super))]
@@ -43,6 +48,8 @@ impl SimpleComponent for SkipForwardsBackwards {
             } else {
                 "Skip backwards"
             }),
+            #[watch]
+            set_sensitive: !model.loading,
 
             connect_clicked[sender] => move |_| {
                 sender.input(SkipForwardsBackwardsInput::Skip);
@@ -56,7 +63,11 @@ impl SimpleComponent for SkipForwardsBackwards {
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let (direction, player) = init;
-        let model = SkipForwardsBackwards { direction, player };
+        let model = SkipForwardsBackwards {
+            direction,
+            player,
+            loading: true,
+        };
         let widgets = view_output!();
         ComponentParts { model, widgets }
     }
@@ -76,6 +87,9 @@ impl SimpleComponent for SkipForwardsBackwards {
                         player.seek(seek_to);
                     }
                 }
+            }
+            SkipForwardsBackwardsInput::SetLoading(loading) => {
+                self.loading = loading;
             }
         }
     }

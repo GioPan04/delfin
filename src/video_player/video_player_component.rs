@@ -12,6 +12,9 @@ use crate::jellyfin_api::api::item::ItemType;
 use crate::jellyfin_api::api::shows::GetEpisodesOptionsBuilder;
 use crate::jellyfin_api::{api::item::get_stream_url, api_client::ApiClient, models::media::Media};
 use crate::utils::ticks::ticks_to_seconds;
+use crate::video_player::controls::skip_forwards_backwards::{
+    SkipForwardsBackwardsInput, SKIP_BACKWARDS_BROKER, SKIP_FORWARDS_BROKER,
+};
 use crate::video_player::controls::video_player_controls::{
     VideoPlayerControls, VideoPlayerControlsInit,
 };
@@ -321,9 +324,14 @@ impl VideoPlayer {
         match state {
             VideoPlayerState::Loading => {
                 SCRUBBER_BROKER.send(ScrubberInput::Reset);
+                PLAY_PAUSE_BROKER.send(PlayPauseInput::SetLoading);
+                SKIP_FORWARDS_BROKER.send(SkipForwardsBackwardsInput::SetLoading(true));
+                SKIP_BACKWARDS_BROKER.send(SkipForwardsBackwardsInput::SetLoading(true));
             }
             VideoPlayerState::Playing { paused } => {
                 PLAY_PAUSE_BROKER.send(PlayPauseInput::SetPlaying(!paused));
+                SKIP_FORWARDS_BROKER.send(SkipForwardsBackwardsInput::SetLoading(false));
+                SKIP_BACKWARDS_BROKER.send(SkipForwardsBackwardsInput::SetLoading(false));
             }
             _ => {}
         }

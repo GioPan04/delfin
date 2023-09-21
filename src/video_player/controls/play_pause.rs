@@ -7,6 +7,7 @@ use crate::video_player::gst_play_widget::GstVideoPlayer;
 
 pub(crate) struct PlayPause {
     video_player: OnceCell<GstVideoPlayer>,
+    loading: bool,
     playing: bool,
 }
 
@@ -15,6 +16,7 @@ pub static PLAY_PAUSE_BROKER: MessageBroker<PlayPauseInput> = MessageBroker::new
 #[derive(Debug)]
 pub enum PlayPauseInput {
     TogglePlaying,
+    SetLoading,
     SetPlaying(bool),
 }
 
@@ -38,6 +40,8 @@ impl SimpleComponent for PlayPause {
             } else {
                 "Play"
             }),
+            #[watch]
+            set_sensitive: !model.loading,
             connect_clicked[sender] => move |_| {
                 sender.input(PlayPauseInput::TogglePlaying);
             },
@@ -51,6 +55,7 @@ impl SimpleComponent for PlayPause {
     ) -> ComponentParts<Self> {
         let model = PlayPause {
             video_player: init,
+            loading: true,
             playing: true,
         };
         let widgets = view_output!();
@@ -72,8 +77,12 @@ impl SimpleComponent for PlayPause {
                     }
                 }
             }
+            PlayPauseInput::SetLoading => {
+                self.loading = true;
+            }
             PlayPauseInput::SetPlaying(playing) => {
                 self.playing = playing;
+                self.loading = false;
             }
         }
     }

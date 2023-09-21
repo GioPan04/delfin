@@ -5,8 +5,12 @@ use crate::{
     jellyfin_api::models::media::Media,
     video_player::{
         controls::{
-            next_prev_episode::NextPrevEpisodeDirection, play_pause::PLAY_PAUSE_BROKER,
-            scrubber::SCRUBBER_BROKER, skip_forwards_backwards::SkipForwardsBackwardsDirection,
+            next_prev_episode::NextPrevEpisodeDirection,
+            play_pause::PLAY_PAUSE_BROKER,
+            scrubber::SCRUBBER_BROKER,
+            skip_forwards_backwards::{
+                SkipForwardsBackwardsDirection, SKIP_BACKWARDS_BROKER, SKIP_FORWARDS_BROKER,
+            },
         },
         gst_play_widget::GstVideoPlayer,
     },
@@ -121,7 +125,10 @@ impl SimpleComponent for VideoPlayerControls {
         second_row.append(prev_episode.widget());
 
         let skip_backwards = SkipForwardsBackwards::builder()
-            .launch((SkipForwardsBackwardsDirection::Backwards, player.clone()))
+            .launch_with_broker(
+                (SkipForwardsBackwardsDirection::Backwards, player.clone()),
+                &SKIP_BACKWARDS_BROKER,
+            )
             .detach();
         second_row.append(skip_backwards.widget());
 
@@ -132,7 +139,10 @@ impl SimpleComponent for VideoPlayerControls {
         model._play_pause = Some(play_pause);
 
         let skip_forwards = SkipForwardsBackwards::builder()
-            .launch((SkipForwardsBackwardsDirection::Forwards, player.clone()))
+            .launch_with_broker(
+                (SkipForwardsBackwardsDirection::Forwards, player.clone()),
+                &SKIP_FORWARDS_BROKER,
+            )
             .detach();
         second_row.append(skip_forwards.widget());
         model
