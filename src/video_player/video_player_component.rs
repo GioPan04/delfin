@@ -49,6 +49,7 @@ pub enum VideoPlayerInput {
     ToggleControls,
     ExitPlayer,
     PlayerStateChanged(PlayState),
+    PositionUpdated,
 }
 
 #[derive(Debug)]
@@ -149,6 +150,11 @@ impl Component for VideoPlayer {
             move |play_state| {
                 sender.input(VideoPlayerInput::PlayerStateChanged(*play_state));
             }
+        });
+
+        video_player.connect_position_updated({
+            let sender = sender.clone();
+            move |_| sender.input(VideoPlayerInput::PositionUpdated)
         });
 
         video_player.connect_end_of_stream({
@@ -281,9 +287,13 @@ impl Component for VideoPlayer {
             }
             VideoPlayerInput::PlayerStateChanged(play_state) => {
                 match (&self.player_state, play_state) {
-                    (_, PlayState::Playing) => {
-                        self.set_player_state(VideoPlayerState::Playing { paused: false });
-                    }
+                    (player_state, PlayState::Playing) => match player_state {
+                        // We switch from Loading to Playing when we get the first position update
+                        VideoPlayerState::Loading => {}
+                        _ => {
+                            self.set_player_state(VideoPlayerState::Playing { paused: false });
+                        }
+                    },
                     (_, PlayState::Paused) => {
                         self.set_player_state(VideoPlayerState::Playing { paused: true });
                     }
@@ -291,6 +301,11 @@ impl Component for VideoPlayer {
                         self.set_player_state(VideoPlayerState::Buffering);
                     }
                     _ => {}
+                }
+            }
+            VideoPlayerInput::PositionUpdated => {
+                if let VideoPlayerState::Loading = self.player_state {
+                    self.set_player_state(VideoPlayerState::Playing { paused: false });
                 }
             }
         }
