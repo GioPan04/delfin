@@ -40,7 +40,8 @@ pub struct Scrubber {
 pub enum ScrubberInput {
     SetScrubberBeingMoved(bool),
     ToggleDurationDisplay,
-    SetPositionDuration(gst::ClockTime, gst::ClockTime),
+    SetPosition(gst::ClockTime),
+    SetDuration(gst::ClockTime),
 }
 
 #[relm4::component(pub)]
@@ -109,7 +110,7 @@ impl Component for Scrubber {
         let model = Scrubber {
             video_player: video_player.clone(),
             position: 0,
-            duration: 100,
+            duration: 0,
             scrubber_being_moved: false,
             duration_display: DurationDisplay::Total,
             scrubber_moving_position_binding: None,
@@ -124,9 +125,18 @@ impl Component for Scrubber {
         settings.set_gtk_primary_button_warps_slider(true);
 
         let video_player = video_player.get().unwrap();
+
         video_player.connect_position_updated({
-            move |position, duration| {
-                sender.input(ScrubberInput::SetPositionDuration(position, duration));
+            let sender = sender.clone();
+            move |position| {
+                sender.input(ScrubberInput::SetPosition(position));
+            }
+        });
+
+        video_player.connect_duration_changed({
+            let sender = sender.clone();
+            move |duration| {
+                sender.input(ScrubberInput::SetDuration(duration));
             }
         });
 
@@ -173,15 +183,17 @@ impl Component for Scrubber {
             ScrubberInput::ToggleDurationDisplay => {
                 self.duration_display = self.duration_display.toggle();
             }
-            ScrubberInput::SetPositionDuration(position, duration) => {
+            ScrubberInput::SetPosition(position) => {
                 let scrubber = &widgets.scrubber;
 
                 if self.scrubber_being_moved {
                     self.position = scrubber.value() as u64;
                 } else {
                     self.position = position.seconds();
-                    self.duration = duration.seconds();
                 }
+            }
+            ScrubberInput::SetDuration(duration) => {
+                self.duration = duration.seconds();
             }
         }
 

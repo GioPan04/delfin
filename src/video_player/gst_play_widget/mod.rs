@@ -2,7 +2,6 @@ mod imp;
 
 use std::cell::OnceCell;
 
-use gst::glib::clone::Downgrade;
 use gst::glib::{Error, SignalHandlerId};
 use gst::{ClockTime, Structure};
 use gstplay::{PlayAudioInfo, PlayMediaInfo, PlaySubtitleInfo};
@@ -164,17 +163,30 @@ impl GstVideoPlayer {
 
     pub fn connect_position_updated<F>(&self, callback: F) -> SignalHandlerId
     where
-        F: Fn(gst::ClockTime, gst::ClockTime) + Send + 'static,
+        F: Fn(ClockTime) + Send + 'static,
     {
         let imp = self.imp();
 
         let signal_adapter = imp.signal_adapter.get().unwrap();
-        let player = imp.player.get().unwrap().downgrade();
 
         signal_adapter.connect_position_updated(move |_, position| {
-            let player = player.upgrade().unwrap();
-            if let (Some(position), Some(duration)) = (position, player.duration()) {
-                callback(position, duration);
+            if let Some(position) = position {
+                callback(position);
+            }
+        })
+    }
+
+    pub fn connect_duration_changed<F>(&self, callback: F) -> SignalHandlerId
+    where
+        F: Fn(ClockTime) + Send + 'static,
+    {
+        let imp = self.imp();
+
+        let signal_adapter = imp.signal_adapter.get().unwrap();
+
+        signal_adapter.connect_duration_changed(move |_, duration| {
+            if let Some(duration) = duration {
+                callback(duration)
             }
         })
     }
