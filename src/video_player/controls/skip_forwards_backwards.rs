@@ -86,8 +86,10 @@ impl SimpleComponent for SkipForwardsBackwards {
                             } else {
                                 position.saturating_sub(skip_amount)
                             };
-                        player.seek(seek_to);
+                        SKIP_FORWARDS_BROKER.send(SkipForwardsBackwardsInput::SetLoading(true));
+                        SKIP_BACKWARDS_BROKER.send(SkipForwardsBackwardsInput::SetLoading(true));
                         SCRUBBER_BROKER.send(super::scrubber::ScrubberInput::SetPosition(seek_to));
+                        player.seek(seek_to);
                     }
                 }
             }
