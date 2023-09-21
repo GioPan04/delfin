@@ -5,10 +5,12 @@ use gst::ClockTime;
 use gtk::{glib, prelude::*};
 use relm4::{
     gtk::{self, ExpressionWatch},
-    Component, ComponentParts,
+    Component, ComponentParts, MessageBroker,
 };
 
 use crate::video_player::gst_play_widget::GstVideoPlayer;
+
+pub static SCRUBBER_BROKER: MessageBroker<ScrubberInput> = MessageBroker::new();
 
 #[derive(Clone, Copy, Debug)]
 enum DurationDisplay {
@@ -25,7 +27,7 @@ impl DurationDisplay {
     }
 }
 
-pub struct Scrubber {
+pub(crate) struct Scrubber {
     video_player: OnceCell<GstVideoPlayer>,
     position: u64,
     duration: u64,
@@ -38,13 +40,14 @@ pub struct Scrubber {
 
 #[derive(Debug)]
 pub enum ScrubberInput {
+    Reset,
     SetScrubberBeingMoved(bool),
     ToggleDurationDisplay,
     SetPosition(gst::ClockTime),
     SetDuration(gst::ClockTime),
 }
 
-#[relm4::component(pub)]
+#[relm4::component(pub(crate))]
 impl Component for Scrubber {
     type Init = OnceCell<GstVideoPlayer>;
     type Input = ScrubberInput;
@@ -151,6 +154,11 @@ impl Component for Scrubber {
         _root: &Self::Root,
     ) {
         match message {
+            ScrubberInput::Reset => {
+                self.position = 0;
+                self.duration = 0;
+                self.scrubber_being_moved = false;
+            }
             ScrubberInput::SetScrubberBeingMoved(scrubber_being_moved) => {
                 self.scrubber_being_moved = scrubber_being_moved;
 

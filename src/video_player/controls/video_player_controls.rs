@@ -6,7 +6,7 @@ use crate::{
     video_player::{
         controls::{
             next_prev_episode::NextPrevEpisodeDirection, play_pause::PLAY_PAUSE_BROKER,
-            skip_forwards_backwards::SkipForwardsBackwardsDirection,
+            scrubber::SCRUBBER_BROKER, skip_forwards_backwards::SkipForwardsBackwardsDirection,
         },
         gst_play_widget::GstVideoPlayer,
     },
@@ -107,7 +107,9 @@ impl SimpleComponent for VideoPlayerControls {
         let widgets = view_output!();
         let second_row = &widgets.second_row;
 
-        let scrubber = Scrubber::builder().launch(player.clone()).detach();
+        let scrubber = Scrubber::builder()
+            .launch_with_broker(player.clone(), &SCRUBBER_BROKER)
+            .detach();
         root.prepend(scrubber.widget());
         model._scrubber = Some(scrubber);
 
