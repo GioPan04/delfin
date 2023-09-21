@@ -165,6 +165,10 @@ impl Component for Scrubber {
                 let scrubber = &widgets.scrubber;
                 let position = &widgets.position;
 
+                if !scrubber_being_moved {
+                    self.position = scrubber.value() as u64;
+                }
+
                 if scrubber_being_moved {
                     self.scrubber_moving_position_binding = Some(
                         scrubber
