@@ -53,6 +53,7 @@ pub enum VideoPlayerInput {
     PlayVideo(Arc<ApiClient>, Server, Box<Media>),
     ToggleControls,
     EndOfStream,
+    ExitPlayer,
     PlayerStateChanged(PlayState),
     PositionUpdated,
 }
@@ -107,7 +108,7 @@ impl Component for VideoPlayer {
                     pack_start = &gtk::Button {
                         set_icon_name: "go-previous",
                         connect_clicked[sender] => move |_| {
-                            sender.input(VideoPlayerInput::EndOfStream);
+                            sender.input(VideoPlayerInput::ExitPlayer);
                         },
                     },
                 },
@@ -272,7 +273,9 @@ impl Component for VideoPlayer {
                     APP_BROKER.send(AppInput::PlayVideo(next.clone()));
                     return;
                 }
-
+                sender.input(VideoPlayerInput::ExitPlayer);
+            }
+            VideoPlayerInput::ExitPlayer => {
                 widgets.video_player.stop();
                 let position = widgets.video_player.position();
 
