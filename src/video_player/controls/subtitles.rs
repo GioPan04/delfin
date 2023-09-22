@@ -1,7 +1,4 @@
-use std::{
-    cell::OnceCell,
-    sync::{Arc, RwLock},
-};
+use std::sync::{Arc, RwLock};
 
 use gstplay::{traits::PlayStreamInfoExt, PlaySubtitleInfo};
 use gtk::prelude::*;
@@ -24,7 +21,7 @@ relm4::new_stateful_action!(
 
 #[derive(Debug)]
 pub struct Subtitles {
-    video_player: OnceCell<GstVideoPlayer>,
+    video_player: Arc<GstVideoPlayer>,
     menu: gio::Menu,
     subtitle_count: Arc<RwLock<Option<usize>>>,
     subtitles_available: bool,
@@ -38,7 +35,7 @@ pub enum SubtitlesInput {
 
 #[relm4::component(pub)]
 impl Component for Subtitles {
-    type Init = OnceCell<GstVideoPlayer>;
+    type Init = Arc<GstVideoPlayer>;
     type Input = SubtitlesInput;
     type Output = ();
     type CommandOutput = ();
@@ -67,26 +64,22 @@ impl Component for Subtitles {
             subtitles_available: false,
         };
 
-        model
-            .video_player
-            .get()
-            .unwrap()
-            .connect_media_info_updated({
-                let subtitle_count = model.subtitle_count.clone();
-                move |media_info| {
-                    let subtitle_streams = media_info.subtitle_streams();
-                    let subtitle_stream_count = subtitle_streams.len();
-                    // subtitle_count keeps track of the current subtitle track count for the
-                    // currently playing media. If a different number is reported we update the
-                    // subtitles menu.
-                    match *subtitle_count.read().unwrap() {
-                        Some(subtitle_count) if subtitle_count == subtitle_stream_count => {}
-                        _ => {
-                            sender.input(SubtitlesInput::SubtitlesUpdated(subtitle_streams));
-                        }
-                    };
-                }
-            });
+        model.video_player.connect_media_info_updated({
+            let subtitle_count = model.subtitle_count.clone();
+            move |media_info| {
+                let subtitle_streams = media_info.subtitle_streams();
+                let subtitle_stream_count = subtitle_streams.len();
+                // subtitle_count keeps track of the current subtitle track count for the
+                // currently playing media. If a different number is reported we update the
+                // subtitles menu.
+                match *subtitle_count.read().unwrap() {
+                    Some(subtitle_count) if subtitle_count == subtitle_stream_count => {}
+                    _ => {
+                        sender.input(SubtitlesInput::SubtitlesUpdated(subtitle_streams));
+                    }
+                };
+            }
+        });
 
         let widgets = view_output!();
 
@@ -95,8 +88,6 @@ impl Component for Subtitles {
                 let video_player = model.video_player.clone();
                 move |_, state, value: Option<i32>| {
                     *state = value;
-
-                    let video_player = video_player.get().unwrap();
 
                     video_player.set_subtitle_track_enabled(value.is_some());
                     if let Some(value) = value {
@@ -160,8 +151,7 @@ impl Component for Subtitles {
                 self.menu.append_section(Some("Subtitle Track"), &subs_menu);
 
                 // Select current subtitle track in menu
-                let player = self.video_player.get().unwrap();
-                if let Some(current_subtitle_track) = player.current_subtitle_track() {
+                if let Some(current_subtitle_track) = self.video_player.current_subtitle_track() {
                     root.activate_action(
                         &format!(
                             "{}.{}",

@@ -1,4 +1,4 @@
-use std::cell::OnceCell;
+use std::sync::Arc;
 
 use gtk::prelude::*;
 use relm4::{gtk, ComponentParts, ComponentSender, MessageBroker, SimpleComponent};
@@ -6,7 +6,7 @@ use relm4::{gtk, ComponentParts, ComponentSender, MessageBroker, SimpleComponent
 use crate::video_player::gst_play_widget::GstVideoPlayer;
 
 pub(crate) struct PlayPause {
-    video_player: OnceCell<GstVideoPlayer>,
+    video_player: Arc<GstVideoPlayer>,
     loading: bool,
     playing: bool,
 }
@@ -22,7 +22,7 @@ pub enum PlayPauseInput {
 
 #[relm4::component(pub(crate))]
 impl SimpleComponent for PlayPause {
-    type Init = OnceCell<GstVideoPlayer>;
+    type Init = Arc<GstVideoPlayer>;
     type Input = PlayPauseInput;
     type Output = ();
 
@@ -49,12 +49,12 @@ impl SimpleComponent for PlayPause {
     }
 
     fn init(
-        init: Self::Init,
+        video_player: Self::Init,
         root: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let model = PlayPause {
-            video_player: init,
+            video_player,
             loading: true,
             playing: true,
         };
@@ -64,19 +64,16 @@ impl SimpleComponent for PlayPause {
 
     fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
         match message {
-            PlayPauseInput::TogglePlaying => {
-                let video_player = self.video_player.get().unwrap();
-                match self.playing {
-                    true => {
-                        video_player.pause();
-                        self.playing = false;
-                    }
-                    false => {
-                        video_player.play();
-                        self.playing = true;
-                    }
+            PlayPauseInput::TogglePlaying => match self.playing {
+                true => {
+                    self.video_player.pause();
+                    self.playing = false;
                 }
-            }
+                false => {
+                    self.video_player.play();
+                    self.playing = true;
+                }
+            },
             PlayPauseInput::SetLoading => {
                 self.loading = true;
             }

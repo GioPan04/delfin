@@ -181,7 +181,7 @@ impl Component for VideoPlayer {
 
         let controls = VideoPlayerControls::builder()
             .launch(VideoPlayerControlsInit {
-                player: OnceCell::from(video_player),
+                player: Arc::new(video_player),
                 default_show_controls: show_controls,
             })
             .detach();

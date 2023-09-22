@@ -1,7 +1,4 @@
-use std::{
-    cell::OnceCell,
-    sync::{Arc, RwLock},
-};
+use std::sync::{Arc, RwLock};
 
 use gstplay::{traits::PlayStreamInfoExt, PlayAudioInfo};
 use gtk::prelude::*;
@@ -24,7 +21,7 @@ relm4::new_stateful_action!(
 
 #[derive(Debug)]
 pub struct AudioTracks {
-    video_player: OnceCell<GstVideoPlayer>,
+    video_player: Arc<GstVideoPlayer>,
     menu: gio::Menu,
     audio_track_count: Arc<RwLock<Option<usize>>>,
     audio_tracks_available: bool,
@@ -38,7 +35,7 @@ pub enum AudioTracksInput {
 
 #[relm4::component(pub)]
 impl Component for AudioTracks {
-    type Init = OnceCell<GstVideoPlayer>;
+    type Init = Arc<GstVideoPlayer>;
     type Input = AudioTracksInput;
     type Output = ();
     type CommandOutput = ();
@@ -64,26 +61,22 @@ impl Component for AudioTracks {
             audio_tracks_available: false,
         };
 
-        model
-            .video_player
-            .get()
-            .unwrap()
-            .connect_media_info_updated({
-                let audio_track_count = model.audio_track_count.clone();
-                move |media_info| {
-                    let audio_tracks = media_info.audio_streams();
-                    let audio_streams_count = audio_tracks.len();
-                    // subtitle_count keeps track of the current subtitle track count for the
-                    // currently playing media. If a different number is reported we update the
-                    // subtitles menu.
-                    match *audio_track_count.read().unwrap() {
-                        Some(audio_track_count) if audio_track_count == audio_streams_count => {}
-                        _ => {
-                            sender.input(AudioTracksInput::AudioTracksUpdated(audio_tracks));
-                        }
-                    };
-                }
-            });
+        model.video_player.connect_media_info_updated({
+            let audio_track_count = model.audio_track_count.clone();
+            move |media_info| {
+                let audio_tracks = media_info.audio_streams();
+                let audio_streams_count = audio_tracks.len();
+                // subtitle_count keeps track of the current subtitle track count for the
+                // currently playing media. If a different number is reported we update the
+                // subtitles menu.
+                match *audio_track_count.read().unwrap() {
+                    Some(audio_track_count) if audio_track_count == audio_streams_count => {}
+                    _ => {
+                        sender.input(AudioTracksInput::AudioTracksUpdated(audio_tracks));
+                    }
+                };
+            }
+        });
 
         let widgets = view_output!();
 
@@ -92,8 +85,6 @@ impl Component for AudioTracks {
                 let video_player = model.video_player.clone();
                 move |_, state, value: Option<i32>| {
                     *state = value;
-
-                    let video_player = video_player.get().unwrap();
 
                     video_player.set_audio_track_enabled(value.is_some());
                     if let Some(value) = value {
@@ -152,8 +143,7 @@ impl Component for AudioTracks {
                     .append_section(Some("Audio Track"), &audio_tracks_menu);
 
                 // Select current audio track in menu
-                let player = self.video_player.get().unwrap();
-                if let Some(current_audio_track) = player.current_audio_track() {
+                if let Some(current_audio_track) = self.video_player.current_audio_track() {
                     root.activate_action(
                         &format!(
                             "{}.{}",

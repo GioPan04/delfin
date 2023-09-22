@@ -1,4 +1,4 @@
-use std::cell::OnceCell;
+use std::sync::Arc;
 
 use glib::closure;
 use gst::ClockTime;
@@ -28,7 +28,7 @@ impl DurationDisplay {
 }
 
 pub(crate) struct Scrubber {
-    video_player: OnceCell<GstVideoPlayer>,
+    video_player: Arc<GstVideoPlayer>,
     loading: bool,
     position: u64,
     duration: u64,
@@ -51,7 +51,7 @@ pub enum ScrubberInput {
 
 #[relm4::component(pub(crate))]
 impl Component for Scrubber {
-    type Init = OnceCell<GstVideoPlayer>;
+    type Init = Arc<GstVideoPlayer>;
     type Input = ScrubberInput;
     type Output = ();
     type CommandOutput = ();
@@ -108,12 +108,10 @@ impl Component for Scrubber {
     }
 
     fn init(
-        init: Self::Init,
+        video_player: Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let video_player = init;
-
         let model = Scrubber {
             video_player: video_player.clone(),
             loading: true,
@@ -131,8 +129,6 @@ impl Component for Scrubber {
         // By default, this would move the scrubber by a set increment
         let settings = scrubber.settings();
         settings.set_gtk_primary_button_warps_slider(true);
-
-        let video_player = video_player.get().unwrap();
 
         video_player.connect_position_updated({
             let sender = sender.clone();
@@ -196,8 +192,8 @@ impl Component for Scrubber {
                     scrubber_moving_position_binding.unwatch();
                     self.scrubber_moving_position_binding = None;
 
-                    let video_player = self.video_player.get().unwrap();
-                    video_player.seek(ClockTime::from_seconds(scrubber.value() as u64));
+                    self.video_player
+                        .seek(ClockTime::from_seconds(scrubber.value() as u64));
                 }
             }
 

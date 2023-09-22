@@ -1,4 +1,4 @@
-use std::cell::OnceCell;
+use std::sync::Arc;
 
 use gtk::prelude::*;
 use relm4::{gtk, ComponentParts, SimpleComponent};
@@ -6,7 +6,7 @@ use relm4::{gtk, ComponentParts, SimpleComponent};
 use crate::video_player::gst_play_widget::GstVideoPlayer;
 
 pub struct Volume {
-    video_player: OnceCell<GstVideoPlayer>,
+    video_player: Arc<GstVideoPlayer>,
     muted: bool,
     volume: f64,
 }
@@ -23,7 +23,7 @@ pub enum VolumeInput {
 
 #[relm4::component(pub)]
 impl SimpleComponent for Volume {
-    type Init = OnceCell<GstVideoPlayer>;
+    type Init = Arc<GstVideoPlayer>;
     type Input = VolumeInput;
     type Output = ();
 
@@ -71,12 +71,10 @@ impl SimpleComponent for Volume {
     }
 
     fn init(
-        init: Self::Init,
+        video_player: Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let video_player = init;
-
         let model = Volume {
             video_player: video_player.clone(),
             muted: false,
@@ -84,8 +82,6 @@ impl SimpleComponent for Volume {
         };
 
         let widgets = view_output!();
-
-        let video_player = video_player.get().unwrap();
 
         video_player.connect_mute_changed({
             let sender = sender.clone();
@@ -104,15 +100,13 @@ impl SimpleComponent for Volume {
     fn update(&mut self, message: Self::Input, _sender: relm4::ComponentSender<Self>) {
         match message {
             VolumeInput::ToggleMute => {
-                let video_player = self.video_player.get().unwrap();
                 self.muted = !self.muted;
-                video_player.set_mute(self.muted);
+                self.video_player.set_mute(self.muted);
             }
             VolumeInput::UpdateMute(muted) => self.muted = muted,
             VolumeInput::SetVolume(volume) => {
-                let video_player = self.video_player.get().unwrap();
                 self.volume = volume;
-                video_player.set_volume(volume);
+                self.video_player.set_volume(volume);
             }
             VolumeInput::UpdateVolume(volume) => self.volume = volume,
         }
