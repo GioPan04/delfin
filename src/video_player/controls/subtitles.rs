@@ -1,4 +1,7 @@
-use std::sync::{Arc, RwLock};
+use std::{
+    rc::Rc,
+    sync::{Arc, RwLock},
+};
 
 use gstplay::{traits::PlayStreamInfoExt, PlaySubtitleInfo};
 use gtk::prelude::*;
@@ -21,7 +24,7 @@ relm4::new_stateful_action!(
 
 #[derive(Debug)]
 pub struct Subtitles {
-    video_player: Arc<GstVideoPlayer>,
+    video_player: Rc<GstVideoPlayer>,
     menu: gio::Menu,
     subtitle_count: Arc<RwLock<Option<usize>>>,
     subtitles_available: bool,
@@ -35,7 +38,7 @@ pub enum SubtitlesInput {
 
 #[relm4::component(pub)]
 impl Component for Subtitles {
-    type Init = Arc<GstVideoPlayer>;
+    type Init = Rc<GstVideoPlayer>;
     type Input = SubtitlesInput;
     type Output = ();
     type CommandOutput = ();

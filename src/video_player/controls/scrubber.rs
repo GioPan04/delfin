@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::rc::Rc;
 
 use glib::closure;
 use gst::ClockTime;
@@ -28,7 +28,7 @@ impl DurationDisplay {
 }
 
 pub(crate) struct Scrubber {
-    video_player: Arc<GstVideoPlayer>,
+    video_player: Rc<GstVideoPlayer>,
     loading: bool,
     position: u64,
     duration: u64,
@@ -51,7 +51,7 @@ pub enum ScrubberInput {
 
 #[relm4::component(pub(crate))]
 impl Component for Scrubber {
-    type Init = Arc<GstVideoPlayer>;
+    type Init = Rc<GstVideoPlayer>;
     type Input = ScrubberInput;
     type Output = ();
     type CommandOutput = ();

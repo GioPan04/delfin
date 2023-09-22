@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, sync::Arc};
+use std::{collections::VecDeque, rc::Rc};
 
 use gtk::prelude::*;
 use relm4::{
@@ -54,7 +54,7 @@ pub(crate) enum NextUpCommandOutput {
 
 #[relm4::component(pub(crate))]
 impl Component for NextUp {
-    type Init = Arc<GstVideoPlayer>;
+    type Init = Rc<GstVideoPlayer>;
     type Input = NextUpInput;
     type Output = ();
     type CommandOutput = NextUpCommandOutput;

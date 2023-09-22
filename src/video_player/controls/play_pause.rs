@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::rc::Rc;
 
 use gtk::prelude::*;
 use relm4::{gtk, ComponentParts, ComponentSender, MessageBroker, SimpleComponent};
@@ -6,7 +6,7 @@ use relm4::{gtk, ComponentParts, ComponentSender, MessageBroker, SimpleComponent
 use crate::video_player::gst_play_widget::GstVideoPlayer;
 
 pub(crate) struct PlayPause {
-    video_player: Arc<GstVideoPlayer>,
+    video_player: Rc<GstVideoPlayer>,
     loading: bool,
     playing: bool,
 }
@@ -22,7 +22,7 @@ pub enum PlayPauseInput {
 
 #[relm4::component(pub(crate))]
 impl SimpleComponent for PlayPause {
-    type Init = Arc<GstVideoPlayer>;
+    type Init = Rc<GstVideoPlayer>;
     type Input = PlayPauseInput;
     type Output = ();
 

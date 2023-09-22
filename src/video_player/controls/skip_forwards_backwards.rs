@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::rc::Rc;
 
 use gst::ClockTime;
 use gtk::prelude::*;
@@ -20,7 +20,7 @@ pub(super) enum SkipForwardsBackwardsDirection {
 #[derive(Debug)]
 pub(super) struct SkipForwardsBackwards {
     direction: SkipForwardsBackwardsDirection,
-    player: Arc<GstVideoPlayer>,
+    player: Rc<GstVideoPlayer>,
     loading: bool,
 }
 
@@ -32,7 +32,7 @@ pub enum SkipForwardsBackwardsInput {
 
 #[relm4::component(pub(super))]
 impl SimpleComponent for SkipForwardsBackwards {
-    type Init = (SkipForwardsBackwardsDirection, Arc<GstVideoPlayer>);
+    type Init = (SkipForwardsBackwardsDirection, Rc<GstVideoPlayer>);
     type Input = SkipForwardsBackwardsInput;
     type Output = ();
 

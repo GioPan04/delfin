@@ -1,4 +1,4 @@
-use std::{cell::OnceCell, sync::Arc};
+use std::{cell::OnceCell, rc::Rc};
 
 use crate::{
     app::APP_BROKER,
@@ -50,7 +50,7 @@ pub struct VideoPlayerControls {
 }
 
 pub struct VideoPlayerControlsInit {
-    pub player: Arc<GstVideoPlayer>,
+    pub player: Rc<GstVideoPlayer>,
     pub default_show_controls: bool,
 }
 

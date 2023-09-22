@@ -1,4 +1,7 @@
-use std::sync::{Arc, RwLock};
+use std::{
+    rc::Rc,
+    sync::{Arc, RwLock},
+};
 
 use gstplay::{traits::PlayStreamInfoExt, PlayAudioInfo};
 use gtk::prelude::*;
@@ -21,7 +24,7 @@ relm4::new_stateful_action!(
 
 #[derive(Debug)]
 pub struct AudioTracks {
-    video_player: Arc<GstVideoPlayer>,
+    video_player: Rc<GstVideoPlayer>,
     menu: gio::Menu,
     audio_track_count: Arc<RwLock<Option<usize>>>,
     audio_tracks_available: bool,
@@ -35,7 +38,7 @@ pub enum AudioTracksInput {
 
 #[relm4::component(pub)]
 impl Component for AudioTracks {
-    type Init = Arc<GstVideoPlayer>;
+    type Init = Rc<GstVideoPlayer>;
     type Input = AudioTracksInput;
     type Output = ();
     type CommandOutput = ();

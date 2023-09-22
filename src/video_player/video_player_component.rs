@@ -1,4 +1,5 @@
 use std::cell::OnceCell;
+use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
 use gst::ClockTime;
@@ -185,7 +186,7 @@ impl Component for VideoPlayer {
         let widgets = view_output!();
         let overlay = &widgets.overlay;
 
-        let video_player = Arc::new(video_player);
+        let video_player = Rc::new(video_player);
 
         let controls = VideoPlayerControls::builder()
             .launch(VideoPlayerControlsInit {

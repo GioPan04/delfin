@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::rc::Rc;
 
 use gtk::prelude::*;
 use relm4::{gtk, ComponentParts, SimpleComponent};
@@ -6,7 +6,7 @@ use relm4::{gtk, ComponentParts, SimpleComponent};
 use crate::video_player::gst_play_widget::GstVideoPlayer;
 
 pub struct Volume {
-    video_player: Arc<GstVideoPlayer>,
+    video_player: Rc<GstVideoPlayer>,
     muted: bool,
     volume: f64,
 }
@@ -23,7 +23,7 @@ pub enum VolumeInput {
 
 #[relm4::component(pub)]
 impl SimpleComponent for Volume {
-    type Init = Arc<GstVideoPlayer>;
+    type Init = Rc<GstVideoPlayer>;
     type Input = VolumeInput;
     type Output = ();
 
