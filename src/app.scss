@@ -68,6 +68,15 @@
       font-weight: normal;
     }
   }
+
+  .next-up {
+    padding: 12px;
+    border-radius: 12px;
+
+    .next-up__thumbnail {
+      border-radius: 6px;
+    }
+  }
 }
 
 .media-details {

@@ -13,6 +13,7 @@ use crate::{
             },
         },
         gst_play_widget::GstVideoPlayer,
+        next_up::NEXT_UP_VISIBILE,
     },
 };
 use gtk::prelude::*;
@@ -30,6 +31,7 @@ use super::{
 };
 
 pub struct VideoPlayerControls {
+    visibility_locked: bool,
     show_controls: bool,
     next_prev_episodes: (Option<Media>, Option<Media>),
     // We need to keep these controllers around, even if we don't read them
@@ -55,6 +57,7 @@ pub struct VideoPlayerControlsInit {
 #[derive(Debug)]
 pub enum VideoPlayerControlsInput {
     SetShowControls(bool),
+    SetVisibilityLocked(bool),
     SetPlaying(Box<Media>),
     SetNextPreviousEpisodes(Box<Option<Media>>, Box<Option<Media>>),
     PlayPreviousEpisode,
@@ -96,6 +99,7 @@ impl SimpleComponent for VideoPlayerControls {
         } = init;
 
         let mut model = VideoPlayerControls {
+            visibility_locked: false,
             show_controls: default_show_controls,
             _skip_forwards_backwards: OnceCell::new(),
             next_prev_episodes: (None, None),
@@ -180,13 +184,25 @@ impl SimpleComponent for VideoPlayerControls {
         second_row.append(fullscreen.widget());
         model._fullscreen = Some(fullscreen);
 
+        NEXT_UP_VISIBILE.subscribe(sender.input_sender(), |visible| {
+            VideoPlayerControlsInput::SetVisibilityLocked(*visible)
+        });
+
         ComponentParts { model, widgets }
     }
 
     fn update(&mut self, message: Self::Input, _sender: relm4::ComponentSender<Self>) {
         match message {
             VideoPlayerControlsInput::SetShowControls(show_controls) => {
-                self.show_controls = show_controls
+                if !self.visibility_locked {
+                    self.show_controls = show_controls
+                }
+            }
+            VideoPlayerControlsInput::SetVisibilityLocked(lock) => {
+                self.visibility_locked = lock;
+                if lock {
+                    self.show_controls = false;
+                }
             }
             VideoPlayerControlsInput::SetPlaying(_) => {
                 if let Some(subtitles) = self.subtitles.get() {

@@ -7,6 +7,7 @@ use gtk::prelude::*;
 use relm4::{gtk, ComponentParts};
 use relm4::{prelude::*, JoinHandle};
 
+use crate::app::{AppInput, APP_BROKER};
 use crate::config::{Config, Server};
 use crate::jellyfin_api::api::item::ItemType;
 use crate::jellyfin_api::api::shows::GetEpisodesOptionsBuilder;
@@ -19,20 +20,24 @@ use crate::video_player::controls::video_player_controls::{
     VideoPlayerControls, VideoPlayerControlsInit,
 };
 use crate::video_player::gst_play_widget::GstVideoPlayer;
+use crate::video_player::next_up::NextUp;
 
 use super::controls::play_pause::{PlayPauseInput, PLAY_PAUSE_BROKER};
 use super::controls::scrubber::{ScrubberInput, SCRUBBER_BROKER};
 use super::controls::video_player_controls::VideoPlayerControlsInput;
+use super::next_up::NextUpInput;
 use super::session::start_session_reporting;
 
 pub struct VideoPlayer {
     config: Arc<RwLock<Config>>,
     controls: OnceCell<Controller<VideoPlayerControls>>,
+    next_up: OnceCell<Controller<NextUp>>,
     media: Option<Media>,
     api_client: Option<Arc<ApiClient>>,
     show_controls: bool,
     session_reporting_handle: Option<JoinHandle<()>>,
     player_state: VideoPlayerState,
+    next: Option<Media>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -47,7 +52,7 @@ pub enum VideoPlayerInput {
     Toast(String),
     PlayVideo(Arc<ApiClient>, Server, Box<Media>),
     ToggleControls,
-    ExitPlayer,
+    EndOfStream,
     PlayerStateChanged(PlayState),
     PositionUpdated,
 }
@@ -102,7 +107,7 @@ impl Component for VideoPlayer {
                     pack_start = &gtk::Button {
                         set_icon_name: "go-previous",
                         connect_clicked[sender] => move |_| {
-                            sender.input(VideoPlayerInput::ExitPlayer);
+                            sender.input(VideoPlayerInput::EndOfStream);
                         },
                     },
                 },
@@ -131,16 +136,16 @@ impl Component for VideoPlayer {
 
         let show_controls = true;
 
-        let controls = OnceCell::new();
-
         let model = VideoPlayer {
             config,
             media: None,
-            controls,
+            controls: OnceCell::new(),
+            next_up: OnceCell::new(),
             api_client: None,
             show_controls,
             session_reporting_handle: None,
             player_state: VideoPlayerState::Loading,
+            next: None,
         };
 
         let video_player = GstVideoPlayer::new();
@@ -160,7 +165,7 @@ impl Component for VideoPlayer {
         video_player.connect_end_of_stream({
             let sender = sender.clone();
             move || {
-                sender.input(VideoPlayerInput::ExitPlayer);
+                sender.input(VideoPlayerInput::EndOfStream);
             }
         });
 
@@ -179,18 +184,26 @@ impl Component for VideoPlayer {
         let widgets = view_output!();
         let overlay = &widgets.overlay;
 
+        let video_player = Arc::new(video_player);
+
         let controls = VideoPlayerControls::builder()
             .launch(VideoPlayerControlsInit {
-                player: Arc::new(video_player),
+                player: video_player.clone(),
                 default_show_controls: show_controls,
             })
             .detach();
         overlay.add_overlay(controls.widget());
-
         model
             .controls
             .set(controls)
             .unwrap_or_else(|_| panic!("Failed to set controls"));
+
+        let next_up = NextUp::builder().launch(video_player.clone()).detach();
+        overlay.add_overlay(next_up.widget());
+        model
+            .next_up
+            .set(next_up)
+            .unwrap_or_else(|_| panic!("Failed to set next_up"));
 
         ComponentParts { model, widgets }
     }
@@ -211,6 +224,7 @@ impl Component for VideoPlayer {
                 let video_player = &widgets.video_player;
 
                 self.set_player_state(VideoPlayerState::Loading);
+                self.next = None;
 
                 self.media = Some(*media.clone());
                 let url = get_stream_url(&server, &media.id);
@@ -253,7 +267,12 @@ impl Component for VideoPlayer {
                     self.show_controls,
                 ));
             }
-            VideoPlayerInput::ExitPlayer => {
+            VideoPlayerInput::EndOfStream => {
+                if let Some(next) = &self.next {
+                    APP_BROKER.send(AppInput::PlayVideo(next.clone()));
+                    return;
+                }
+
                 widgets.video_player.stop();
                 let position = widgets.video_player.position();
 
@@ -321,11 +340,18 @@ impl Component for VideoPlayer {
     ) {
         match message {
             VideoPlayerCommandOutput::LoadedNextPrev((prev, next)) => {
+                self.next = next.clone();
+
+                let next = Box::new(next);
                 if let Some(controls) = self.controls.get() {
                     controls.emit(VideoPlayerControlsInput::SetNextPreviousEpisodes(
                         Box::new(prev),
-                        Box::new(next),
+                        next.clone(),
                     ));
+                }
+
+                if let Some(next_up) = self.next_up.get() {
+                    next_up.emit(NextUpInput::SetNextUp(next));
                 }
             }
         }
@@ -342,6 +368,7 @@ impl VideoPlayer {
                 PLAY_PAUSE_BROKER.send(PlayPauseInput::SetLoading);
                 SKIP_FORWARDS_BROKER.send(SkipForwardsBackwardsInput::SetLoading(true));
                 SKIP_BACKWARDS_BROKER.send(SkipForwardsBackwardsInput::SetLoading(true));
+                self.next_up.get().unwrap().emit(NextUpInput::Reset);
             }
             VideoPlayerState::Playing { paused } => {
                 SCRUBBER_BROKER.send(ScrubberInput::SetPlaying);
