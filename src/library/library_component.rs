@@ -1,3 +1,4 @@
+use jellyfin_api::types::BaseItemDto;
 use relm4::ComponentController;
 use std::sync::Arc;
 
@@ -5,9 +6,7 @@ use adw::prelude::*;
 use relm4::{adw, gtk, prelude::*, Component, Controller};
 
 use crate::jellyfin_api::{
-    api::views::UserViews,
-    api_client::ApiClient,
-    models::{display_preferences::DisplayPreferences, media::Media},
+    api::views::UserViews, api_client::ApiClient, models::display_preferences::DisplayPreferences,
 };
 
 use super::home::{Home, HomeInit};
@@ -25,13 +24,13 @@ pub struct Library {
 
 #[derive(Debug)]
 pub enum LibraryInput {
-    MediaSelected(Media),
+    MediaSelected(BaseItemDto),
 }
 
 #[derive(Debug)]
 pub enum LibraryOutput {
     NavigateBack,
-    PlayVideo(Box<Media>),
+    PlayVideo(Box<BaseItemDto>),
 }
 
 #[derive(Debug)]

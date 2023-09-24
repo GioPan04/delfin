@@ -5,6 +5,7 @@ use tokio::{
     task::JoinHandle,
     time::{sleep, Duration},
 };
+use uuid::Uuid;
 
 use crate::{config::Config, jellyfin_api::api_client::ApiClient};
 
@@ -13,11 +14,10 @@ use super::gst_play_widget::GstVideoPlayer;
 pub fn start_session_reporting(
     config: Arc<RwLock<Config>>,
     api_client: Arc<ApiClient>,
-    item_id: &str,
+    item_id: &Uuid,
     video_player: &GstVideoPlayer,
 ) -> JoinHandle<()> {
     let player = video_player.player().get().unwrap().downgrade();
-    let item_id = item_id.to_string();
 
     let position_update_frequency = config
         .read()
@@ -26,6 +26,7 @@ pub fn start_session_reporting(
         .position_update_frequency as u64;
 
     tokio::spawn({
+        let item_id = *item_id;
         async move {
             loop {
                 sleep(Duration::from_secs(position_update_frequency)).await;

@@ -1,5 +1,7 @@
+use jellyfin_api::types::BaseItemDto;
 use relm4::component::AsyncComponentController;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use gtk::prelude::*;
 use relm4::{
@@ -9,24 +11,21 @@ use relm4::{
     view, AsyncComponentSender,
 };
 
-use crate::{
-    jellyfin_api::{api_client::ApiClient, models::media::Media},
-    media_details::season_buttons::SeasonButtons,
-};
+use crate::{jellyfin_api::api_client::ApiClient, media_details::season_buttons::SeasonButtons};
 
 use super::episodes::{Episodes, EpisodesInit};
 
 pub struct Seasons {
     api_client: Arc<ApiClient>,
-    series_id: String,
-    seasons: Vec<Media>,
+    series_id: Uuid,
+    seasons: Vec<BaseItemDto>,
     season_buttons: Option<Controller<SeasonButtons>>,
     episodes: Option<AsyncController<Episodes>>,
 }
 
 pub struct SeasonsInit {
     pub api_client: Arc<ApiClient>,
-    pub series_id: String,
+    pub series_id: Uuid,
 }
 
 #[derive(Debug)]
@@ -123,7 +122,7 @@ impl AsyncComponent for Seasons {
                 let episodes = Episodes::builder()
                     .launch(EpisodesInit {
                         api_client: self.api_client.clone(),
-                        series_id: self.series_id.clone(),
+                        series_id: self.series_id,
                         season,
                     })
                     .detach();

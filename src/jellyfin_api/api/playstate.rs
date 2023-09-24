@@ -1,5 +1,6 @@
 use anyhow::Result;
 use serde::Serialize;
+use uuid::Uuid;
 
 use crate::{jellyfin_api::api_client::ApiClient, utils::ticks::seconds_to_ticks};
 
@@ -42,7 +43,7 @@ impl ApiClient {
     pub async fn report_playback_progress(
         &self,
         event_name: &str,
-        item_id: &str,
+        item_id: &Uuid,
         position_secs: usize,
     ) -> Result<()> {
         let url = self.root.join("Sessions/Playing/Progress").unwrap();
@@ -51,7 +52,7 @@ impl ApiClient {
             .post(url)
             .json(&ReportPlaybackProgressReq {
                 event_name: event_name.into(),
-                item_id: item_id.into(),
+                item_id: item_id.to_string(),
                 position_ticks: seconds_to_ticks(position_secs),
             })
             .send()
@@ -60,13 +61,17 @@ impl ApiClient {
         Ok(())
     }
 
-    pub async fn report_playback_stopped(&self, item_id: &str, position_secs: usize) -> Result<()> {
+    pub async fn report_playback_stopped(
+        &self,
+        item_id: &Uuid,
+        position_secs: usize,
+    ) -> Result<()> {
         let url = self.root.join("Sessions/Playing/Stopped").unwrap();
 
         self.client
             .post(url)
             .json(&ReportPlaybackStoppedReq {
-                item_id: item_id.into(),
+                item_id: item_id.to_string(),
                 position_ticks: seconds_to_ticks(position_secs),
             })
             .send()

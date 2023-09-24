@@ -1,12 +1,13 @@
 use adw::prelude::*;
 use core::fmt;
+use jellyfin_api::types::BaseItemDto;
 use relm4::{prelude::*, MessageBroker};
 use std::sync::{Arc, RwLock};
 
 use crate::{
     accounts::account_list::{AccountList, AccountListInput, AccountListOutput},
     config::{self, Config},
-    jellyfin_api::{api_client::ApiClient, models::media::Media},
+    jellyfin_api::api_client::ApiClient,
     library::library_component::{Library, LibraryOutput},
     media_details::{MediaDetails, MediaDetailsOutput},
     servers::server_list::{ServerList, ServerListOutput},
@@ -16,7 +17,7 @@ use crate::{
 
 #[derive(Debug)]
 pub enum AppBrokerMessage {
-    PlayVideo(Media),
+    PlayVideo(BaseItemDto),
 }
 
 pub static APP_BROKER: MessageBroker<AppInput> = MessageBroker::new();
@@ -72,8 +73,8 @@ pub enum AppInput {
     NavigateBack,
     ServerSelected(config::Server),
     AccountSelected(config::Server, config::Account),
-    ShowDetails(Media),
-    PlayVideo(Media),
+    ShowDetails(BaseItemDto),
+    PlayVideo(BaseItemDto),
 }
 
 #[relm4::component(pub)]
@@ -244,12 +245,12 @@ impl Component for App {
                     sender.input(AppInput::SetPage(AppPage::MediaDetails));
                 }
             }
-            AppInput::PlayVideo(media) => {
+            AppInput::PlayVideo(item) => {
                 if let (Some(api_client), Some(server)) = (&self.api_client, &self.server) {
                     self.video_player.emit(VideoPlayerInput::PlayVideo(
                         api_client.clone(),
                         server.clone(),
-                        Box::new(media),
+                        Box::new(item),
                     ));
                     sender.input(AppInput::SetPage(AppPage::VideoPlayer));
                 }

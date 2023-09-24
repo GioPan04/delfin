@@ -1,6 +1,7 @@
 use std::{collections::VecDeque, matches, sync::Arc};
 
 use adw::{prelude::*, SqueezerTransitionType};
+use jellyfin_api::types::{BaseItemDto, BaseItemKind};
 use relm4::{
     gtk::{gdk::Texture, gdk_pixbuf::Pixbuf},
     prelude::*,
@@ -8,27 +9,23 @@ use relm4::{
 
 use crate::{
     app::APP_BROKER,
-    jellyfin_api::{
-        api::{item::ItemType, latest::GetNextUpOptionsBuilder},
-        api_client::ApiClient,
-        models::media::Media,
-    },
+    jellyfin_api::{api::latest::GetNextUpOptionsBuilder, api_client::ApiClient},
 };
 
 pub const MEDIA_DETAILS_BACKDROP_HEIGHT: i32 = 400;
 
 #[derive(Debug)]
 pub(crate) struct MediaDetailsHeader {
-    media: Media,
+    media: BaseItemDto,
     backdrop: Option<Texture>,
     play_next_label: Option<String>,
-    play_next_media: Option<Media>,
+    play_next_media: Option<BaseItemDto>,
 }
 
 pub(crate) struct MediaDetailsHeaderInit {
     pub(crate) api_client: Arc<ApiClient>,
-    pub(crate) media: Media,
-    pub(crate) item: Media,
+    pub(crate) media: BaseItemDto,
+    pub(crate) item: BaseItemDto,
 }
 
 #[derive(Debug)]
@@ -38,7 +35,7 @@ pub enum MediaDetailsHeaderInput {
 
 #[derive(Debug)]
 pub enum MediaDetailsHeaderCommandOutput {
-    PlayNextLoaded(Box<(String, Option<Media>)>),
+    PlayNextLoaded(Box<(String, Option<BaseItemDto>)>),
     BackdropLoaded(VecDeque<u8>),
 }
 
@@ -134,7 +131,7 @@ impl Component for MediaDetailsHeader {
                         set_spacing: 32,
 
                         gtk::Label {
-                            set_label: title,
+                            set_label: &title,
                             set_valign: gtk::Align::Center,
                             set_ellipsize: gtk::pango::EllipsizeMode::End,
                             add_css_class: "media-details-header-title",
@@ -187,17 +184,7 @@ impl Component for MediaDetailsHeader {
             item,
         } = init;
 
-        let img_url = match &item.backdrop_image_urls {
-            Some(backdrop_image_urls) => {
-                if !backdrop_image_urls.is_empty() {
-                    Some(backdrop_image_urls[0].clone())
-                } else {
-                    None
-                }
-            }
-            _ => None,
-        };
-        if let Some(img_url) = img_url {
+        if let Ok(img_url) = api_client.get_backdrop_url(&item) {
             sender.oneshot_command(async {
                 let img_bytes: VecDeque<u8> = reqwest::get(img_url)
                     .await
@@ -226,11 +213,12 @@ impl Component for MediaDetailsHeader {
             play_next_media: None,
         };
 
-        let title = &model
+        let title = model
             .media
             .series_name
-            .as_ref()
-            .unwrap_or(&model.media.name);
+            .clone()
+            .or(model.media.name.clone())
+            .unwrap_or("Unnamed Item".to_string());
 
         let widgets = view_output!();
 
@@ -271,19 +259,26 @@ impl Component for MediaDetailsHeader {
 // Keep away from this accursed function
 async fn get_play_next(
     api_client: &Arc<ApiClient>,
-    item: &Media,
-    media: &Media,
-) -> (String, Option<Media>) {
-    let verb = if media.user_data.playback_position_ticks == 0 {
+    item: &BaseItemDto,
+    media: &BaseItemDto,
+) -> (String, Option<BaseItemDto>) {
+    let verb = if media
+        .user_data
+        .clone()
+        .and_then(|user_data| user_data.playback_position_ticks)
+        .unwrap_or(0)
+        == 0
+    {
         "Play"
     } else {
         "Resume"
     }
     .to_string();
 
-    if !(matches!(media.item_type, ItemType::Episode)
-        || matches!(media.item_type, ItemType::Series))
-    {
+    if !(matches!(
+        media.type_,
+        Some(BaseItemKind::Episode) | Some(BaseItemKind::Series)
+    )) {
         return (verb, Some(media.clone()));
     }
 
@@ -296,32 +291,34 @@ async fn get_play_next(
         );
     }
 
-    let next_up = match api_client
-        .get_next_up(
-            GetNextUpOptionsBuilder::default()
-                .series_id(&item.id)
-                .build()
-                .unwrap(),
-        )
-        .await
-        .map(|next_up| {
-            if !next_up.is_empty() {
-                return Some(next_up[0].clone());
-            }
-            None
-        }) {
-        Ok(Some(next_up)) => Some(next_up),
-        _ => None,
-    };
+    if let Some(series_id) = item.id {
+        let next_up = match api_client
+            .get_next_up(
+                GetNextUpOptionsBuilder::default()
+                    .series_id(series_id)
+                    .build()
+                    .unwrap(),
+            )
+            .await
+            .map(|next_up| {
+                if !next_up.is_empty() {
+                    return Some(next_up[0].clone());
+                }
+                None
+            }) {
+            Ok(Some(next_up)) => Some(next_up),
+            _ => None,
+        };
 
-    if let Some(next_up) = next_up {
-        if let (Some(parent_index_number), Some(index_number)) =
-            (&next_up.parent_index_number, &next_up.index_number)
-        {
-            return (
-                format!("{verb} S{parent_index_number}:E{index_number}"),
-                Some(next_up),
-            );
+        if let Some(next_up) = next_up {
+            if let (Some(parent_index_number), Some(index_number)) =
+                (&next_up.parent_index_number, &next_up.index_number)
+            {
+                return (
+                    format!("{verb} S{parent_index_number}:E{index_number}"),
+                    Some(next_up),
+                );
+            }
         }
     }
 

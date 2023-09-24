@@ -1,6 +1,7 @@
 use std::{cell::OnceCell, sync::Arc};
 
 use gtk::prelude::*;
+use jellyfin_api::types::{BaseItemDto, BaseItemKind};
 use relm4::{
     component::{AsyncComponent, AsyncComponentController, AsyncComponentParts, AsyncController},
     loading_widgets::LoadingWidgets,
@@ -9,7 +10,7 @@ use relm4::{
 };
 
 use crate::{
-    jellyfin_api::{api::item::ItemType, api_client::ApiClient, models::media::Media},
+    jellyfin_api::api_client::ApiClient,
     media_details::{media_details_header::MediaDetailsHeaderInit, seasons::SeasonsInit},
 };
 
@@ -19,14 +20,14 @@ use super::{
 };
 
 pub struct MediaDetailsContents {
-    item: Media,
+    item: BaseItemDto,
     header: OnceCell<Controller<MediaDetailsHeader>>,
     seasons: Option<AsyncController<Seasons>>,
 }
 
 #[relm4::component(pub async)]
 impl AsyncComponent for MediaDetailsContents {
-    type Init = (Arc<ApiClient>, Media);
+    type Init = (Arc<ApiClient>, BaseItemDto);
     type Input = ();
     type Output = MediaDetailsOutput;
     type CommandOutput = ();
@@ -90,15 +91,13 @@ impl AsyncComponent for MediaDetailsContents {
 
         let mut seasons = None;
 
-        let series_id =
-            media
-                .series_id
-                .clone()
-                .or(if matches!(media.item_type, ItemType::Series) {
-                    Some(media.id.clone())
-                } else {
-                    None
-                });
+        let series_id = media
+            .series_id
+            .or(if let Some(BaseItemKind::Series) = media.type_ {
+                media.id
+            } else {
+                None
+            });
 
         if let Some(series_id) = series_id {
             seasons = Some(
@@ -112,7 +111,7 @@ impl AsyncComponent for MediaDetailsContents {
         }
 
         let item = api_client
-            .get_item(&media.series_id.clone().unwrap_or(media.id.clone()))
+            .get_item(&media.series_id.or(media.id).unwrap())
             .await
             .unwrap();
 
@@ -146,7 +145,7 @@ impl AsyncComponent for MediaDetailsContents {
     }
 }
 
-fn add_info(info_box: &gtk::Box, item: &Media) {
+fn add_info(info_box: &gtk::Box, item: &BaseItemDto) {
     let mut first = true;
 
     let mut add_separator = move |skip_separator: bool| {

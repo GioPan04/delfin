@@ -2,7 +2,6 @@ use std::{cell::OnceCell, rc::Rc};
 
 use crate::{
     app::APP_BROKER,
-    jellyfin_api::models::media::Media,
     video_player::{
         controls::{
             next_prev_episode::NextPrevEpisodeDirection,
@@ -17,6 +16,7 @@ use crate::{
     },
 };
 use gtk::prelude::*;
+use jellyfin_api::types::BaseItemDto;
 use relm4::{gtk, Component, ComponentController, ComponentParts, Controller, SimpleComponent};
 
 use super::{
@@ -33,7 +33,7 @@ use super::{
 pub struct VideoPlayerControls {
     visibility_locked: bool,
     show_controls: bool,
-    next_prev_episodes: (Option<Media>, Option<Media>),
+    next_prev_episodes: (Option<BaseItemDto>, Option<BaseItemDto>),
     // We need to keep these controllers around, even if we don't read them
     _scrubber: Option<Controller<Scrubber>>,
     _play_pause: Option<Controller<PlayPause>>,
@@ -58,8 +58,8 @@ pub struct VideoPlayerControlsInit {
 pub enum VideoPlayerControlsInput {
     SetShowControls(bool),
     SetVisibilityLocked(bool),
-    SetPlaying(Box<Media>),
-    SetNextPreviousEpisodes(Box<Option<Media>>, Box<Option<Media>>),
+    SetPlaying(Box<BaseItemDto>),
+    SetNextPreviousEpisodes(Box<Option<BaseItemDto>>, Box<Option<BaseItemDto>>),
     PlayPreviousEpisode,
     PlayNextEpisode,
 }

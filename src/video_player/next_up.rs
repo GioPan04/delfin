@@ -1,6 +1,7 @@
-use std::{collections::VecDeque, rc::Rc};
+use std::{collections::VecDeque, rc::Rc, sync::Arc};
 
 use gtk::prelude::*;
+use jellyfin_api::types::BaseItemDto;
 use relm4::{
     gtk::{
         gdk::{self, Texture},
@@ -12,7 +13,7 @@ use relm4::{
 
 use crate::{
     app::{AppInput, APP_BROKER},
-    jellyfin_api::models::media::Media,
+    jellyfin_api::api_client::ApiClient,
 };
 
 use super::gst_play_widget::GstVideoPlayer;
@@ -25,7 +26,7 @@ pub(crate) static NEXT_UP_VISIBILE: SharedState<bool> = SharedState::new();
 #[derive(Debug)]
 pub(crate) struct NextUp {
     state: NextUpState,
-    next_up: Option<Media>,
+    next_up: Option<BaseItemDto>,
     duration: Option<gst::ClockTime>,
     thumbnail: Option<Texture>,
 }
@@ -40,7 +41,7 @@ enum NextUpState {
 #[derive(Debug)]
 pub(crate) enum NextUpInput {
     Reset,
-    SetNextUp(Box<Option<Media>>),
+    SetNextUp((Box<Option<BaseItemDto>>, Arc<ApiClient>)),
     SetDuration(gst::ClockTime),
     SetPosition(gst::ClockTime),
     PlayNext,
@@ -158,9 +159,9 @@ impl Component for NextUp {
                 self.duration = None;
                 self.set_visible(false);
             }
-            NextUpInput::SetNextUp(next) => {
+            NextUpInput::SetNextUp((next, api_client)) => {
                 self.next_up = *next;
-                self.fetch_next_up_thumbnail(&sender);
+                self.fetch_next_up_thumbnail(&sender, &api_client);
             }
             NextUpInput::SetDuration(duration) => {
                 self.duration = Some(duration);
@@ -215,20 +216,21 @@ impl NextUp {
         *NEXT_UP_VISIBILE.write() = visible;
     }
 
-    fn fetch_next_up_thumbnail(&mut self, sender: &ComponentSender<Self>) {
+    fn fetch_next_up_thumbnail(&mut self, sender: &ComponentSender<Self>, api_client: &ApiClient) {
         if let Some(next_up) = &self.next_up {
-            let img_url = next_up.image_tags.primary.clone();
-            sender.oneshot_command(async {
-                let img_bytes: VecDeque<u8> = reqwest::get(img_url)
-                    .await
-                    .expect("Error getting media tile image: {img_url}")
-                    .bytes()
-                    .await
-                    .expect("Error getting media tile image bytes: {img_url}")
-                    .into_iter()
-                    .collect();
-                NextUpCommandOutput::SetThumbnail(img_bytes)
-            });
+            if let Ok(img_url) = api_client.get_episode_thumbnail_url(next_up) {
+                sender.oneshot_command(async {
+                    let img_bytes: VecDeque<u8> = reqwest::get(img_url)
+                        .await
+                        .expect("Error getting media tile image: {img_url}")
+                        .bytes()
+                        .await
+                        .expect("Error getting media tile image bytes: {img_url}")
+                        .into_iter()
+                        .collect();
+                    NextUpCommandOutput::SetThumbnail(img_bytes)
+                });
+            }
         }
     }
 }

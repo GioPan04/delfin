@@ -1,8 +1,9 @@
-use std::{cell::OnceCell, collections::VecDeque};
+use std::{cell::OnceCell, collections::VecDeque, sync::Arc};
 
 use adw::prelude::*;
 use gdk::Texture;
 use gtk::{gdk, gdk_pixbuf};
+use jellyfin_api::types::BaseItemDto;
 use relm4::{
     gtk::gdk_pixbuf::{InterpType, Pixbuf},
     prelude::*,
@@ -10,29 +11,25 @@ use relm4::{
 
 use crate::{
     app::{AppInput, APP_BROKER},
-    jellyfin_api::models::media::Media,
+    jellyfin_api::api_client::ApiClient,
 };
 
 pub const EPISODE_THUMBNAIL_SIZE: i32 = 75;
 
 pub(crate) struct Episode {
-    media: Media,
+    media: BaseItemDto,
     thumbnail: OnceCell<Controller<EpisodeThumbnail>>,
 }
 
 #[relm4::component(pub(crate))]
 impl SimpleComponent for Episode {
-    type Init = Media;
+    type Init = (BaseItemDto, Arc<ApiClient>);
     type Input = ();
     type Output = ();
 
     view! {
         adw::ActionRow {
-            set_title: if let Some(index_number) = &model.media.index_number {
-                format!("{index_number}. {}", &model.media.name)
-            } else {
-                model.media.name.clone()
-            }.as_str(),
+            set_title: &title,
             set_title_lines: 1,
             set_use_markup: false,
 
@@ -55,18 +52,28 @@ impl SimpleComponent for Episode {
     }
 
     fn init(
-        media: Self::Init,
+        init: Self::Init,
         root: &Self::Root,
         _sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
+        let (media, api_client) = init;
+
         let model = Self {
             media: media.clone(),
             thumbnail: OnceCell::new(),
         };
 
+        let title = match (&model.media.index_number, &model.media.name) {
+            (Some(index_number), Some(name)) => format!("{index_number}. {name}"),
+            (_, Some(name)) => name.clone(),
+            _ => "Unnamed Episode".to_string(),
+        };
+
         let widgets = view_output!();
 
-        let thumbnail = EpisodeThumbnail::builder().launch(media.clone()).detach();
+        let thumbnail = EpisodeThumbnail::builder()
+            .launch((media, api_client))
+            .detach();
         root.add_prefix(thumbnail.widget());
 
         model.thumbnail.set(thumbnail).unwrap();
@@ -77,7 +84,7 @@ impl SimpleComponent for Episode {
 
 #[derive(Debug)]
 struct EpisodeThumbnail {
-    media: Media,
+    media: BaseItemDto,
     thumbnail: Option<Texture>,
 }
 #[derive(Debug)]
@@ -87,7 +94,7 @@ enum EpisodeThumbnailCommandOutput {
 
 #[relm4::component]
 impl Component for EpisodeThumbnail {
-    type Init = Media;
+    type Init = (BaseItemDto, Arc<ApiClient>);
     type Input = ();
     type Output = ();
     type CommandOutput = EpisodeThumbnailCommandOutput;
@@ -112,7 +119,9 @@ impl Component for EpisodeThumbnail {
 
                 add_overlay = &gtk::Box {
                     #[watch]
-                    set_visible: !model.media.user_data.played,
+                    set_visible: !model.media.user_data.as_ref()
+                        .and_then(|user_data| user_data.played)
+                        .unwrap_or(false),
 
                     add_css_class: "episode-unplayed-indicator",
                     set_halign: gtk::Align::End,
@@ -135,23 +144,25 @@ impl Component for EpisodeThumbnail {
     }
 
     fn init(
-        media: Self::Init,
+        init: Self::Init,
         root: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let img_url = media.image_tags.primary.clone();
+        let (media, api_client) = init;
 
-        sender.oneshot_command(async {
-            let img_bytes: VecDeque<u8> = reqwest::get(img_url)
-                .await
-                .expect("Error getting media tile image: {img_url}")
-                .bytes()
-                .await
-                .expect("Error getting media tile image bytes: {img_url}")
-                .into_iter()
-                .collect();
-            EpisodeThumbnailCommandOutput::LoadThumbnail(img_bytes)
-        });
+        if let Ok(img_url) = api_client.get_episode_thumbnail_url(&media) {
+            sender.oneshot_command(async {
+                let img_bytes: VecDeque<u8> = reqwest::get(img_url)
+                    .await
+                    .expect("Error getting media tile image: {img_url}")
+                    .bytes()
+                    .await
+                    .expect("Error getting media tile image bytes: {img_url}")
+                    .into_iter()
+                    .collect();
+                EpisodeThumbnailCommandOutput::LoadThumbnail(img_bytes)
+            });
+        }
 
         let model = Self {
             media,

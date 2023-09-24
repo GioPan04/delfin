@@ -11,7 +11,6 @@ use relm4::{
 use crate::jellyfin_api::api::views::UserViews;
 use crate::jellyfin_api::api_client::ApiClient;
 use crate::jellyfin_api::models::display_preferences::{DisplayPreferences, HomeSection};
-use crate::jellyfin_api::models::media::Media;
 
 use super::home_sections::continue_watching::HomeSectionContinueWatching;
 use super::home_sections::latest::HomeSectionLatest;

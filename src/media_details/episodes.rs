@@ -1,28 +1,28 @@
 use std::sync::Arc;
 
 use adw::prelude::*;
+use jellyfin_api::types::BaseItemDto;
 use relm4::{
     component::{AsyncComponent, AsyncComponentParts},
     loading_widgets::LoadingWidgets,
     prelude::*,
     view, AsyncComponentSender,
 };
+use uuid::Uuid;
 
-use crate::jellyfin_api::{
-    api::shows::GetEpisodesOptionsBuilder, api_client::ApiClient, models::media::Media,
-};
+use crate::jellyfin_api::{api::shows::GetEpisodesOptionsBuilder, api_client::ApiClient};
 
 use super::episode::Episode;
 
 pub(crate) struct Episodes {
-    episodes: Vec<Media>,
+    episodes: Vec<BaseItemDto>,
     episode_components: Vec<Controller<Episode>>,
 }
 
 pub(crate) struct EpisodesInit {
     pub(crate) api_client: Arc<ApiClient>,
-    pub(crate) series_id: String,
-    pub(crate) season: Media,
+    pub(crate) series_id: Uuid,
+    pub(crate) season: BaseItemDto,
 }
 
 #[relm4::component(pub(crate) async)]
@@ -70,7 +70,7 @@ impl AsyncComponent for Episodes {
             .get_episodes(
                 &GetEpisodesOptionsBuilder::default()
                     .series_id(series_id)
-                    .season_id(season.id)
+                    .season_id(season.id.unwrap())
                     .build()
                     .unwrap(),
             )
@@ -86,7 +86,9 @@ impl AsyncComponent for Episodes {
         let episode_list = &widgets.episode_list;
 
         for episode in &model.episodes {
-            let e = Episode::builder().launch(episode.clone()).detach();
+            let e = Episode::builder()
+                .launch((episode.clone(), api_client.clone()))
+                .detach();
             episode_list.append(e.widget());
             model.episode_components.push(e);
         }

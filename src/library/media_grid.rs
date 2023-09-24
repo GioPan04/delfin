@@ -1,14 +1,13 @@
 use std::sync::Arc;
 
 use gtk::prelude::*;
+use jellyfin_api::types::BaseItemDto;
 use relm4::{
     component::{AsyncComponent, AsyncComponentController, AsyncController},
     gtk, Component, ComponentParts, ComponentSender,
 };
 
-use crate::jellyfin_api::{
-    api::latest::GetNextUpOptions, api_client::ApiClient, models::media::Media,
-};
+use crate::jellyfin_api::{api::latest::GetNextUpOptions, api_client::ApiClient};
 
 use super::media_tile::{MediaTile, MediaTileDisplay};
 
@@ -42,7 +41,7 @@ pub enum MediaGridOutput {
 
 #[derive(Debug)]
 pub enum MediaGridCommandOutput {
-    MediaLoaded(Vec<Media>),
+    MediaLoaded(Vec<BaseItemDto>),
 }
 
 #[relm4::component(pub)]
@@ -109,7 +108,7 @@ impl Component for MediaGrid {
 
                 for (column, media) in media.into_iter().enumerate() {
                     let media_tile = MediaTile::builder()
-                        .launch((media, media_tile_display))
+                        .launch((media, media_tile_display, self.api_client.clone()))
                         .detach();
                     media_grid.attach(media_tile.widget(), column as i32, 0, 1, 1);
                     self.media_tiles.push(media_tile);

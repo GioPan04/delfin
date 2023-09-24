@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use gtk::prelude::*;
+use jellyfin_api::types::BaseItemDto;
 use relm4::{
     component::{AsyncComponent, AsyncComponentController, AsyncController},
     prelude::*,
@@ -8,7 +9,7 @@ use relm4::{
 
 use crate::{
     app::{AppInput, APP_BROKER},
-    jellyfin_api::{api_client::ApiClient, models::media::Media},
+    jellyfin_api::api_client::ApiClient,
     media_details::media_details_contents::MediaDetailsContents,
 };
 
@@ -31,7 +32,7 @@ pub enum MediaDetailsOutput {
 
 #[relm4::component(pub)]
 impl SimpleComponent for MediaDetails {
-    type Init = (Arc<ApiClient>, Media);
+    type Init = (Arc<ApiClient>, BaseItemDto);
     type Input = ();
     type Output = MediaDetailsOutput;
 
@@ -45,7 +46,7 @@ impl SimpleComponent for MediaDetails {
                 set_valign: gtk::Align::Start,
                 #[wrap(Some)]
                 set_title_widget = &adw::WindowTitle {
-                    set_title: title,
+                    set_title: &title,
                 },
                 pack_start = &gtk::Button {
                     set_icon_name: "go-previous",
@@ -70,7 +71,11 @@ impl SimpleComponent for MediaDetails {
     ) -> ComponentParts<Self> {
         let (api_client, media) = init;
 
-        let title = &media.series_name.as_ref().unwrap_or(&media.name);
+        let title = media
+            .series_name
+            .clone()
+            .or(media.name.clone())
+            .unwrap_or("Unnamed Item".to_string());
 
         let widgets = view_output!();
         let container = &widgets.container;

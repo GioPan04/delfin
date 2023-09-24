@@ -5,14 +5,14 @@ use std::sync::{Arc, RwLock};
 use gst::ClockTime;
 use gstplay::PlayState;
 use gtk::prelude::*;
+use jellyfin_api::types::{BaseItemDto, BaseItemKind};
 use relm4::{gtk, ComponentParts};
 use relm4::{prelude::*, JoinHandle};
 
 use crate::app::{AppInput, APP_BROKER};
 use crate::config::{Config, Server};
-use crate::jellyfin_api::api::item::ItemType;
 use crate::jellyfin_api::api::shows::GetEpisodesOptionsBuilder;
-use crate::jellyfin_api::{api::item::get_stream_url, api_client::ApiClient, models::media::Media};
+use crate::jellyfin_api::{api::item::get_stream_url, api_client::ApiClient};
 use crate::utils::ticks::ticks_to_seconds;
 use crate::video_player::controls::skip_forwards_backwards::{
     SkipForwardsBackwardsInput, SKIP_BACKWARDS_BROKER, SKIP_FORWARDS_BROKER,
@@ -33,12 +33,12 @@ pub struct VideoPlayer {
     config: Arc<RwLock<Config>>,
     controls: OnceCell<Controller<VideoPlayerControls>>,
     next_up: OnceCell<Controller<NextUp>>,
-    media: Option<Media>,
+    media: Option<BaseItemDto>,
     api_client: Option<Arc<ApiClient>>,
     show_controls: bool,
     session_reporting_handle: Option<JoinHandle<()>>,
     player_state: VideoPlayerState,
-    next: Option<Media>,
+    next: Option<BaseItemDto>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -51,7 +51,7 @@ enum VideoPlayerState {
 #[derive(Debug)]
 pub enum VideoPlayerInput {
     Toast(String),
-    PlayVideo(Arc<ApiClient>, Server, Box<Media>),
+    PlayVideo(Arc<ApiClient>, Server, Box<BaseItemDto>),
     ToggleControls,
     EndOfStream,
     ExitPlayer,
@@ -66,7 +66,7 @@ pub enum VideoPlayerOutput {
 
 #[derive(Debug)]
 pub enum VideoPlayerCommandOutput {
-    LoadedNextPrev((Option<Media>, Option<Media>)),
+    LoadedNextPrev((Option<BaseItemDto>, Option<BaseItemDto>)),
 }
 
 #[relm4::component(pub)]
@@ -100,11 +100,9 @@ impl Component for VideoPlayer {
                     #[wrap(Some)]
                     set_title_widget = &adw::WindowTitle {
                         #[watch]
-                        set_title: if let Some(media) = &model.media {
-                            &media.name
-                        } else {
-                            "Jellything"
-                        },
+                        set_title: &model.media.as_ref()
+                            .and_then(|media| media.name.clone())
+                            .unwrap_or("Jellything".to_string()),
                     },
                     pack_start = &gtk::Button {
                         set_icon_name: "go-previous",
@@ -222,45 +220,55 @@ impl Component for VideoPlayer {
                 let toast = adw::Toast::new(&message);
                 widgets.toaster.add_toast(toast);
             }
-            VideoPlayerInput::PlayVideo(api_client, server, media) => {
+            VideoPlayerInput::PlayVideo(api_client, server, item) => {
                 let video_player = &widgets.video_player;
 
                 self.set_player_state(VideoPlayerState::Loading);
                 self.next = None;
 
-                self.media = Some(*media.clone());
-                let url = get_stream_url(&server, &media.id);
+                self.media = Some(*item.clone());
+                let url = get_stream_url(&server, &item.id.unwrap().to_string());
                 video_player.play_uri(&url);
 
-                let playback_position = ticks_to_seconds(media.user_data.playback_position_ticks);
-                video_player.seek(ClockTime::from_seconds(playback_position as u64));
+                if let Some(playback_position_ticks) = item
+                    .user_data
+                    .as_ref()
+                    .and_then(|user_data| user_data.playback_position_ticks)
+                {
+                    let playback_position = ticks_to_seconds(playback_position_ticks);
+                    video_player.seek(ClockTime::from_seconds(playback_position as u64));
+                }
 
                 if let Some(controls) = self.controls.get() {
                     controls.emit(VideoPlayerControlsInput::SetPlaying(Box::new(
-                        *media.clone(),
+                        *item.clone(),
                     )));
                 }
 
                 // Report start of playback
-                relm4::spawn({
-                    let api_client = api_client.clone();
-                    let item_id = media.id.clone();
-                    async move {
-                        api_client.report_playback_started(&item_id).await.unwrap();
-                    }
-                });
+                if let Some(item_id) = item.id {
+                    relm4::spawn({
+                        let api_client = api_client.clone();
+                        async move {
+                            api_client
+                                .report_playback_started(&item_id.to_string())
+                                .await
+                                .unwrap();
+                        }
+                    });
+                }
 
                 // Starts a background task that continuously reports playback progress
                 self.session_reporting_handle = Some(start_session_reporting(
                     self.config.clone(),
                     api_client.clone(),
-                    &media.id,
+                    &item.id.unwrap(),
                     video_player,
                 ));
 
                 self.api_client = Some(api_client);
 
-                self.fetch_next_prev(&sender, &media);
+                self.fetch_next_prev(&sender, &item);
             }
             VideoPlayerInput::ToggleControls => {
                 self.show_controls = !self.show_controls;
@@ -287,7 +295,7 @@ impl Component for VideoPlayer {
                     // Report end of playback
                     relm4::spawn({
                         let api_client = api_client.clone();
-                        let item_id = media.id.clone();
+                        let item_id = media.id.unwrap();
                         async move {
                             api_client
                                 .report_playback_stopped(&item_id, position.seconds() as usize)
@@ -354,8 +362,8 @@ impl Component for VideoPlayer {
                     ));
                 }
 
-                if let Some(next_up) = self.next_up.get() {
-                    next_up.emit(NextUpInput::SetNextUp(next));
+                if let (Some(next_up), Some(api_client)) = (self.next_up.get(), &self.api_client) {
+                    next_up.emit(NextUpInput::SetNextUp((next, api_client.clone())));
                 }
             }
         }
@@ -384,20 +392,19 @@ impl VideoPlayer {
         }
     }
 
-    fn fetch_next_prev(&self, sender: &ComponentSender<Self>, media: &Media) {
-        if let (Some(api_client), ItemType::Episode, Some(series_id)) =
-            (&self.api_client, &media.item_type, &media.series_id)
+    fn fetch_next_prev(&self, sender: &ComponentSender<Self>, item: &BaseItemDto) {
+        if let (Some(api_client), Some(BaseItemKind::Episode), Some(series_id), Some(episode_id)) =
+            (&self.api_client, &item.type_, item.series_id, item.id)
         {
             sender.oneshot_command({
                 let api_client = api_client.clone();
-                let series_id = series_id.clone();
-                let episode_id = media.id.clone();
+
                 async move {
                     let res = match api_client
                         .get_episodes(
                             &GetEpisodesOptionsBuilder::default()
                                 .series_id(series_id)
-                                .adjacent_to(&episode_id)
+                                .adjacent_to(episode_id)
                                 .is_missing(false)
                                 .is_virtual_unaired(false)
                                 .build()
@@ -416,10 +423,10 @@ impl VideoPlayer {
                             Some(prev.clone()),
                             Some(next.clone()),
                         )),
-                        [prev, cur] if cur.id == episode_id => {
+                        [prev, cur] if cur.id.unwrap() == episode_id => {
                             VideoPlayerCommandOutput::LoadedNextPrev((Some(prev.clone()), None))
                         }
-                        [cur, next] if cur.id == episode_id => {
+                        [cur, next] if cur.id.unwrap() == episode_id => {
                             VideoPlayerCommandOutput::LoadedNextPrev((None, Some(next.clone())))
                         }
                         _ => VideoPlayerCommandOutput::LoadedNextPrev((None, None)),
