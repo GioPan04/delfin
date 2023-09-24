@@ -5,12 +5,10 @@ use relm4::{
     gtk, Component, ComponentController, ComponentParts, ComponentSender, Controller,
     SimpleComponent,
 };
+use uuid::Uuid;
 
 use crate::{
-    jellyfin_api::{
-        api::views::{UserViewItem, UserViews},
-        api_client::ApiClient,
-    },
+    jellyfin_api::{api::views::UserView, api_client::ApiClient},
     library::media_grid::{
         MediaGrid, MediaGridInit, MediaGridOutput, MediaGridType, MediaGridTypeLatestParams,
     },
@@ -22,13 +20,13 @@ pub struct HomeSectionLatest {
 
 #[derive(Debug)]
 pub enum HomeSectionLatestInput {
-    Empty(String),
+    Empty(Uuid),
     None,
 }
 
 #[relm4::component(pub)]
 impl Component for HomeSectionLatest {
-    type Init = (Arc<ApiClient>, UserViews);
+    type Init = (Arc<ApiClient>, Vec<UserView>);
     type Input = HomeSectionLatestInput;
     type Output = ();
     type CommandOutput = ();
@@ -59,7 +57,7 @@ impl Component for HomeSectionLatest {
                 .launch((api_client.clone(), view.clone()))
                 .forward(sender.input_sender(), identity);
             root.append(row.widget());
-            model.rows.insert(view.id, row);
+            model.rows.insert(view.id.to_string(), row);
         }
 
         ComponentParts { model, widgets }
@@ -68,7 +66,7 @@ impl Component for HomeSectionLatest {
     fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         match message {
             HomeSectionLatestInput::Empty(id) => {
-                if let Some(row) = self.rows.get(&id) {
+                if let Some(row) = self.rows.get(&id.to_string()) {
                     row.widget().set_visible(false);
                 }
             }
@@ -92,7 +90,7 @@ pub struct LatestRow {
 
 #[relm4::component(pub)]
 impl SimpleComponent for LatestRow {
-    type Init = (Arc<ApiClient>, UserViewItem);
+    type Init = (Arc<ApiClient>, UserView);
     type Input = HomeSectionLatestInput;
     type Output = HomeSectionLatestInput;
 

@@ -6,6 +6,7 @@ use relm4::{
     component::{AsyncComponent, AsyncComponentController, AsyncController},
     gtk, Component, ComponentParts, ComponentSender,
 };
+use uuid::Uuid;
 
 use crate::jellyfin_api::{api::latest::GetNextUpOptions, api_client::ApiClient};
 
@@ -20,7 +21,7 @@ pub enum MediaGridType {
 
 #[derive(Clone, Debug)]
 pub struct MediaGridTypeLatestParams {
-    pub view_id: String,
+    pub view_id: Uuid,
 }
 
 pub struct MediaGrid {
@@ -36,7 +37,7 @@ pub struct MediaGridInit {
 
 #[derive(Debug)]
 pub enum MediaGridOutput {
-    Empty(Option<String>),
+    Empty(Option<Uuid>),
 }
 
 #[derive(Debug)]
@@ -143,10 +144,10 @@ impl MediaGrid {
         });
     }
 
-    fn get_view_id(&self) -> Option<String> {
+    fn get_view_id(&self) -> Option<Uuid> {
         match &self.grid_type {
             MediaGridType::ContinueWatching | MediaGridType::NextUp => None,
-            MediaGridType::Latest(params) => Some(params.view_id.clone()),
+            MediaGridType::Latest(params) => Some(params.view_id),
         }
     }
 }

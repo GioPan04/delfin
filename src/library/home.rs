@@ -8,7 +8,7 @@ use relm4::{
     gtk, prelude::*, Component, ComponentParts, ComponentSender, Controller, SimpleComponent,
 };
 
-use crate::jellyfin_api::api::views::UserViews;
+use crate::jellyfin_api::api::views::UserView;
 use crate::jellyfin_api::api_client::ApiClient;
 use crate::jellyfin_api::models::display_preferences::{DisplayPreferences, HomeSection};
 
@@ -35,7 +35,7 @@ pub enum HomeOutput {}
 pub struct HomeInit {
     pub api_client: Arc<ApiClient>,
     pub display_preferences: DisplayPreferences,
-    pub user_views: UserViews,
+    pub user_views: Vec<UserView>,
 }
 
 #[relm4::component(pub)]
@@ -86,7 +86,7 @@ impl Home {
         sections_container: &gtk::Box,
         display_preferences: DisplayPreferences,
         api_client: Arc<ApiClient>,
-        user_views: UserViews,
+        user_views: Vec<UserView>,
     ) {
         for section in display_preferences.home_sections {
             match section {

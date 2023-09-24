@@ -1,32 +1,46 @@
-use anyhow::Result;
-use serde::Deserialize;
+use anyhow::{bail, Ok, Result};
+use jellyfin_api::types::{BaseItemDto, BaseItemDtoQueryResult};
+use uuid::Uuid;
 
 use crate::jellyfin_api::api_client::ApiClient;
 
-pub type UserViews = Vec<UserViewItem>;
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct GetUserViewsRes {
-    pub items: UserViews,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct UserViewItem {
-    pub id: String,
+#[derive(Clone, Debug)]
+pub struct UserView {
+    pub id: Uuid,
     pub name: String,
-    // TODO: this should be an enum
     pub collection_type: String,
 }
 
+impl TryFrom<BaseItemDto> for UserView {
+    type Error = anyhow::Error;
+
+    fn try_from(value: BaseItemDto) -> std::result::Result<Self, Self::Error> {
+        if let (Some(id), Some(name), Some(collection_type)) =
+            (value.id, value.name.clone(), value.collection_type.clone())
+        {
+            return Ok(Self {
+                id,
+                name,
+                collection_type,
+            });
+        }
+
+        bail!("UserView was missing required properties: {value:#?}");
+    }
+}
+
 impl ApiClient {
-    pub async fn get_user_views(&self) -> Result<UserViews> {
+    pub async fn get_user_views(&self) -> Result<Vec<UserView>> {
         let url = self
             .root
             .join(&format!("Users/{}/Views", self.account.id))
             .unwrap();
-        let res: GetUserViewsRes = self.client.get(url).send().await?.json().await?;
-        Ok(res.items)
+        let res: BaseItemDtoQueryResult = self.client.get(url).send().await?.json().await?;
+
+        let items = res.items.ok_or(anyhow::anyhow!("No items returned"))?;
+        items
+            .iter()
+            .map(|item| UserView::try_from(item.clone()))
+            .collect()
     }
 }

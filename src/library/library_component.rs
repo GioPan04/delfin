@@ -6,7 +6,7 @@ use adw::prelude::*;
 use relm4::{adw, gtk, prelude::*, Component, Controller};
 
 use crate::jellyfin_api::{
-    api::views::UserViews, api_client::ApiClient, models::display_preferences::DisplayPreferences,
+    api::views::UserView, api_client::ApiClient, models::display_preferences::DisplayPreferences,
 };
 
 use super::home::{Home, HomeInit};
@@ -35,7 +35,7 @@ pub enum LibraryOutput {
 
 #[derive(Debug)]
 pub enum LibraryCommandOutput {
-    LibraryLoaded(UserViews, DisplayPreferences),
+    LibraryLoaded(Vec<UserView>, DisplayPreferences),
 }
 
 #[relm4::component(pub)]
@@ -206,7 +206,7 @@ impl Library {
         &mut self,
         widgets: &mut LibraryWidgets,
         _sender: &relm4::ComponentSender<Self>,
-        user_views: UserViews,
+        user_views: Vec<UserView>,
         display_preferences: DisplayPreferences,
     ) {
         let view_stack = &widgets.view_stack;
@@ -234,7 +234,7 @@ impl Library {
 
             view_stack.add_titled_with_icon(
                 &gtk::Box::default(),
-                Some(&view.id.clone()),
+                Some(&view.id.to_string()),
                 &view.name.clone(),
                 icon,
             );

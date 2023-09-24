@@ -8,7 +8,7 @@ use crate::jellyfin_api::api_client::ApiClient;
 impl ApiClient {
     pub async fn get_latest_media(
         &self,
-        parent_id: &str,
+        parent_id: &Uuid,
         limit: Option<usize>,
     ) -> Result<Vec<BaseItemDto>> {
         let limit = limit.unwrap_or(16);
@@ -18,7 +18,7 @@ impl ApiClient {
             .join(&format!("Users/{}/Items/Latest", self.account.id))?;
 
         url.query_pairs_mut()
-            .append_pair("parentId", parent_id)
+            .append_pair("parentId", &parent_id.to_string())
             .append_pair("limit", &limit.to_string());
 
         let res = self.client.get(url).send().await?.json().await?;
