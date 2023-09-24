@@ -223,6 +223,11 @@ impl Library {
         view_stack.add_titled_with_icon(home.widget(), Some("home"), "Home", "home-filled");
         self.home = Some(home);
 
+        let user_views: Vec<&UserView> = user_views
+            .iter()
+            .filter(|view| matches!(view.collection_type.as_ref(), "movies" | "tvshows"))
+            .collect();
+
         for view in user_views {
             let icon = match view.collection_type.as_str() {
                 "movies" => "video-clip-multiple-filled",
