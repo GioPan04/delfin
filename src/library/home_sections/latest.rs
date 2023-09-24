@@ -52,6 +52,11 @@ impl Component for HomeSectionLatest {
 
         let widgets = view_output!();
 
+        let user_views: Vec<&UserView> = user_views
+            .iter()
+            .filter(|view| matches!(view.collection_type.as_ref(), "movies" | "tvshows"))
+            .collect();
+
         for view in user_views {
             let row = LatestRow::builder()
                 .launch((api_client.clone(), view.clone()))
