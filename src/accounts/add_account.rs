@@ -56,17 +56,11 @@ impl Component for AddAccountDialog {
             set_visible: true,
 
             #[wrap(Some)]
-            set_content = &gtk::Box {
-                set_orientation: gtk::Orientation::Vertical,
+            set_content = &adw::ToolbarView {
+                add_top_bar = &adw::HeaderBar {},
 
-                adw::HeaderBar {
-                    #[wrap(Some)]
-                    set_title_widget = &adw::WindowTitle {
-                        set_title: "Add an account",
-                    },
-                },
-
-                adw::Clamp {
+                #[wrap(Some)]
+                set_content = &adw::Clamp {
                     set_margin_all: 20,
 
                     #[local_ref]
