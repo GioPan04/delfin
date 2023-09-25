@@ -221,7 +221,7 @@ impl Component for VideoPlayer {
                 self.next = None;
 
                 self.media = Some(*item.clone());
-                let url = get_stream_url(&server, &item.id.unwrap().to_string());
+                let url = get_stream_url(&server, &item.id.unwrap());
                 video_player.play_uri(&url);
 
                 if let Some(playback_position_ticks) = item
