@@ -96,6 +96,8 @@ impl Component for MediaDetailsHeader {
                         #[name = "fade_overlay"]
                         add_overlay = &gtk::Box {
                             set_width_request: 1280,
+                            // This needs to be hidden by default for the breakpoint to show it
+                            // properly, so we dynamically chang the visibility of the children
                             set_visible: false,
 
                             gtk::Box {
@@ -103,6 +105,8 @@ impl Component for MediaDetailsHeader {
                                 set_width_request: 32,
                                 set_halign: gtk::Align::Start,
                                 set_valign: gtk::Align::Fill,
+                                #[watch]
+                                set_visible: model.backdrop.is_some(),
                             },
 
                             gtk::Box {
@@ -111,6 +115,8 @@ impl Component for MediaDetailsHeader {
                                 set_halign: gtk::Align::End,
                                 set_valign: gtk::Align::Fill,
                                 set_hexpand: true,
+                                #[watch]
+                                set_visible: model.backdrop.is_some(),
                             },
                         },
                     },
