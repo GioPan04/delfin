@@ -1,6 +1,6 @@
 use std::{collections::VecDeque, matches, sync::Arc};
 
-use adw::{prelude::*, SqueezerTransitionType};
+use adw::{prelude::*, BreakpointCondition};
 use jellyfin_api::types::{BaseItemDto, BaseItemKind};
 use relm4::{
     gtk::{gdk::Texture, gdk_pixbuf::Pixbuf},
@@ -47,54 +47,56 @@ impl Component for MediaDetailsHeader {
     type CommandOutput = MediaDetailsHeaderCommandOutput;
 
     view! {
-        gtk::Overlay {
-            set_height_request: MEDIA_DETAILS_BACKDROP_HEIGHT,
-            add_css_class: "media-details-header",
-            set_overflow: gtk::Overflow::Hidden,
+        adw::BreakpointBin {
+            set_size_request: (150, MEDIA_DETAILS_BACKDROP_HEIGHT),
 
-            // Leaving this here for now, might come back to this later
-            // gtk::Picture {
-            //     #[watch]
-            //     set_paintable: model.backdrop.as_ref(),
-            //
-            //     add_css_class: "media-details-backdrop-blur",
-            //     set_halign: gtk::Align::Center,
-            //     set_valign: gtk::Align::Center,
-            //     set_content_fit: gtk::ContentFit::Fill,
-            // },
+            #[wrap(Some)]
+            set_child = &gtk::Overlay {
+                set_height_request: MEDIA_DETAILS_BACKDROP_HEIGHT,
+                add_css_class: "media-details-header",
+                set_overflow: gtk::Overflow::Hidden,
 
-            add_overlay = &adw::Clamp {
-                set_maximum_size: 1280,
-                set_tightening_threshold: 1280,
-                connect_maximum_size_notify => |_| {},
+                // Leaving this here for now, might come back to this later
+                // gtk::Picture {
+                //     #[watch]
+                //     set_paintable: model.backdrop.as_ref(),
+                //
+                //     add_css_class: "media-details-backdrop-blur",
+                //     set_halign: gtk::Align::Center,
+                //     set_valign: gtk::Align::Center,
+                //     set_content_fit: gtk::ContentFit::Fill,
+                // },
 
-                gtk::Overlay {
-                    gtk::Picture {
-                        #[watch]
-                        set_paintable: model.backdrop.as_ref(),
+                add_overlay = &adw::Clamp {
+                    set_maximum_size: 1280,
+                    set_tightening_threshold: 1280,
+                    connect_maximum_size_notify => |_| {},
 
-                        set_halign: gtk::Align::Center,
-                        set_valign: gtk::Align::Center,
-                        set_height_request: MEDIA_DETAILS_BACKDROP_HEIGHT,
-                        set_content_fit: gtk::ContentFit::Cover,
-                    },
+                    gtk::Overlay {
+                        gtk::Picture {
+                            #[watch]
+                            set_paintable: model.backdrop.as_ref(),
 
-                    add_overlay = &gtk::Spinner {
-                        #[watch]
-                        set_visible: model.backdrop.is_none(),
-                        set_spinning: true,
-                        set_halign: gtk::Align::Center,
-                        set_valign: gtk::Align::Center,
-                        set_width_request: 24,
-                        set_height_request: 24,
-                    },
+                            set_halign: gtk::Align::Center,
+                            set_valign: gtk::Align::Center,
+                            set_height_request: MEDIA_DETAILS_BACKDROP_HEIGHT,
+                            set_content_fit: gtk::ContentFit::Cover,
+                        },
 
-                    add_overlay = &adw::Squeezer {
-                        set_allow_none: true,
-                        set_transition_type: SqueezerTransitionType::Crossfade,
+                        add_overlay = &gtk::Spinner {
+                            #[watch]
+                            set_visible: model.backdrop.is_none(),
+                            set_spinning: true,
+                            set_halign: gtk::Align::Center,
+                            set_valign: gtk::Align::Center,
+                            set_width_request: 24,
+                            set_height_request: 24,
+                        },
 
-                        gtk::Box {
+                        #[name = "fade_overlay"]
+                        add_overlay = &gtk::Box {
                             set_width_request: 1280,
+                            set_visible: false,
 
                             gtk::Box {
                                 add_css_class: "media-details-backdrop-overlay-left",
@@ -113,63 +115,72 @@ impl Component for MediaDetailsHeader {
                         },
                     },
                 },
-            },
 
-            add_overlay = &gtk::Box {
-                set_orientation: gtk::Orientation::Horizontal,
-                add_css_class: "media-details-header-overlay",
+                add_overlay = &gtk::Box {
+                    set_orientation: gtk::Orientation::Horizontal,
+                    add_css_class: "media-details-header-overlay",
 
-                adw::Clamp {
-                    set_maximum_size: 1280,
-                    set_tightening_threshold: 1280,
+                    adw::Clamp {
+                        set_maximum_size: 1280,
+                        set_tightening_threshold: 1280,
 
-                    gtk::Box {
-                        set_orientation: gtk::Orientation::Horizontal,
-                        set_valign: gtk::Align::End,
-                        set_margin_start:  32,
-                        set_margin_end: 32,
-                        set_spacing: 32,
+                        gtk::Box {
+                            set_orientation: gtk::Orientation::Horizontal,
+                            set_valign: gtk::Align::End,
+                            set_margin_start:  32,
+                            set_margin_end: 32,
+                            set_spacing: 32,
 
-                        gtk::Label {
-                            set_label: &title,
-                            set_valign: gtk::Align::Center,
-                            set_ellipsize: gtk::pango::EllipsizeMode::End,
-                            add_css_class: "media-details-header-title",
-                        },
-
-                        gtk::Button {
-                            add_css_class: "pill",
-                            add_css_class: "suggested-action",
-                            set_halign: gtk::Align::End,
-                            set_valign: gtk::Align::Center,
-                            set_hexpand: true,
-                            set_vexpand: false,
-                            #[watch]
-                            set_sensitive: model.play_next_label.is_some() && model.play_next_media.is_some(),
-
-                            connect_clicked[sender] => move |_| {
-                                sender.input(MediaDetailsHeaderInput::PlayNext);
+                            gtk::Label {
+                                set_label: &title,
+                                set_valign: gtk::Align::Center,
+                                set_ellipsize: gtk::pango::EllipsizeMode::End,
+                                add_css_class: "media-details-header-title",
                             },
 
-                            #[wrap(Some)]
-                            set_child = &gtk::Box {
-                                set_orientation: gtk::Orientation::Horizontal,
-                                set_spacing: 8,
+                            gtk::Button {
+                                add_css_class: "pill",
+                                add_css_class: "suggested-action",
+                                set_halign: gtk::Align::End,
+                                set_valign: gtk::Align::Center,
+                                set_hexpand: true,
+                                set_vexpand: false,
+                                #[watch]
+                                set_sensitive: model.play_next_label.is_some() && model.play_next_media.is_some(),
 
-                                gtk::Image::from_icon_name("play-filled"),
+                                connect_clicked[sender] => move |_| {
+                                    sender.input(MediaDetailsHeaderInput::PlayNext);
+                                },
 
-                                if model.play_next_label.is_some() {
-                                    gtk::Label {
-                                        #[watch]
-                                        set_label: model.play_next_label.as_ref().unwrap(),
-                                    }
-                                } else { gtk::Spinner { set_spinning: true } },
+                                #[wrap(Some)]
+                                set_child = &gtk::Box {
+                                    set_orientation: gtk::Orientation::Horizontal,
+                                    set_spacing: 8,
+
+                                    gtk::Image::from_icon_name("play-filled"),
+
+                                    if model.play_next_label.is_some() {
+                                        gtk::Label {
+                                            #[watch]
+                                            set_label: model.play_next_label.as_ref().unwrap(),
+                                        }
+                                    } else { gtk::Spinner { set_spinning: true } },
+                                },
                             },
                         },
+
                     },
-
                 },
             },
+
+            add_breakpoint = adw::Breakpoint::new(BreakpointCondition::new_length(
+                adw::BreakpointConditionLengthType::MinWidth,
+                1280.0,
+                adw::LengthUnit::Sp
+            )) {
+                add_setter: (&fade_overlay, "visible", &true.into()),
+            },
+
         }
     }
 

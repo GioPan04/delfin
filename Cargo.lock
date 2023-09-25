@@ -1297,6 +1297,7 @@ dependencies = [
  "gstreamer",
  "gstreamer-play",
  "jellyfin_api",
+ "libadwaita",
  "regex",
  "relm4",
  "relm4-icons",

@@ -5,8 +5,12 @@ use std::sync::Arc;
 use adw::prelude::*;
 use relm4::{adw, gtk, prelude::*, Component, Controller};
 
-use crate::jellyfin_api::{
-    api::views::UserView, api_client::ApiClient, models::display_preferences::DisplayPreferences,
+use crate::{
+    jellyfin_api::{
+        api::views::UserView, api_client::ApiClient,
+        models::display_preferences::DisplayPreferences,
+    },
+    utils::breakpoints::WIDGET_NONE,
 };
 
 use super::home::{Home, HomeInit};
@@ -46,77 +50,86 @@ impl Component for Library {
     type CommandOutput = LibraryCommandOutput;
 
     view! {
-        gtk::Box {
-            set_orientation: gtk::Orientation::Vertical,
+        adw::BreakpointBin {
+            set_size_request: (150, 150),
 
-            adw::HeaderBar {
-                    set_centering_policy: adw::CenteringPolicy::Strict,
-
-                    #[wrap(Some)]
-                    #[transition = "Crossfade"]
-                    set_title_widget = if matches!(model.state, LibraryState::Loading) {
-                        &adw::WindowTitle {}
-                    } else {
-                        #[name = "view_switcher_title"]
-                        &adw::ViewSwitcherTitle {
-                            set_title: "Jellything",
+            #[wrap(Some)]
+            set_child = &adw::ToolbarView {
+                #[name = "header_bar"]
+                add_top_bar = &adw::HeaderBar {
+                        #[name = "view_switcher"]
+                        #[wrap(Some)]
+                        set_title_widget = &adw::ViewSwitcher {
+                            set_policy: adw::ViewSwitcherPolicy::Wide,
                             set_stack: Some(&view_stack),
-                        }
-                    },
-
-                    pack_start = &gtk::Button {
-                        set_icon_name: "go-previous",
-                        #[watch]
-                        set_visible: true,
-                        connect_clicked[sender] => move |_| {
-                            sender.output(LibraryOutput::NavigateBack).unwrap();
                         },
-                    },
-            },
 
-            #[transition = "Crossfade"]
-            append = if matches!(model.state, LibraryState::Loading) {
-                gtk::Box {
+                        pack_start = &gtk::Button {
+                            set_icon_name: "go-previous",
+                            connect_clicked[sender] => move |_| {
+                                sender.output(LibraryOutput::NavigateBack).unwrap();
+                            },
+                        },
+                },
+
+                #[wrap(Some)]
+                set_content = &gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
 
-                    adw::Clamp {
+                    #[transition = "Crossfade"]
+                    append = if matches!(model.state, LibraryState::Loading) {
                         gtk::Box {
                             set_orientation: gtk::Orientation::Vertical,
-                            set_hexpand: true,
-                            set_vexpand: true,
-                            set_halign: gtk::Align::Center,
-                            set_valign: gtk::Align::Center,
-                            set_spacing: 20,
 
-                            gtk::Spinner {
-                                set_spinning: true,
-                                set_size_request: (64, 64),
+                            adw::Clamp {
+                                gtk::Box {
+                                    set_orientation: gtk::Orientation::Vertical,
+                                    set_hexpand: true,
+                                    set_vexpand: true,
+                                    set_halign: gtk::Align::Center,
+                                    set_valign: gtk::Align::Center,
+                                    set_spacing: 20,
+
+                                    gtk::Spinner {
+                                        set_spinning: true,
+                                        set_size_request: (64, 64),
+                                    },
+
+                                    gtk::Label {
+                                        set_label: "Loading your library...",
+                                        add_css_class: "title-2",
+                                    },
+                                }
+                            }
+                        }
+                    } else {
+                        gtk::Box {
+                            set_orientation: gtk::Orientation::Vertical,
+
+                            gtk::ScrolledWindow {
+                                #[local_ref]
+                                view_stack -> adw::ViewStack {
+                                    set_margin_all: 20,
+                                    set_valign: gtk::Align::Fill,
+                                },
                             },
 
-                            gtk::Label {
-                                set_label: "Loading your library...",
-                                add_css_class: "title-2",
+                            #[name = "view_switcher_bar"]
+                            adw::ViewSwitcherBar {
+                                set_stack: Some(&view_stack),
                             },
                         }
-                    }
-                }
-            } else {
-                gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
-
-                    gtk::ScrolledWindow {
-                        #[local_ref]
-                        view_stack -> adw::ViewStack {
-                            set_margin_all: 20,
-                            set_valign: gtk::Align::Fill,
-                        },
                     },
+                },
+            },
 
-                    #[name = "view_switcher_bar"]
-                    adw::ViewSwitcherBar {
-                        set_stack: Some(&view_stack),
-                    },
-                }
+            add_breakpoint = adw::Breakpoint::new(adw::BreakpointCondition::new_length(
+                adw::BreakpointConditionLengthType::MaxWidth,
+                550.0,
+                adw::LengthUnit::Sp
+            )) {
+                add_setter: (&header_bar, "title-widget", &WIDGET_NONE.into()),
+                add_setter: (&view_switcher_bar, "reveal", &true.into()),
             },
         }
     }
@@ -137,13 +150,6 @@ impl Component for Library {
         let view_stack = adw::ViewStack::new();
 
         let widgets = view_output!();
-
-        // Always show view switcher at either top or bottom of screen
-        let view_switcher_title = &widgets.view_switcher_title;
-        let view_switcher_bar = &widgets.view_switcher_bar;
-        view_switcher_title
-            .bind_property("title-visible", view_switcher_bar, "reveal")
-            .build();
 
         model.initial_fetch(&sender);
 

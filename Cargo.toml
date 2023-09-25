@@ -43,3 +43,8 @@ toml = "0.8.0"
 tracing = { version = "0.1.37", features = ["log"] }
 uuid = { version = "1.4.1", features = ["v4"] }
 whoami = { version = "1.4.1", default-features = false }
+
+# Use libadwaita 1.4 without Gnome 45
+# (this makes cargo throw a warning, don't worry about it 😎👉👉)
+[dependencies.libadwaita]
+features = ["v1_2", "v1_3", "v1_4"]
