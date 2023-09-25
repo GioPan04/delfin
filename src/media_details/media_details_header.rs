@@ -139,6 +139,8 @@ impl Component for MediaDetailsHeader {
 
                             gtk::Label {
                                 set_label: &title,
+                                // Show full title in tooltip in case label is ellipsized
+                                set_tooltip: &title,
                                 set_valign: gtk::Align::Center,
                                 set_ellipsize: gtk::pango::EllipsizeMode::End,
                                 add_css_class: "media-details-header-title",
