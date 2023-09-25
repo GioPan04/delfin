@@ -6,7 +6,10 @@ use relm4::{
     Controller,
 };
 
-use crate::config::{self, Config};
+use crate::{
+    config::{self, Config},
+    utils::constants::PAGE_MARGIN,
+};
 
 use super::{
     add_server::{AddServerDialog, AddServerOutput},
@@ -39,35 +42,47 @@ impl Component for ServerList {
     type CommandOutput = ();
 
     view! {
-        adw::Clamp {
-            adw::PreferencesGroup {
-                set_title: "Select a server",
-                set_description: Some("Choose which Jellyfin server you'd like to use"),
+        adw::NavigationPage {
+            set_title: "Servers",
+
+            #[wrap(Some)]
+            set_child = &adw::ToolbarView {
+                add_top_bar = &adw::HeaderBar {},
+
                 #[wrap(Some)]
-                set_header_suffix = &gtk::Button {
-                    connect_clicked[sender] => move |_| {
-                        sender.input(ServerListInput::AddServer);
-                    },
-                    adw::ButtonContent {
-                        set_icon_name: "list-add-symbolic",
-                        set_label: "Add a server",
-                    },
-                },
+                set_content = &adw::Clamp {
+                    set_margin_top: PAGE_MARGIN,
 
-                #[local_ref]
-                servers_box -> gtk::ListBox {
-                    add_css_class: "boxed-list",
-                    set_selection_mode: gtk::SelectionMode::None,
-                },
+                    adw::PreferencesGroup {
+                        set_title: "Select a server",
+                        set_description: Some("Choose which Jellyfin server you'd like to use"),
+                        #[wrap(Some)]
+                        set_header_suffix = &gtk::Button {
+                            connect_clicked[sender] => move |_| {
+                                sender.input(ServerListInput::AddServer);
+                            },
+                            adw::ButtonContent {
+                                set_icon_name: "list-add-symbolic",
+                                set_label: "Add a server",
+                            },
+                        },
 
-                gtk::ListBox {
-                    add_css_class: "boxed-list",
-                    set_selection_mode: gtk::SelectionMode::None,
-                    #[watch]
-                    set_visible: model.servers.is_empty(),
-                    adw::ActionRow {
-                        set_title: "No Servers Available",
-                        set_subtitle: "Add a server to start watching",
+                        #[local_ref]
+                        servers_box -> gtk::ListBox {
+                            add_css_class: "boxed-list",
+                            set_selection_mode: gtk::SelectionMode::None,
+                        },
+
+                        gtk::ListBox {
+                            add_css_class: "boxed-list",
+                            set_selection_mode: gtk::SelectionMode::None,
+                            #[watch]
+                            set_visible: model.servers.is_empty(),
+                            adw::ActionRow {
+                                set_title: "No Servers Available",
+                                set_subtitle: "Add a server to start watching",
+                            },
+                        },
                     },
                 },
             },

@@ -9,7 +9,7 @@ use crate::{
     config::{self, Config},
     jellyfin_api::api_client::ApiClient,
     library::library_component::{Library, LibraryOutput},
-    media_details::{MediaDetails, MediaDetailsOutput},
+    media_details::MediaDetails,
     servers::server_list::{ServerList, ServerListOutput},
     utils::main_window::MAIN_APP_WINDOW_NAME,
     video_player::video_player_component::{VideoPlayer, VideoPlayerInput, VideoPlayerOutput},
@@ -31,18 +31,6 @@ pub enum AppPage {
     VideoPlayer,
 }
 
-impl AppPage {
-    fn back(&self) -> Self {
-        match self {
-            AppPage::Servers => AppPage::Servers,
-            AppPage::Accounts => AppPage::Servers,
-            AppPage::Library => AppPage::Accounts,
-            AppPage::MediaDetails => AppPage::Library,
-            AppPage::VideoPlayer => AppPage::Library,
-        }
-    }
-}
-
 impl fmt::Display for AppPage {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -58,7 +46,6 @@ impl fmt::Display for AppPage {
 pub struct App {
     config: Arc<RwLock<Config>>,
     api_client: Option<Arc<ApiClient>>,
-    page: AppPage,
     servers: Controller<ServerList>,
     account_list: Controller<AccountList>,
     library: Option<Controller<Library>>,
@@ -69,7 +56,6 @@ pub struct App {
 
 #[derive(Debug)]
 pub enum AppInput {
-    SetPage(AppPage),
     NavigateBack,
     ServerSelected(config::Server),
     AccountSelected(config::Server, config::Account),
@@ -91,46 +77,19 @@ impl Component for App {
             set_default_width: 960,
             set_default_height: 540,
 
+            #[name = "navigation"]
             #[wrap(Some)]
-            set_content = &gtk::Box {
-                set_orientation: gtk::Orientation::Vertical,
-                set_spacing: 20,
-
-                adw::HeaderBar {
-                    #[watch]
-                    set_visible: matches!(model.page, AppPage::Servers) || matches!(model.page, AppPage::Accounts),
-                    #[wrap(Some)]
-                    set_title_widget = &adw::WindowTitle {
-                        set_title: "Jellything",
-                    },
-                    pack_start = &gtk::Button {
-                        set_icon_name: "go-previous",
-                        #[watch]
-                        set_visible: !matches!(model.page, AppPage::Servers),
-                        connect_clicked[sender] => move |_| {
-                            sender.input(AppInput::NavigateBack);
-                        },
-                    },
+            set_content = &adw::NavigationView {
+                add = model.servers.widget() {
+                    set_tag: Some(&AppPage::Servers.to_string()),
                 },
-
-                #[name = "stack"]
-                gtk::Stack {
-                    add_child = model.servers.widget() {} -> {
-                        set_name: &AppPage::Servers.to_string(),
-                    },
-
-                    add_child = model.account_list.widget() {} -> {
-                        set_name: &AppPage::Accounts.to_string(),
-                    },
-
-                    add_child = model.video_player.widget() {} -> {
-                        set_name: &AppPage::VideoPlayer.to_string(),
-                    },
-
-                    #[watch]
-                    set_visible_child_name: &model.page.to_string(),
+                add = model.account_list.widget() {
+                    set_tag: Some(&AppPage::Accounts.to_string()),
                 },
-            }
+                add = model.video_player.widget() {
+                    set_tag: Some(&AppPage::VideoPlayer.to_string()),
+                },
+            },
         }
     }
 
@@ -158,7 +117,6 @@ impl Component for App {
         let model = App {
             config,
             api_client: None,
-            page: AppPage::Servers,
             servers,
             account_list,
             library: None,
@@ -179,40 +137,18 @@ impl Component for App {
         sender: ComponentSender<Self>,
         _root: &Self::Root,
     ) {
+        let navigation = &widgets.navigation;
+
         match message {
-            AppInput::SetPage(page) => {
-                let stack = &widgets.stack;
-
-                let cur = self.page as u8;
-                let next = page as u8;
-
-                match cur.partial_cmp(&next) {
-                    Some(std::cmp::Ordering::Less) => {
-                        stack.set_transition_type(gtk::StackTransitionType::SlideLeft)
-                    }
-                    Some(std::cmp::Ordering::Greater) => {
-                        stack.set_transition_type(gtk::StackTransitionType::SlideRight)
-                    }
-                    _ => return,
-                }
-
-                self.page = page;
-            }
             AppInput::NavigateBack => {
-                sender.input(AppInput::SetPage(self.page.back()));
+                navigation.pop();
             }
             AppInput::ServerSelected(server) => {
                 self.server = Some(server.clone());
                 self.account_list.emit(AccountListInput::SetServer(server));
-                sender.input(AppInput::SetPage(AppPage::Accounts));
+                navigation.push_by_tag(&AppPage::Accounts.to_string());
             }
             AppInput::AccountSelected(server, account) => {
-                let stack = &widgets.stack;
-
-                if let Some(previous) = &self.library {
-                    stack.remove(previous.widget());
-                }
-
                 let api_client = ApiClient::new(Arc::clone(&self.config), &server, &account);
                 let api_client = Arc::new(api_client);
                 self.api_client = Some(api_client.clone());
@@ -220,29 +156,16 @@ impl Component for App {
                 let library = Library::builder()
                     .launch(api_client)
                     .forward(sender.input_sender(), convert_library_output);
-                stack.add_named(library.widget(), Some(&AppPage::Library.to_string()));
+                navigation.push(library.widget());
                 self.library = Some(library);
-
-                sender.input(AppInput::SetPage(AppPage::Library));
             }
             AppInput::ShowDetails(media) => {
-                let stack = &widgets.stack;
-
-                if let Some(previous) = &self.media_details {
-                    stack.remove(previous.widget());
-                }
-
                 if let Some(api_client) = &self.api_client {
                     let media_details = MediaDetails::builder()
                         .launch((api_client.clone(), media))
-                        .forward(sender.input_sender(), convert_media_details_output);
-                    stack.add_named(
-                        media_details.widget(),
-                        Some(&AppPage::MediaDetails.to_string()),
-                    );
+                        .detach();
+                    navigation.push(media_details.widget());
                     self.media_details = Some(media_details);
-
-                    sender.input(AppInput::SetPage(AppPage::MediaDetails));
                 }
             }
             AppInput::PlayVideo(item) => {
@@ -252,7 +175,7 @@ impl Component for App {
                         server.clone(),
                         Box::new(item),
                     ));
-                    sender.input(AppInput::SetPage(AppPage::VideoPlayer));
+                    navigation.push_by_tag(&AppPage::VideoPlayer.to_string());
                 }
             }
         }
@@ -283,13 +206,6 @@ fn convert_video_player_output(output: VideoPlayerOutput) -> AppInput {
 
 fn convert_library_output(output: LibraryOutput) -> AppInput {
     match output {
-        LibraryOutput::NavigateBack => AppInput::NavigateBack,
         LibraryOutput::PlayVideo(media) => AppInput::PlayVideo(*media),
-    }
-}
-
-fn convert_media_details_output(output: MediaDetailsOutput) -> AppInput {
-    match output {
-        MediaDetailsOutput::NavigateBack => AppInput::NavigateBack,
     }
 }

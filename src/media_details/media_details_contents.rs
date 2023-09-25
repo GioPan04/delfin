@@ -16,7 +16,6 @@ use crate::{
 
 use super::{
     display_years::DisplayYears, media_details_header::MediaDetailsHeader, seasons::Seasons,
-    MediaDetailsOutput,
 };
 
 pub struct MediaDetailsContents {
@@ -29,7 +28,7 @@ pub struct MediaDetailsContents {
 impl AsyncComponent for MediaDetailsContents {
     type Init = (Arc<ApiClient>, BaseItemDto);
     type Input = ();
-    type Output = MediaDetailsOutput;
+    type Output = ();
     type CommandOutput = ();
 
     view! {

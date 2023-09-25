@@ -9,6 +9,7 @@ use relm4::{
 use crate::{
     config::{Account, Config, Server},
     jellyfin_api::api::user::AuthenticateByNameRes,
+    utils::constants::PAGE_MARGIN,
 };
 
 use super::{
@@ -44,37 +45,49 @@ impl Component for AccountList {
     type CommandOutput = ();
 
     view! {
-        adw::Clamp {
-            adw::PreferencesGroup {
-                #[watch]
-                set_title: &format!("Sign in to {}", &model.server.name),
-                set_description: Some("Choose which account you'd like to sign in as"),
+        adw::NavigationPage {
+            set_title: "Accounts",
+
+            #[wrap(Some)]
+            set_child = &adw::ToolbarView {
+                add_top_bar = &adw::HeaderBar {},
+
                 #[wrap(Some)]
-                set_header_suffix = &gtk::Button {
-                    connect_clicked[sender] => move |_| {
-                        sender.input(AccountListInput::AddAccount);
-                    },
-                    adw::ButtonContent {
-                        set_icon_name: "list-add-symbolic",
-                        set_label: "Add an account",
-                    },
-                },
+                set_content = &adw::Clamp {
+                    set_margin_top: PAGE_MARGIN,
 
-                #[local_ref]
-                accounts_box -> gtk::ListBox {
-                    add_css_class: "boxed-list",
-                    set_selection_mode: gtk::SelectionMode::None,
-                },
+                    adw::PreferencesGroup {
+                        #[watch]
+                        set_title: &format!("Sign in to {}", &model.server.name),
+                        set_description: Some("Choose which account you'd like to sign in as"),
+                        #[wrap(Some)]
+                        set_header_suffix = &gtk::Button {
+                            connect_clicked[sender] => move |_| {
+                                sender.input(AccountListInput::AddAccount);
+                            },
+                            adw::ButtonContent {
+                                set_icon_name: "list-add-symbolic",
+                                set_label: "Add an account",
+                            },
+                        },
 
-                // Empty state
-                gtk::ListBox {
-                    add_css_class: "boxed-list",
-                    set_selection_mode: gtk::SelectionMode::None,
-                    #[watch]
-                    set_visible: model.accounts.is_empty(),
-                    adw::ActionRow {
-                        set_title: "No Accounts Available",
-                        set_subtitle: "Add an account to start watching",
+                        #[local_ref]
+                        accounts_box -> gtk::ListBox {
+                            add_css_class: "boxed-list",
+                            set_selection_mode: gtk::SelectionMode::None,
+                        },
+
+                        // Empty state
+                        gtk::ListBox {
+                            add_css_class: "boxed-list",
+                            set_selection_mode: gtk::SelectionMode::None,
+                            #[watch]
+                            set_visible: model.accounts.is_empty(),
+                            adw::ActionRow {
+                                set_title: "No Accounts Available",
+                                set_subtitle: "Add an account to start watching",
+                            },
+                        },
                     },
                 },
             },

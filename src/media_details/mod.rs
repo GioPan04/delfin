@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use gtk::prelude::*;
+use adw::prelude::*;
 use jellyfin_api::types::BaseItemDto;
 use relm4::{
     component::{AsyncComponent, AsyncComponentController, AsyncController},
@@ -8,7 +8,6 @@ use relm4::{
 };
 
 use crate::{
-    app::{AppInput, APP_BROKER},
     jellyfin_api::api_client::ApiClient,
     media_details::media_details_contents::MediaDetailsContents,
 };
@@ -25,41 +24,26 @@ pub struct MediaDetails {
     _media_details_contents: AsyncController<MediaDetailsContents>,
 }
 
-#[derive(Debug)]
-pub enum MediaDetailsOutput {
-    NavigateBack,
-}
-
 #[relm4::component(pub)]
 impl SimpleComponent for MediaDetails {
     type Init = (Arc<ApiClient>, BaseItemDto);
     type Input = ();
-    type Output = MediaDetailsOutput;
+    type Output = ();
 
     view! {
-        #[root]
-        gtk::Box {
-            set_orientation: gtk::Orientation::Vertical,
-            add_css_class: "media-details",
+        adw::NavigationPage {
+            #[wrap(Some)]
+            set_child = &adw::ToolbarView {
+                add_css_class: "media-details",
 
-            adw::HeaderBar {
-                set_valign: gtk::Align::Start,
+                add_top_bar = &adw::HeaderBar {},
+
+                #[name = "container"]
                 #[wrap(Some)]
-                set_title_widget = &adw::WindowTitle {
-                    set_title: &title,
+                set_content = &gtk::ScrolledWindow {
+                    set_hexpand: true,
+                    set_vexpand: true,
                 },
-                pack_start = &gtk::Button {
-                    set_icon_name: "go-previous",
-                    connect_clicked => move |_| {
-                        APP_BROKER.send(AppInput::NavigateBack);
-                    },
-                },
-            },
-
-            #[name = "container"]
-            gtk::ScrolledWindow {
-                set_hexpand: true,
-                set_vexpand: true,
             },
         }
     }
@@ -71,11 +55,13 @@ impl SimpleComponent for MediaDetails {
     ) -> ComponentParts<Self> {
         let (api_client, media) = init;
 
-        let title = media
-            .series_name
-            .clone()
-            .or(media.name.clone())
-            .unwrap_or("Unnamed Item".to_string());
+        root.set_title(
+            &media
+                .series_name
+                .clone()
+                .or(media.name.clone())
+                .unwrap_or("Unnamed Item".to_string()),
+        );
 
         let widgets = view_output!();
         let container = &widgets.container;

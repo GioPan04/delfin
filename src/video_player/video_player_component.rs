@@ -2,9 +2,9 @@ use std::cell::OnceCell;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
+use adw::prelude::*;
 use gst::ClockTime;
 use gstplay::PlayState;
-use gtk::prelude::*;
 use jellyfin_api::types::{BaseItemDto, BaseItemKind};
 use relm4::{gtk, ComponentParts};
 use relm4::{prelude::*, JoinHandle};
@@ -77,54 +77,48 @@ impl Component for VideoPlayer {
     type CommandOutput = VideoPlayerCommandOutput;
 
     view! {
-        #[name = "toaster"]
-        adw::ToastOverlay {
-            add_css_class: "video-player",
+        adw::NavigationPage {
+            #[watch]
+            set_title: &model.media.as_ref()
+                .and_then(|media| media.name.clone())
+                .unwrap_or("Jellything".to_string()),
 
-            #[name = "overlay"]
-            gtk::Overlay {
-                #[local_ref]
-                video_player -> GstVideoPlayer {
-                    add_controller = gtk::GestureClick {
-                        connect_pressed[sender] => move |_, _, _, _| {
-                            sender.input(VideoPlayerInput::ToggleControls);
+            #[wrap(Some)]
+            #[name = "toaster"]
+            set_child = &adw::ToastOverlay {
+                add_css_class: "video-player",
+
+                #[name = "overlay"]
+                gtk::Overlay {
+                    #[local_ref]
+                    video_player -> GstVideoPlayer {
+                        add_controller = gtk::GestureClick {
+                            connect_pressed[sender] => move |_, _, _, _| {
+                                sender.input(VideoPlayerInput::ToggleControls);
+                            },
                         },
                     },
-                },
 
-                add_overlay = &adw::HeaderBar {
-                    #[watch]
-                    set_visible: model.show_controls,
-                    set_valign: gtk::Align::Start,
-                    add_css_class: "osd",
-                    #[wrap(Some)]
-                    set_title_widget = &adw::WindowTitle {
+                    add_overlay = &adw::HeaderBar {
                         #[watch]
-                        set_title: &model.media.as_ref()
-                            .and_then(|media| media.name.clone())
-                            .unwrap_or("Jellything".to_string()),
+                        set_visible: model.show_controls,
+                        set_valign: gtk::Align::Start,
+                        add_css_class: "osd",
                     },
-                    pack_start = &gtk::Button {
-                        set_icon_name: "go-previous",
-                        connect_clicked[sender] => move |_| {
-                            sender.input(VideoPlayerInput::ExitPlayer);
-                        },
-                    },
-                },
 
-                #[name = "spinner"]
-                add_overlay = &gtk::Spinner {
-                    #[watch]
-                    set_visible: matches!(model.player_state, VideoPlayerState::Loading | VideoPlayerState::Buffering),
-                    set_spinning: true,
-                    set_halign: gtk::Align::Center,
-                    set_valign: gtk::Align::Center,
-                    set_width_request: 48,
-                    set_height_request: 48,
+                    #[name = "spinner"]
+                    add_overlay = &gtk::Spinner {
+                        #[watch]
+                        set_visible: matches!(model.player_state, VideoPlayerState::Loading | VideoPlayerState::Buffering),
+                        set_spinning: true,
+                        set_halign: gtk::Align::Center,
+                        set_valign: gtk::Align::Center,
+                        set_width_request: 48,
+                        set_height_request: 48,
+                    },
                 },
             },
         }
-
     }
 
     fn init(
