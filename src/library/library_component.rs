@@ -54,7 +54,7 @@ impl Component for Library {
 
     view! {
         adw::NavigationPage {
-            set_tag: Some(&AppPage::Library.to_string()),
+            set_tag: Some(AppPage::Library.into()),
             set_title: "Library",
 
             #[wrap(Some)]

@@ -1,5 +1,4 @@
 use adw::prelude::*;
-use core::fmt;
 use jellyfin_api::types::BaseItemDto;
 use relm4::{prelude::*, MessageBroker};
 use std::sync::{Arc, RwLock};
@@ -31,14 +30,14 @@ pub enum AppPage {
     VideoPlayer,
 }
 
-impl fmt::Display for AppPage {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            AppPage::Servers => write!(f, "servers"),
-            AppPage::Accounts => write!(f, "accounts"),
-            AppPage::Library => write!(f, "library"),
-            AppPage::MediaDetails => write!(f, "media_details"),
-            AppPage::VideoPlayer => write!(f, "video_player"),
+impl From<AppPage> for &str {
+    fn from(val: AppPage) -> Self {
+        match val {
+            AppPage::Servers => "servers",
+            AppPage::Accounts => "accounts",
+            AppPage::Library => "library",
+            AppPage::MediaDetails => "media_details",
+            AppPage::VideoPlayer => "video_player",
         }
     }
 }
@@ -84,13 +83,13 @@ impl Component for App {
             #[wrap(Some)]
             set_content = &adw::NavigationView {
                 add = model.servers.widget() {
-                    set_tag: Some(&AppPage::Servers.to_string()),
+                    set_tag: Some(AppPage::Servers.into()),
                 },
                 add = model.account_list.widget() {
-                    set_tag: Some(&AppPage::Accounts.to_string()),
+                    set_tag: Some(AppPage::Accounts.into()),
                 },
                 add = model.video_player.widget() {
-                    set_tag: Some(&AppPage::VideoPlayer.to_string()),
+                    set_tag: Some(AppPage::VideoPlayer.into()),
                 },
             },
         }
@@ -148,12 +147,12 @@ impl Component for App {
                 navigation.pop();
             }
             AppInput::PopToPage(page) => {
-                navigation.pop_to_tag(&page.to_string());
+                navigation.pop_to_tag(page.into());
             }
             AppInput::ServerSelected(server) => {
                 self.server = Some(server.clone());
                 self.account_list.emit(AccountListInput::SetServer(server));
-                navigation.push_by_tag(&AppPage::Accounts.to_string());
+                navigation.push_by_tag(AppPage::Accounts.into());
             }
             AppInput::AccountSelected(server, account) => {
                 self.account = Some(account.clone());
@@ -192,11 +191,11 @@ impl Component for App {
                         server.clone(),
                         Box::new(item),
                     ));
-                    navigation.push_by_tag(&AppPage::VideoPlayer.to_string());
+                    navigation.push_by_tag(AppPage::VideoPlayer.into());
                 }
             }
             AppInput::SignOut => {
-                navigation.pop_to_tag(&AppPage::Servers.to_string());
+                navigation.pop_to_tag(AppPage::Servers.into());
             }
         }
 
