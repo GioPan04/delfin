@@ -52,15 +52,18 @@ pub struct App {
     media_details: Option<Controller<MediaDetails>>,
     video_player: Controller<VideoPlayer>,
     server: Option<config::Server>,
+    account: Option<config::Account>,
 }
 
 #[derive(Debug)]
 pub enum AppInput {
     NavigateBack,
+    PopToPage(AppPage),
     ServerSelected(config::Server),
     AccountSelected(config::Server, config::Account),
     ShowDetails(BaseItemDto),
     PlayVideo(BaseItemDto),
+    SignOut,
 }
 
 #[relm4::component(pub)]
@@ -123,6 +126,7 @@ impl Component for App {
             media_details: None,
             video_player,
             server: None,
+            account: None,
         };
 
         let widgets = view_output!();
@@ -143,26 +147,39 @@ impl Component for App {
             AppInput::NavigateBack => {
                 navigation.pop();
             }
+            AppInput::PopToPage(page) => {
+                navigation.pop_to_tag(&page.to_string());
+            }
             AppInput::ServerSelected(server) => {
                 self.server = Some(server.clone());
                 self.account_list.emit(AccountListInput::SetServer(server));
                 navigation.push_by_tag(&AppPage::Accounts.to_string());
             }
             AppInput::AccountSelected(server, account) => {
+                self.account = Some(account.clone());
+
                 let api_client = ApiClient::new(Arc::clone(&self.config), &server, &account);
                 let api_client = Arc::new(api_client);
                 self.api_client = Some(api_client.clone());
 
                 let library = Library::builder()
-                    .launch(api_client)
+                    .launch((self.config.clone(), server, account, api_client))
                     .forward(sender.input_sender(), convert_library_output);
                 navigation.push(library.widget());
                 self.library = Some(library);
             }
             AppInput::ShowDetails(media) => {
-                if let Some(api_client) = &self.api_client {
+                if let (Some(api_client), Some(server), Some(account)) =
+                    (&self.api_client, &self.server, &self.account)
+                {
                     let media_details = MediaDetails::builder()
-                        .launch((api_client.clone(), media))
+                        .launch((
+                            api_client.clone(),
+                            media,
+                            self.config.clone(),
+                            server.clone(),
+                            account.clone(),
+                        ))
                         .detach();
                     navigation.push(media_details.widget());
                     self.media_details = Some(media_details);
@@ -177,6 +194,9 @@ impl Component for App {
                     ));
                     navigation.push_by_tag(&AppPage::VideoPlayer.to_string());
                 }
+            }
+            AppInput::SignOut => {
+                navigation.pop_to_tag(&AppPage::Servers.to_string());
             }
         }
 

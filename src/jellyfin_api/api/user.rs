@@ -5,6 +5,7 @@ use reqwest::{StatusCode, Url};
 use serde::{Deserialize, Serialize};
 
 use crate::jellyfin_api::{
+    api_client::ApiClient,
     unauthed_client::get_unauthed_client,
     util::{auth_header::get_auth_header, url::httpify},
 };
@@ -80,4 +81,12 @@ pub async fn get_user_avatar(url: &str, user_id: &str) -> Result<VecDeque<u8>> {
         .await?
         .into_iter()
         .collect())
+}
+
+impl ApiClient {
+    pub async fn sign_out(&self) -> Result<()> {
+        let url = self.root.join("/Sessions/Logout")?;
+        self.client.post(url).send().await?;
+        Ok(())
+    }
 }

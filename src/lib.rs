@@ -1,5 +1,6 @@
 pub mod accounts;
 pub mod app;
+pub mod borgar;
 pub mod config;
 pub mod jellyfin_api;
 pub mod library;

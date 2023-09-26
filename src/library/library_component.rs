@@ -1,12 +1,14 @@
 use jellyfin_api::types::BaseItemDto;
 use relm4::ComponentController;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 use adw::prelude::*;
 use relm4::{adw, gtk, prelude::*, Component, Controller};
 
 use crate::{
     app::AppPage,
+    borgar::borgar_menu::BorgarMenu,
+    config::{Account, Config, Server},
     jellyfin_api::{
         api::views::UserView, api_client::ApiClient,
         models::display_preferences::DisplayPreferences,
@@ -22,6 +24,7 @@ enum LibraryState {
 }
 
 pub struct Library {
+    borgar_menu: Controller<BorgarMenu>,
     api_client: Arc<ApiClient>,
     state: LibraryState,
     home: Option<Controller<Home>>,
@@ -44,7 +47,7 @@ pub enum LibraryCommandOutput {
 
 #[relm4::component(pub)]
 impl Component for Library {
-    type Init = Arc<ApiClient>;
+    type Init = (Arc<RwLock<Config>>, Server, Account, Arc<ApiClient>);
     type Input = LibraryInput;
     type Output = LibraryOutput;
     type CommandOutput = LibraryCommandOutput;
@@ -68,6 +71,8 @@ impl Component for Library {
                             set_policy: adw::ViewSwitcherPolicy::Wide,
                             set_stack: Some(&view_stack),
                         },
+
+                        pack_end = model.borgar_menu.widget(),
                     },
 
                     #[wrap(Some)]
@@ -138,9 +143,12 @@ impl Component for Library {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let api_client = init;
+        let (config, server, account, api_client) = init;
 
         let model = Library {
+            borgar_menu: BorgarMenu::builder()
+                .launch((api_client.clone(), config, server, account))
+                .detach(),
             api_client: Arc::clone(&api_client),
             state: LibraryState::Loading,
             home: None,

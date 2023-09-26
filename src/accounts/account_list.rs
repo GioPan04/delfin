@@ -26,6 +26,7 @@ pub struct AccountList {
 
 #[derive(Debug)]
 pub enum AccountListInput {
+    ReloadAccounts,
     SetServer(Server),
     AddAccount,
     AccountAdded(AuthenticateByNameRes),
@@ -47,6 +48,10 @@ impl Component for AccountList {
     view! {
         adw::NavigationPage {
             set_title: "Accounts",
+
+            connect_showing[sender] => move |_| {
+                sender.input(AccountListInput::ReloadAccounts);
+            },
 
             #[wrap(Some)]
             set_child = &adw::ToolbarView {
@@ -120,6 +125,13 @@ impl Component for AccountList {
         root: &Self::Root,
     ) {
         match message {
+            AccountListInput::ReloadAccounts => {
+                let mut accounts = self.accounts.guard();
+                accounts.clear();
+                for account in &self.server.accounts {
+                    accounts.push_back((self.server.url.clone(), account.clone()));
+                }
+            }
             AccountListInput::SetServer(server) => {
                 self.server = server.clone();
 

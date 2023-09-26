@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 use adw::prelude::*;
 use jellyfin_api::types::BaseItemDto;
@@ -8,6 +8,8 @@ use relm4::{
 };
 
 use crate::{
+    borgar::borgar_menu::BorgarMenu,
+    config::{Account, Config, Server},
     jellyfin_api::api_client::ApiClient,
     media_details::media_details_contents::MediaDetailsContents,
 };
@@ -21,12 +23,19 @@ mod season_buttons;
 mod seasons;
 
 pub struct MediaDetails {
-    _media_details_contents: AsyncController<MediaDetailsContents>,
+    borgar_menu: Controller<BorgarMenu>,
+    media_details_contents: AsyncController<MediaDetailsContents>,
 }
 
 #[relm4::component(pub)]
 impl SimpleComponent for MediaDetails {
-    type Init = (Arc<ApiClient>, BaseItemDto);
+    type Init = (
+        Arc<ApiClient>,
+        BaseItemDto,
+        Arc<RwLock<Config>>,
+        Server,
+        Account,
+    );
     type Input = ();
     type Output = ();
 
@@ -36,7 +45,9 @@ impl SimpleComponent for MediaDetails {
             set_child = &adw::ToolbarView {
                 add_css_class: "media-details",
 
-                add_top_bar = &adw::HeaderBar {},
+                add_top_bar = &adw::HeaderBar {
+                    pack_end = model.borgar_menu.widget(),
+                },
 
                 #[name = "container"]
                 #[wrap(Some)]
@@ -53,7 +64,7 @@ impl SimpleComponent for MediaDetails {
         root: &Self::Root,
         _sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let (api_client, media) = init;
+        let (api_client, media, config, server, account) = init;
 
         root.set_title(
             &media
@@ -63,17 +74,21 @@ impl SimpleComponent for MediaDetails {
                 .unwrap_or("Unnamed Item".to_string()),
         );
 
+        let media_details_contents = MediaDetailsContents::builder()
+            .launch((api_client.clone(), media))
+            .detach();
+
+        let model = MediaDetails {
+            borgar_menu: BorgarMenu::builder()
+                .launch((api_client, config, server, account))
+                .detach(),
+            media_details_contents,
+        };
+
         let widgets = view_output!();
         let container = &widgets.container;
 
-        let media_details_contents = MediaDetailsContents::builder()
-            .launch((api_client, media))
-            .detach();
-        container.set_child(Some(media_details_contents.widget()));
-
-        let model = MediaDetails {
-            _media_details_contents: media_details_contents,
-        };
+        container.set_child(Some(model.media_details_contents.widget()));
 
         ComponentParts { model, widgets }
     }

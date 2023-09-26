@@ -24,6 +24,7 @@ pub struct ServerList {
 
 #[derive(Debug)]
 pub enum ServerListInput {
+    ReloadServers,
     AddServer,
     ServerAdded(config::Server),
     ServerSelected(DynamicIndex),
@@ -44,6 +45,10 @@ impl Component for ServerList {
     view! {
         adw::NavigationPage {
             set_title: "Servers",
+
+            connect_showing[sender] => move |_| {
+                sender.input(ServerListInput::ReloadServers);
+            },
 
             #[wrap(Some)]
             set_child = &adw::ToolbarView {
@@ -94,10 +99,7 @@ impl Component for ServerList {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let mut servers = FactoryVecDeque::new(gtk::ListBox::default(), sender.input_sender());
-        for server in &config.read().unwrap().servers {
-            servers.guard().push_back(server.clone());
-        }
+        let servers = FactoryVecDeque::new(gtk::ListBox::default(), sender.input_sender());
 
         let model = ServerList {
             config,
@@ -109,6 +111,8 @@ impl Component for ServerList {
 
         let widgets = view_output!();
 
+        sender.input(ServerListInput::ReloadServers);
+
         ComponentParts { model, widgets }
     }
 
@@ -119,6 +123,13 @@ impl Component for ServerList {
         root: &Self::Root,
     ) {
         match message {
+            ServerListInput::ReloadServers => {
+                let mut servers = self.servers.guard();
+                servers.clear();
+                for server in &self.config.read().unwrap().servers {
+                    servers.push_back(server.clone());
+                }
+            }
             ServerListInput::AddServer => {
                 self.add_server_dialog = Some(
                     AddServerDialog::builder()
