@@ -54,7 +54,7 @@ pub enum VideoPlayerInput {
     PlayVideo(Arc<ApiClient>, Server, Box<BaseItemDto>),
     ToggleControls,
     EndOfStream,
-    ExitPlayer,
+    StopPlayer,
     PlayerStateChanged(PlayState),
     PositionUpdated,
 }
@@ -117,6 +117,10 @@ impl Component for VideoPlayer {
                         set_height_request: 48,
                     },
                 },
+            },
+
+            connect_hiding[sender] => move |_| {
+                sender.input(VideoPlayerInput::StopPlayer);
             },
         }
     }
@@ -276,9 +280,10 @@ impl Component for VideoPlayer {
                     APP_BROKER.send(AppInput::PlayVideo(next.clone()));
                     return;
                 }
-                sender.input(VideoPlayerInput::ExitPlayer);
+                sender.input(VideoPlayerInput::StopPlayer);
+                sender.output(VideoPlayerOutput::NavigateBack).unwrap();
             }
-            VideoPlayerInput::ExitPlayer => {
+            VideoPlayerInput::StopPlayer => {
                 widgets.video_player.stop();
                 let position = widgets.video_player.position();
 
@@ -307,8 +312,6 @@ impl Component for VideoPlayer {
                     session_reporting_handle.abort();
                     self.session_reporting_handle = None;
                 }
-
-                sender.output(VideoPlayerOutput::NavigateBack).unwrap();
             }
             VideoPlayerInput::PlayerStateChanged(play_state) => {
                 match (&self.player_state, play_state) {
