@@ -13,6 +13,8 @@ use crate::{
     preferences::Preferences,
 };
 
+use super::about::About;
+
 pub struct BorgarMenu {
     api_client: Arc<ApiClient>,
     config: Arc<RwLock<Config>>,
@@ -20,17 +22,20 @@ pub struct BorgarMenu {
     account: Account,
     preferences: Option<Controller<Preferences>>,
     sign_out_dialog: Option<Controller<SignOutDialog>>,
+    about: Option<Controller<About>>,
 }
 
 #[derive(Debug)]
 pub enum BorgarMenuInput {
-    Preferences,
     SignOut,
+    Preferences,
+    About,
 }
 
 relm4::new_action_group!(BorgarMenuActionGroup, "menu");
-relm4::new_stateless_action!(PreferencesAction, BorgarMenuActionGroup, "preferences");
 relm4::new_stateless_action!(SignOutAction, BorgarMenuActionGroup, "sign_out");
+relm4::new_stateless_action!(PreferencesAction, BorgarMenuActionGroup, "preferences");
+relm4::new_stateless_action!(AboutAction, BorgarMenuActionGroup, "about");
 
 #[relm4::component(pub)]
 impl Component for BorgarMenu {
@@ -49,8 +54,13 @@ impl Component for BorgarMenu {
 
     menu! {
         menu: {
-            "Preferences" => PreferencesAction,
-            "Sign Out" => SignOutAction,
+            section! {
+                "Sign Out" => SignOutAction,
+            },
+            section! {
+                "Preferences" => PreferencesAction,
+                "About Jellything" => AboutAction,
+            },
         }
     }
 
@@ -68,15 +78,9 @@ impl Component for BorgarMenu {
             account,
             preferences: None,
             sign_out_dialog: None,
+            about: None,
         };
         let widgets = view_output!();
-
-        let preferences_action: RelmAction<PreferencesAction> = RelmAction::new_stateless({
-            let sender = sender.clone();
-            move |_| {
-                sender.input(BorgarMenuInput::Preferences);
-            }
-        });
 
         let sign_out_action: RelmAction<SignOutAction> = RelmAction::new_stateless({
             let sender = sender.clone();
@@ -85,9 +89,24 @@ impl Component for BorgarMenu {
             }
         });
 
+        let preferences_action: RelmAction<PreferencesAction> = RelmAction::new_stateless({
+            let sender = sender.clone();
+            move |_| {
+                sender.input(BorgarMenuInput::Preferences);
+            }
+        });
+
+        let about_action: RelmAction<AboutAction> = RelmAction::new_stateless({
+            let sender = sender.clone();
+            move |_| {
+                sender.input(BorgarMenuInput::About);
+            }
+        });
+
         let mut group = RelmActionGroup::<BorgarMenuActionGroup>::new();
-        group.add_action(preferences_action);
         group.add_action(sign_out_action);
+        group.add_action(preferences_action);
+        group.add_action(about_action);
         group.register_for_widget(root);
 
         ComponentParts { model, widgets }
@@ -100,14 +119,6 @@ impl Component for BorgarMenu {
         root: &Self::Root,
     ) {
         match message {
-            BorgarMenuInput::Preferences => {
-                self.preferences = Some(
-                    Preferences::builder()
-                        .transient_for(root)
-                        .launch(())
-                        .detach(),
-                );
-            }
             BorgarMenuInput::SignOut => {
                 self.sign_out_dialog = Some(
                     SignOutDialog::builder()
@@ -120,6 +131,17 @@ impl Component for BorgarMenu {
                         ))
                         .detach(),
                 );
+            }
+            BorgarMenuInput::Preferences => {
+                self.preferences = Some(
+                    Preferences::builder()
+                        .transient_for(root)
+                        .launch(())
+                        .detach(),
+                );
+            }
+            BorgarMenuInput::About => {
+                self.about = Some(About::builder().transient_for(root).launch(()).detach())
             }
         }
         self.update_view(widgets, sender);
