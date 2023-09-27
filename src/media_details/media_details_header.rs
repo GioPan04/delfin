@@ -10,6 +10,7 @@ use relm4::{
 use crate::{
     app::APP_BROKER,
     jellyfin_api::{api::latest::GetNextUpOptionsBuilder, api_client::ApiClient},
+    utils::constants::MAX_LIBRARY_WIDTH,
 };
 
 pub const MEDIA_DETAILS_BACKDROP_HEIGHT: i32 = 400;
@@ -68,8 +69,8 @@ impl Component for MediaDetailsHeader {
                 // },
 
                 add_overlay = &adw::Clamp {
-                    set_maximum_size: 1280,
-                    set_tightening_threshold: 1280,
+                    set_maximum_size: MAX_LIBRARY_WIDTH,
+                    set_tightening_threshold: MAX_LIBRARY_WIDTH,
                     connect_maximum_size_notify => |_| {},
 
                     gtk::Overlay {
@@ -95,7 +96,7 @@ impl Component for MediaDetailsHeader {
 
                         #[name = "fade_overlay"]
                         add_overlay = &gtk::Box {
-                            set_width_request: 1280,
+                            set_width_request: MAX_LIBRARY_WIDTH,
                             // This needs to be hidden by default for the breakpoint to show it
                             // properly, so we dynamically chang the visibility of the children
                             set_visible: false,
@@ -127,8 +128,8 @@ impl Component for MediaDetailsHeader {
                     add_css_class: "media-details-header-overlay",
 
                     adw::Clamp {
-                        set_maximum_size: 1280,
-                        set_tightening_threshold: 1280,
+                        set_maximum_size: MAX_LIBRARY_WIDTH,
+                        set_tightening_threshold: MAX_LIBRARY_WIDTH,
 
                         gtk::Box {
                             set_orientation: gtk::Orientation::Horizontal,
@@ -183,8 +184,8 @@ impl Component for MediaDetailsHeader {
 
             add_breakpoint = adw::Breakpoint::new(BreakpointCondition::new_length(
                 adw::BreakpointConditionLengthType::MinWidth,
-                1280.0,
-                adw::LengthUnit::Sp
+                MAX_LIBRARY_WIDTH as f64,
+                adw::LengthUnit::Px
             )) {
                 add_setter: (&fade_overlay, "visible", &true.into()),
             },

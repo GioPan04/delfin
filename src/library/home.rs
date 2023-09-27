@@ -11,6 +11,7 @@ use relm4::{
 use crate::jellyfin_api::api::views::UserView;
 use crate::jellyfin_api::api_client::ApiClient;
 use crate::jellyfin_api::models::display_preferences::{DisplayPreferences, HomeSection};
+use crate::utils::constants::MAX_LIBRARY_WIDTH;
 
 use super::home_sections::continue_watching::HomeSectionContinueWatching;
 use super::home_sections::latest::HomeSectionLatest;
@@ -46,7 +47,7 @@ impl SimpleComponent for Home {
 
     view! {
         adw::Clamp {
-            set_maximum_size: 1280,
+            set_maximum_size: MAX_LIBRARY_WIDTH,
             set_tightening_threshold: 1000,
 
             #[name = "sections_container"]
