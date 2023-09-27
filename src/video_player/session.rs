@@ -1,4 +1,4 @@
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use gst::prelude::ObjectExt;
 use tokio::{
@@ -7,23 +7,20 @@ use tokio::{
 };
 use uuid::Uuid;
 
-use crate::{config::Config, jellyfin_api::api_client::ApiClient};
+use crate::{globals::CONFIG, jellyfin_api::api_client::ApiClient};
 
 use super::gst_play_widget::GstVideoPlayer;
 
 pub fn start_session_reporting(
-    config: Arc<RwLock<Config>>,
     api_client: Arc<ApiClient>,
     item_id: &Uuid,
     video_player: &GstVideoPlayer,
 ) -> JoinHandle<()> {
+    let config = CONFIG.read();
+
     let player = video_player.player().get().unwrap().downgrade();
 
-    let position_update_frequency = config
-        .read()
-        .unwrap()
-        .video_player
-        .position_update_frequency as u64;
+    let position_update_frequency = config.video_player.position_update_frequency as u64;
 
     tokio::spawn({
         let item_id = *item_id;

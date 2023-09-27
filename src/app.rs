@@ -5,7 +5,8 @@ use std::sync::{Arc, RwLock};
 
 use crate::{
     accounts::account_list::{AccountList, AccountListInput, AccountListOutput},
-    config::{self, Config},
+    config,
+    globals::CONFIG,
     jellyfin_api::api_client::ApiClient,
     library::library_component::{Library, LibraryOutput},
     media_details::MediaDetails,
@@ -43,7 +44,6 @@ impl From<AppPage> for &str {
 }
 
 pub struct App {
-    config: Arc<RwLock<Config>>,
     api_client: Option<Arc<ApiClient>>,
     servers: Controller<ServerList>,
     account_list: Controller<AccountList>,
@@ -67,7 +67,7 @@ pub enum AppInput {
 
 #[relm4::component(pub)]
 impl Component for App {
-    type Init = Arc<RwLock<Config>>;
+    type Init = ();
     type Input = AppInput;
     type Output = ();
     type CommandOutput = ();
@@ -96,7 +96,7 @@ impl Component for App {
     }
 
     fn init(
-        config: Self::Init,
+        _init: Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
@@ -105,19 +105,18 @@ impl Component for App {
         root.add_css_class("devel");
 
         let servers = ServerList::builder()
-            .launch(Arc::clone(&config))
+            .launch(())
             .forward(sender.input_sender(), convert_server_list_output);
 
         let account_list = AccountList::builder()
-            .launch(Arc::clone(&config))
+            .launch(())
             .forward(sender.input_sender(), convert_account_list_output);
 
         let video_player = VideoPlayer::builder()
-            .launch(Arc::clone(&config))
+            .launch(())
             .forward(sender.input_sender(), convert_video_player_output);
 
         let model = App {
-            config,
             api_client: None,
             servers,
             account_list,
@@ -157,12 +156,23 @@ impl Component for App {
             AppInput::AccountSelected(server, account) => {
                 self.account = Some(account.clone());
 
-                let api_client = ApiClient::new(Arc::clone(&self.config), &server, &account);
+                let api_client = ApiClient::new(
+                    // TODO
+                    Arc::new(RwLock::new(CONFIG.read().clone())),
+                    &server,
+                    &account,
+                );
                 let api_client = Arc::new(api_client);
                 self.api_client = Some(api_client.clone());
 
                 let library = Library::builder()
-                    .launch((self.config.clone(), server, account, api_client))
+                    .launch((
+                        // TODO
+                        Arc::new(RwLock::new(CONFIG.read().clone())),
+                        server,
+                        account,
+                        api_client,
+                    ))
                     .forward(sender.input_sender(), convert_library_output);
                 navigation.push(library.widget());
                 self.library = Some(library);
@@ -175,7 +185,8 @@ impl Component for App {
                         .launch((
                             api_client.clone(),
                             media,
-                            self.config.clone(),
+                            // TODO
+                            Arc::new(RwLock::new(CONFIG.read().clone())),
                             server.clone(),
                             account.clone(),
                         ))

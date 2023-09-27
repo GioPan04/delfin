@@ -4,7 +4,7 @@ use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Config {
     pub device_id: String,
     pub servers: Vec<Server>,
@@ -22,7 +22,7 @@ impl Default for Config {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct VideoPlayerConfig {
     pub position_update_frequency: usize,
 }

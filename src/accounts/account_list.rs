@@ -1,5 +1,3 @@
-use std::sync::{Arc, RwLock};
-
 use adw::prelude::*;
 use relm4::{
     adw, factory::FactoryVecDeque, gtk, prelude::DynamicIndex, Component, ComponentParts,
@@ -7,7 +5,8 @@ use relm4::{
 };
 
 use crate::{
-    config::{Account, Config, Server},
+    config::{Account, Server},
+    globals::CONFIG,
     jellyfin_api::api::user::AuthenticateByNameRes,
     utils::constants::PAGE_MARGIN,
 };
@@ -18,7 +17,6 @@ use super::{
 };
 
 pub struct AccountList {
-    config: Arc<RwLock<Config>>,
     server: Server,
     accounts: FactoryVecDeque<AccountListItem>,
     add_account_dialog: Option<Controller<AddAccountDialog>>,
@@ -40,7 +38,7 @@ pub enum AccountListOutput {
 
 #[relm4::component(pub)]
 impl Component for AccountList {
-    type Init = Arc<RwLock<Config>>;
+    type Init = ();
     type Input = AccountListInput;
     type Output = AccountListOutput;
     type CommandOutput = ();
@@ -100,12 +98,11 @@ impl Component for AccountList {
     }
 
     fn init(
-        config: Self::Init,
+        _init: Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = AccountList {
-            config,
             server: Server::default(),
             accounts: FactoryVecDeque::new(gtk::ListBox::default(), sender.input_sender()),
             add_account_dialog: None,
@@ -143,7 +140,7 @@ impl Component for AccountList {
                 }
             }
             AccountListInput::AddAccount => {
-                let config = self.config.read().unwrap();
+                let config = CONFIG.read();
                 self.add_account_dialog = Some(
                     AddAccountDialog::builder()
                         .transient_for(root)
@@ -160,7 +157,7 @@ impl Component for AccountList {
                 self.accounts
                     .guard()
                     .push_front((self.server.url.clone(), account.clone()));
-                let mut config = self.config.write().unwrap();
+                let mut config = CONFIG.write();
                 let server = config.servers.iter_mut().find(|s| s.id == self.server.id);
                 if let Some(server) = server {
                     server.accounts.insert(0, account.clone());
@@ -172,7 +169,7 @@ impl Component for AccountList {
             }
             AccountListInput::AcountSelected(index) => {
                 let index = index.current_index();
-                let config = self.config.read().unwrap();
+                let config = CONFIG.read();
                 let server = config.servers.iter().find(|s| s.id == self.server.id);
                 if let Some(server) = server {
                     let account = &server.accounts[index];

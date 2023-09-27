@@ -1,6 +1,6 @@
 use std::cell::OnceCell;
 use std::rc::Rc;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use adw::prelude::*;
 use gst::ClockTime;
@@ -10,7 +10,7 @@ use relm4::{gtk, ComponentParts};
 use relm4::{prelude::*, JoinHandle};
 
 use crate::app::{AppInput, APP_BROKER};
-use crate::config::{Config, Server};
+use crate::config::Server;
 use crate::jellyfin_api::api::shows::GetEpisodesOptionsBuilder;
 use crate::jellyfin_api::{api::item::get_stream_url, api_client::ApiClient};
 use crate::utils::ticks::ticks_to_seconds;
@@ -30,7 +30,6 @@ use super::next_up::NextUpInput;
 use super::session::start_session_reporting;
 
 pub struct VideoPlayer {
-    config: Arc<RwLock<Config>>,
     controls: OnceCell<Controller<VideoPlayerControls>>,
     next_up: OnceCell<Controller<NextUp>>,
     media: Option<BaseItemDto>,
@@ -71,7 +70,7 @@ pub enum VideoPlayerCommandOutput {
 
 #[relm4::component(pub)]
 impl Component for VideoPlayer {
-    type Init = Arc<RwLock<Config>>;
+    type Init = ();
     type Input = VideoPlayerInput;
     type Output = VideoPlayerOutput;
     type CommandOutput = VideoPlayerCommandOutput;
@@ -126,16 +125,13 @@ impl Component for VideoPlayer {
     }
 
     fn init(
-        init: Self::Init,
+        _init: Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let config = init;
-
         let show_controls = true;
 
         let model = VideoPlayer {
-            config,
             media: None,
             controls: OnceCell::new(),
             next_up: OnceCell::new(),
@@ -258,7 +254,6 @@ impl Component for VideoPlayer {
 
                 // Starts a background task that continuously reports playback progress
                 self.session_reporting_handle = Some(start_session_reporting(
-                    self.config.clone(),
                     api_client.clone(),
                     &item.id.unwrap(),
                     video_player,

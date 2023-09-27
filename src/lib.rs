@@ -2,6 +2,7 @@ pub mod accounts;
 pub mod app;
 pub mod borgar;
 pub mod config;
+pub mod globals;
 pub mod jellyfin_api;
 pub mod library;
 pub mod media_details;
