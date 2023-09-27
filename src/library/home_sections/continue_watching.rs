@@ -1,15 +1,18 @@
 use std::sync::Arc;
 
 use gtk::prelude::*;
-use relm4::{gtk, prelude::*, Component, ComponentParts};
+use relm4::{
+    component::{AsyncComponent, AsyncComponentController, AsyncController},
+    gtk, Component, ComponentParts,
+};
 
 use crate::{
     jellyfin_api::api_client::ApiClient,
-    library::media_grid::{MediaGrid, MediaGridInit, MediaGridOutput, MediaGridType},
+    library::media_list::{MediaList, MediaListInit, MediaListOutput, MediaListType},
 };
 
 pub struct HomeSectionContinueWatching {
-    _media_grid: Controller<MediaGrid>,
+    _media_grid: AsyncController<MediaList>,
 }
 
 #[derive(Debug)]
@@ -47,21 +50,20 @@ impl Component for HomeSectionContinueWatching {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let media_grid = MediaGrid::builder()
-            .launch(MediaGridInit {
+        let widgets = view_output!();
+        let container = &widgets.container;
+
+        let media_grid = MediaList::builder()
+            .launch(MediaListInit {
                 api_client,
-                grid_type: MediaGridType::ContinueWatching,
+                list_type: MediaListType::ContinueWatching,
             })
             .forward(sender.input_sender(), |o| o.into());
+        container.set_child(Some(media_grid.widget()));
 
         let model = HomeSectionContinueWatching {
             _media_grid: media_grid,
         };
-
-        let widgets = view_output!();
-        let container = &widgets.container;
-
-        container.set_child(Some(model._media_grid.widget()));
 
         ComponentParts { model, widgets }
     }
@@ -79,10 +81,10 @@ impl Component for HomeSectionContinueWatching {
     }
 }
 
-impl From<MediaGridOutput> for HomeSectionContinueWatchingInput {
-    fn from(value: MediaGridOutput) -> Self {
+impl From<MediaListOutput> for HomeSectionContinueWatchingInput {
+    fn from(value: MediaListOutput) -> Self {
         match value {
-            MediaGridOutput::Empty(_) => HomeSectionContinueWatchingInput::Empty,
+            MediaListOutput::Empty(_) => HomeSectionContinueWatchingInput::Empty,
         }
     }
 }

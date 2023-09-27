@@ -2,6 +2,7 @@ use std::{collections::HashMap, convert::identity, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::{
+    component::{AsyncComponent, AsyncComponentController, AsyncController},
     gtk, Component, ComponentController, ComponentParts, ComponentSender, Controller,
     SimpleComponent,
 };
@@ -9,8 +10,8 @@ use uuid::Uuid;
 
 use crate::{
     jellyfin_api::{api::views::UserView, api_client::ApiClient},
-    library::media_grid::{
-        MediaGrid, MediaGridInit, MediaGridOutput, MediaGridType, MediaGridTypeLatestParams,
+    library::media_list::{
+        MediaList, MediaListInit, MediaListOutput, MediaListType, MediaListTypeLatestParams,
     },
 };
 
@@ -80,17 +81,17 @@ impl Component for HomeSectionLatest {
     }
 }
 
-impl From<MediaGridOutput> for HomeSectionLatestInput {
-    fn from(value: MediaGridOutput) -> Self {
+impl From<MediaListOutput> for HomeSectionLatestInput {
+    fn from(value: MediaListOutput) -> Self {
         match value {
-            MediaGridOutput::Empty(Some(id)) => HomeSectionLatestInput::Empty(id),
+            MediaListOutput::Empty(Some(id)) => HomeSectionLatestInput::Empty(id),
             _ => HomeSectionLatestInput::None,
         }
     }
 }
 
 pub struct LatestRow {
-    _media_grid: Controller<MediaGrid>,
+    _media_grid: AsyncController<MediaList>,
 }
 
 #[relm4::component(pub)]
@@ -120,7 +121,7 @@ impl SimpleComponent for LatestRow {
 
     fn init(
         init: Self::Init,
-        _root: &Self::Root,
+        root: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let (api_client, view) = init;
@@ -140,10 +141,10 @@ impl SimpleComponent for LatestRow {
         };
         title.set_label(title_text);
 
-        let media_grid = MediaGrid::builder()
-            .launch(MediaGridInit {
+        let media_grid = MediaList::builder()
+            .launch(MediaListInit {
                 api_client,
-                grid_type: MediaGridType::Latest(MediaGridTypeLatestParams { view_id: view.id }),
+                list_type: MediaListType::Latest(MediaListTypeLatestParams { view_id: view.id }),
             })
             .forward(sender.input_sender(), |o| o.into());
         container.set_child(Some(media_grid.widget()));
