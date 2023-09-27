@@ -1,8 +1,12 @@
+pub mod video_player_config;
+
 use std::{fs, path::PathBuf};
 
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+use self::video_player_config::VideoPlayerConfig;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Config {
@@ -18,19 +22,6 @@ impl Default for Config {
             device_id: Uuid::new_v4().to_string(),
             servers: Vec::default(),
             video_player: VideoPlayerConfig::default(),
-        }
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct VideoPlayerConfig {
-    pub position_update_frequency: usize,
-}
-
-impl Default for VideoPlayerConfig {
-    fn default() -> Self {
-        Self {
-            position_update_frequency: 10,
         }
     }
 }
