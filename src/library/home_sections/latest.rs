@@ -91,7 +91,7 @@ impl From<MediaListOutput> for HomeSectionLatestInput {
 }
 
 pub struct LatestRow {
-    _media_grid: AsyncController<MediaList>,
+    _media_list: AsyncController<MediaList>,
 }
 
 #[relm4::component(pub)]
@@ -111,11 +111,6 @@ impl SimpleComponent for LatestRow {
                 add_css_class: "title-2",
                 set_halign: gtk::Align::Start,
             },
-
-            #[name = "container"]
-            gtk::ScrolledWindow {
-                set_vscrollbar_policy: gtk::PolicyType::Never,
-            }
         }
     }
 
@@ -128,7 +123,6 @@ impl SimpleComponent for LatestRow {
 
         let widgets = view_output!();
         let title = &widgets.title;
-        let container = &widgets.container;
 
         let title_text = match view.collection_type.as_str() {
             "movies" => "Latest Movies",
@@ -141,16 +135,16 @@ impl SimpleComponent for LatestRow {
         };
         title.set_label(title_text);
 
-        let media_grid = MediaList::builder()
+        let media_list = MediaList::builder()
             .launch(MediaListInit {
                 api_client,
                 list_type: MediaListType::Latest(MediaListTypeLatestParams { view_id: view.id }),
             })
             .forward(sender.input_sender(), |o| o.into());
-        container.set_child(Some(media_grid.widget()));
+        root.append(media_list.widget());
 
         let model = LatestRow {
-            _media_grid: media_grid,
+            _media_list: media_list,
         };
 
         ComponentParts { model, widgets }

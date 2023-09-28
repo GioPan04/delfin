@@ -14,6 +14,8 @@ use crate::{
     jellyfin_api::api_client::ApiClient,
 };
 
+pub const MEDIA_TILE_COVER_WIDTH: i32 = 133;
+
 #[derive(Clone, Copy)]
 pub enum MediaTileDisplay {
     Cover,
@@ -23,7 +25,7 @@ pub enum MediaTileDisplay {
 impl MediaTileDisplay {
     fn width(&self) -> i32 {
         match self {
-            Self::Cover => 133,
+            Self::Cover => MEDIA_TILE_COVER_WIDTH,
             Self::Wide => 263,
         }
     }
@@ -37,8 +39,15 @@ impl MediaTileDisplay {
 
     fn label_halign(&self) -> gtk::Align {
         match self {
-            Self::Cover => gtk::Align::Center,
+            Self::Cover => gtk::Align::Fill,
             Self::Wide => gtk::Align::Start,
+        }
+    }
+
+    fn label_max_width_characters(&self) -> i32 {
+        match self {
+            Self::Cover => 1,
+            Self::Wide => -1,
         }
     }
 }
@@ -145,6 +154,7 @@ impl AsyncComponent for MediaTile {
                 set_halign: tile_display.label_halign(),
                 set_cursor_from_name: Some("pointer"),
                 set_ellipsize: gtk::pango::EllipsizeMode::End,
+                set_max_width_chars: tile_display.label_max_width_characters(),
                 #[watch]
                 set_markup: &get_item_label(&model.media),
 

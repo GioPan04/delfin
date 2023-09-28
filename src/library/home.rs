@@ -48,7 +48,7 @@ impl SimpleComponent for Home {
     view! {
         adw::Clamp {
             set_maximum_size: MAX_LIBRARY_WIDTH,
-            set_tightening_threshold: 1000,
+            set_tightening_threshold: MAX_LIBRARY_WIDTH,
 
             #[name = "sections_container"]
             gtk::Box {
