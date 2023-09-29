@@ -36,6 +36,10 @@
 
     border-bottom-left-radius: $media-tile-br;
     border-bottom-right-radius: $media-tile-br;
+
+    trough {
+      background: transparent;
+    }
   }
 
   label {
