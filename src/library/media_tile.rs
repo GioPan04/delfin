@@ -70,7 +70,7 @@ impl AsyncComponent for MediaTile {
     view! {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
-            set_halign: gtk::Align::Start,
+            set_halign: gtk::Align::Center,
             set_spacing: 8,
             add_css_class: "media-tile",
 
