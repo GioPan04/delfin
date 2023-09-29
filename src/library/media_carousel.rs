@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use adw::prelude::*;
+use gtk::glib;
 use jellyfin_api::types::BaseItemDto;
 use relm4::{
     component::{AsyncComponent, AsyncComponentController, AsyncController},
@@ -8,7 +9,7 @@ use relm4::{
     ComponentParts,
 };
 
-use crate::jellyfin_api::api_client::ApiClient;
+use crate::{globals::SHIFT_STATE, jellyfin_api::api_client::ApiClient};
 
 use super::media_tile::{MediaTile, MediaTileDisplay};
 
@@ -102,6 +103,26 @@ impl Component for MediaCarousel {
                     #[name = "carousel"]
                     adw::Carousel {
                         set_allow_scroll_wheel: false,
+                        set_focusable: true,
+
+                        add_controller = gtk::EventControllerScroll {
+                            // TODO: Might need a separate controller for Horizontal scrolling that doesn't check if shift is pressed
+                            set_flags: gtk::EventControllerScrollFlags::VERTICAL,
+                            connect_scroll[sender] => move |_, _dx, dy| {
+                                let shift_state = SHIFT_STATE.read();
+                                if shift_state.pressed() {
+                                    sender.input(
+                                        if dy > 0.0 {
+                                            MediaCarouselInput::Right
+                                        } else {
+                                            MediaCarouselInput::Left
+                                        }
+                                    );
+                                    return glib::Propagation::Stop;
+                                }
+                                glib::Propagation::Proceed
+                            },
+                        },
                     },
                     #[name = "carousel_indicator"]
                     adw::CarouselIndicatorLines {},

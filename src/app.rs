@@ -11,7 +11,7 @@ use crate::{
     library::library_component::{Library, LibraryOutput},
     media_details::MediaDetails,
     servers::server_list::{ServerList, ServerListOutput},
-    utils::main_window::MAIN_APP_WINDOW_NAME,
+    utils::{main_window::MAIN_APP_WINDOW_NAME, shift_state::shift_state_controller},
     video_player::video_player_component::{VideoPlayer, VideoPlayerInput, VideoPlayerOutput},
 };
 
@@ -78,6 +78,8 @@ impl Component for App {
             set_title: Some("Jellything"),
             set_default_width: 960,
             set_default_height: 540,
+
+            add_controller: shift_state_controller(),
 
             #[name = "navigation"]
             #[wrap(Some)]
