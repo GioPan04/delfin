@@ -29,6 +29,8 @@ pub(crate) struct MediaCarouselInit {
 #[derive(Debug)]
 pub(crate) enum MediaCarouselInput {
     Resize(i32),
+    Left,
+    Right,
 }
 
 #[relm4::component(pub(crate))]
@@ -52,6 +54,31 @@ impl Component for MediaCarousel {
                     add_css_class: "title-2",
                     set_halign: gtk::Align::Start,
                 },
+
+                gtk::Box {
+                    set_orientation: gtk::Orientation::Horizontal,
+                    set_halign: gtk::Align::End,
+                    set_hexpand: true,
+                    add_css_class: "linked",
+                    #[watch]
+                    set_visible: carousel.n_pages() > 1,
+
+                    gtk::Button {
+                        set_icon_name: "left",
+                        add_css_class: "flat",
+                        connect_clicked[sender] => move |_| {
+                            sender.input(MediaCarouselInput::Left);
+                        },
+                    },
+
+                    gtk::Button {
+                        set_icon_name: "right",
+                        add_css_class: "flat",
+                        connect_clicked[sender] => move |_| {
+                            sender.input(MediaCarouselInput::Right);
+                        },
+                    },
+                },
             },
 
             #[name = "breakpoints"]
@@ -64,7 +91,9 @@ impl Component for MediaCarousel {
                     set_orientation: gtk::Orientation::Vertical,
 
                     #[name = "carousel"]
-                    adw::Carousel {},
+                    adw::Carousel {
+                        set_allow_scroll_wheel: false,
+                    },
                     #[name = "carousel_indicator"]
                     adw::CarouselIndicatorLines {},
                 }
@@ -117,10 +146,10 @@ impl Component for MediaCarousel {
         sender: ComponentSender<Self>,
         _root: &Self::Root,
     ) {
+        let carousel: &adw::Carousel = &widgets.carousel;
+
         match message {
             MediaCarouselInput::Resize(tiles_per_page) => {
-                let carousel = &widgets.carousel;
-
                 // Remove existing pages
                 for page in &self.pages {
                     while page.first_child().is_some() {
@@ -155,6 +184,26 @@ impl Component for MediaCarousel {
                 }
 
                 self.update_view(widgets, sender);
+            }
+            MediaCarouselInput::Left => {
+                let cur_pos = carousel.position() as i32;
+                let mut pos = cur_pos - 1;
+                if pos < 0 {
+                    pos = carousel.n_pages() as i32 - 1;
+                }
+
+                let next_page = carousel.nth_page(pos as u32);
+                carousel.scroll_to(&next_page, true);
+            }
+            MediaCarouselInput::Right => {
+                let cur_pos = carousel.position() as i32;
+                let mut pos = cur_pos + 1;
+                if pos > (carousel.n_pages() as i32) - 1 {
+                    pos = 0;
+                }
+
+                let next_page = carousel.nth_page(pos as u32);
+                carousel.scroll_to(&next_page, true);
             }
         }
     }
