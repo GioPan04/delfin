@@ -40,6 +40,7 @@ pub struct MediaList {
 pub struct MediaListInit {
     pub list_type: MediaListType,
     pub api_client: Arc<ApiClient>,
+    pub label: String,
 }
 
 #[derive(Debug)]
@@ -79,6 +80,7 @@ impl MediaList {
     ) -> Self {
         let api_client = Arc::clone(&init.api_client);
         let list_type = init.list_type;
+        let label = init.label.clone();
 
         let media = match list_type {
             MediaListType::ContinueWatching => api_client
@@ -112,6 +114,7 @@ impl MediaList {
                         media,
                         media_tile_display,
                         api_client,
+                        label,
                     })
                     .detach();
                 root.append(carousel.widget());

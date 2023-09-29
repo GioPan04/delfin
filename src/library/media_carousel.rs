@@ -23,6 +23,7 @@ pub(crate) struct MediaCarouselInit {
     pub(crate) media: Vec<BaseItemDto>,
     pub(crate) media_tile_display: MediaTileDisplay,
     pub(crate) api_client: Arc<ApiClient>,
+    pub(crate) label: String,
 }
 
 #[derive(Debug)]
@@ -38,17 +39,35 @@ impl Component for MediaCarousel {
     type CommandOutput = ();
 
     view! {
-        adw::BreakpointBin {
-            set_size_request: (MEDIA_TILE_COVER_WIDTH * 2 + MIN_PADDING, 280),
-            set_hexpand: true,
+        gtk::Box {
+            set_orientation: gtk::Orientation::Vertical,
+            set_spacing: 16,
 
-            #[wrap(Some)]
-            set_child = &gtk::Box {
-                set_orientation: gtk::Orientation::Vertical,
-                #[name = "carousel"]
-                adw::Carousel {},
-                #[name = "carousel_indicator"]
-                adw::CarouselIndicatorLines {},
+            gtk::Box {
+                set_orientation: gtk::Orientation::Horizontal,
+
+                #[name = "title"]
+                gtk::Label {
+                    set_label: label.as_str(),
+                    add_css_class: "title-2",
+                    set_halign: gtk::Align::Start,
+                },
+            },
+
+            #[name = "breakpoints"]
+            adw::BreakpointBin {
+                set_size_request: (MEDIA_TILE_COVER_WIDTH * 2 + MIN_PADDING, 280),
+                set_hexpand: true,
+
+                #[wrap(Some)]
+                set_child = &gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
+
+                    #[name = "carousel"]
+                    adw::Carousel {},
+                    #[name = "carousel_indicator"]
+                    adw::CarouselIndicatorLines {},
+                }
             }
         }
     }
@@ -62,9 +81,11 @@ impl Component for MediaCarousel {
             api_client,
             media,
             media_tile_display,
+            label,
         } = init;
 
         let widgets = view_output!();
+        let breakpoints = &widgets.breakpoints;
         let carousel = &widgets.carousel;
         let carousel_indicator = &widgets.carousel_indicator;
 
@@ -84,7 +105,7 @@ impl Component for MediaCarousel {
             pages: vec![],
         };
 
-        add_breakpoints(root, &sender);
+        add_breakpoints(breakpoints, &sender);
 
         ComponentParts { model, widgets }
     }
@@ -139,7 +160,7 @@ impl Component for MediaCarousel {
     }
 }
 
-fn add_breakpoints(root: &adw::BreakpointBin, sender: &ComponentSender<MediaCarousel>) {
+fn add_breakpoints(breakpoints: &adw::BreakpointBin, sender: &ComponentSender<MediaCarousel>) {
     for tiles_per_page in 2..=8 {
         let required =
             (MEDIA_TILE_COVER_WIDTH * tiles_per_page) + (MIN_PADDING * (tiles_per_page - 1));
@@ -156,6 +177,6 @@ fn add_breakpoints(root: &adw::BreakpointBin, sender: &ComponentSender<MediaCaro
             }
         });
 
-        root.add_breakpoint(breakpoint);
+        breakpoints.add_breakpoint(breakpoint);
     }
 }

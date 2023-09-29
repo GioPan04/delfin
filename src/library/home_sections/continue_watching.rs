@@ -57,6 +57,7 @@ impl Component for HomeSectionContinueWatching {
             .launch(MediaListInit {
                 api_client,
                 list_type: MediaListType::ContinueWatching,
+                label: "Continue Watching".to_string(),
             })
             .forward(sender.input_sender(), |o| o.into());
         container.set_child(Some(media_grid.widget()));

@@ -104,13 +104,6 @@ impl SimpleComponent for LatestRow {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
             set_spacing: 16,
-
-            #[name = "title"]
-            gtk::Label {
-                set_label: "Latest ...",
-                add_css_class: "title-2",
-                set_halign: gtk::Align::Start,
-            },
         }
     }
 
@@ -122,7 +115,6 @@ impl SimpleComponent for LatestRow {
         let (api_client, view) = init;
 
         let widgets = view_output!();
-        let title = &widgets.title;
 
         let title_text = match view.collection_type.as_str() {
             "movies" => "Latest Movies",
@@ -133,12 +125,12 @@ impl SimpleComponent for LatestRow {
                 s
             }
         };
-        title.set_label(title_text);
 
         let media_list = MediaList::builder()
             .launch(MediaListInit {
                 api_client,
                 list_type: MediaListType::Latest(MediaListTypeLatestParams { view_id: view.id }),
+                label: title_text.to_string(),
             })
             .forward(sender.input_sender(), |o| o.into());
         root.append(media_list.widget());

@@ -57,6 +57,7 @@ impl Component for HomeSectionNextUp {
             .launch(MediaListInit {
                 api_client,
                 list_type: MediaListType::NextUp,
+                label: "Next Up".to_string(),
             })
             .forward(sender.input_sender(), |o| o.into());
         container.set_child(Some(media_grid.widget()));
