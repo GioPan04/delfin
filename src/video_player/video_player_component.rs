@@ -10,9 +10,8 @@ use relm4::{gtk, ComponentParts};
 use relm4::{prelude::*, JoinHandle};
 
 use crate::app::{AppInput, APP_BROKER};
-use crate::config::Server;
 use crate::jellyfin_api::api::shows::GetEpisodesOptionsBuilder;
-use crate::jellyfin_api::{api::item::get_stream_url, api_client::ApiClient};
+use crate::jellyfin_api::api_client::ApiClient;
 use crate::utils::ticks::ticks_to_seconds;
 use crate::video_player::controls::skip_forwards_backwards::{
     SkipForwardsBackwardsInput, SKIP_BACKWARDS_BROKER, SKIP_FORWARDS_BROKER,
@@ -50,7 +49,7 @@ enum VideoPlayerState {
 #[derive(Debug)]
 pub enum VideoPlayerInput {
     Toast(String),
-    PlayVideo(Arc<ApiClient>, Server, Box<BaseItemDto>),
+    PlayVideo(Arc<ApiClient>, Box<BaseItemDto>),
     ToggleControls,
     EndOfStream,
     StopPlayer,
@@ -176,7 +175,7 @@ impl Component for VideoPlayer {
         });
 
         let widgets = view_output!();
-        let overlay = &widgets.overlay;
+        let overlay: &gtk::Overlay = &widgets.overlay;
 
         let video_player = Rc::new(video_player);
 
@@ -214,14 +213,14 @@ impl Component for VideoPlayer {
                 let toast = adw::Toast::new(&message);
                 widgets.toaster.add_toast(toast);
             }
-            VideoPlayerInput::PlayVideo(api_client, server, item) => {
+            VideoPlayerInput::PlayVideo(api_client, item) => {
                 let video_player = &widgets.video_player;
 
                 self.set_player_state(VideoPlayerState::Loading);
                 self.next = None;
 
                 self.media = Some(*item.clone());
-                let url = get_stream_url(&server, &item.id.unwrap());
+                let url = api_client.get_stream_url(&item.id.unwrap());
                 video_player.play_uri(&url);
 
                 if let Some(playback_position_ticks) = item

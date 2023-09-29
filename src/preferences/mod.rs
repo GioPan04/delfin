@@ -9,6 +9,7 @@ pub struct Preferences;
 pub enum PreferencesInput {
     SkipBackwardsAmount(u32),
     SkipForwardsAmount(u32),
+    HlsPlayback(bool),
 }
 
 #[relm4::component(pub)]
@@ -48,6 +49,14 @@ impl SimpleComponent for Preferences {
                             sender.input(PreferencesInput::SkipForwardsAmount(cb.selected()));
                         },
                     },
+
+                    add = &adw::SwitchRow {
+                        set_title: "HLS playback",
+                        set_active: video_player_config.hls_playback,
+                        connect_active_notify[sender] => move |sr| {
+                            sender.input(PreferencesInput::HlsPlayback(sr.is_active()));
+                        },
+                    },
                 },
             },
         }
@@ -67,23 +76,26 @@ impl SimpleComponent for Preferences {
     }
 
     fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+        let mut config = CONFIG.write();
+
         match message {
             PreferencesInput::SkipBackwardsAmount(index) => {
-                let mut config = CONFIG.write();
                 config.video_player.skip_backwards_amount = match index {
                     0 => VideoPlayerSkipAmount::Ten,
                     _ => VideoPlayerSkipAmount::Thirty,
                 };
-                config.save().expect("Error saving config");
             }
             PreferencesInput::SkipForwardsAmount(index) => {
-                let mut config = CONFIG.write();
                 config.video_player.skip_forwards_amount = match index {
                     0 => VideoPlayerSkipAmount::Ten,
                     _ => VideoPlayerSkipAmount::Thirty,
                 };
-                config.save().expect("Error saving config");
             }
-        }
+            PreferencesInput::HlsPlayback(active) => {
+                config.video_player.hls_playback = active;
+            }
+        };
+
+        config.save().expect("Error saving config");
     }
 }

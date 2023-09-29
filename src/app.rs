@@ -198,10 +198,9 @@ impl Component for App {
                 }
             }
             AppInput::PlayVideo(item) => {
-                if let (Some(api_client), Some(server)) = (&self.api_client, &self.server) {
+                if let Some(api_client) = &self.api_client {
                     self.video_player.emit(VideoPlayerInput::PlayVideo(
                         api_client.clone(),
-                        server.clone(),
                         Box::new(item),
                     ));
                     navigation.push_by_tag(AppPage::VideoPlayer.into());

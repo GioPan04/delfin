@@ -7,6 +7,7 @@ pub struct VideoPlayerConfig {
     pub position_update_frequency: usize,
     pub skip_backwards_amount: VideoPlayerSkipAmount,
     pub skip_forwards_amount: VideoPlayerSkipAmount,
+    pub hls_playback: bool,
 }
 
 impl Default for VideoPlayerConfig {
@@ -15,6 +16,7 @@ impl Default for VideoPlayerConfig {
             position_update_frequency: 10,
             skip_backwards_amount: VideoPlayerSkipAmount::Ten,
             skip_forwards_amount: VideoPlayerSkipAmount::Thirty,
+            hls_playback: true,
         }
     }
 }

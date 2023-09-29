@@ -1,22 +1,27 @@
 use anyhow::Result;
 use jellyfin_api::types::BaseItemDto;
-use reqwest::Url;
 use uuid::Uuid;
 
-use crate::{
-    config,
-    jellyfin_api::{api_client::ApiClient, util::url::httpify},
-};
-
-pub fn get_stream_url(server: &config::Server, item_id: &Uuid) -> String {
-    Url::parse(&httpify(&server.url))
-        .unwrap()
-        .join(&format!("Videos/{}/stream?static=true", item_id))
-        .unwrap()
-        .to_string()
-}
+use crate::{globals::CONFIG, jellyfin_api::api_client::ApiClient};
 
 impl ApiClient {
+    pub fn get_stream_url(&self, item_id: &Uuid) -> String {
+        if CONFIG.read().video_player.hls_playback {
+            self.root
+                .join(&format!(
+                    "Videos/{}/main.m3u8?static=true&api_key={}",
+                    item_id, self.account.access_token
+                ))
+                .unwrap()
+                .to_string()
+        } else {
+            self.root
+                .join(&format!("Videos/{}/stream?static=true", item_id))
+                .unwrap()
+                .to_string()
+        }
+    }
+
     pub async fn get_item(&self, item_id: &Uuid) -> Result<BaseItemDto> {
         let url = self
             .root
