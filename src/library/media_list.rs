@@ -12,12 +12,11 @@ use crate::jellyfin_api::{api::latest::GetNextUpOptions, api_client::ApiClient};
 
 use super::{
     media_carousel::{MediaCarousel, MediaCarouselInit},
-    media_grid::{MediaGrid, MediaGridInit},
     media_tile::MediaTileDisplay,
 };
 
 enum MediaListContents {
-    Grid(Controller<MediaGrid>),
+    // Grid(Controller<MediaGrid>),
     Carousel(Controller<MediaCarousel>),
 }
 
@@ -107,30 +106,17 @@ impl MediaList {
             MediaListType::Latest(_) => MediaTileDisplay::Cover,
         };
 
-        let contents = match list_type {
-            MediaListType::Latest(_) => {
-                let carousel = MediaCarousel::builder()
-                    .launch(MediaCarouselInit {
-                        media,
-                        media_tile_display,
-                        api_client,
-                        label,
-                    })
-                    .detach();
-                root.append(carousel.widget());
-                MediaListContents::Carousel(carousel)
-            }
-            _ => {
-                let grid = MediaGrid::builder()
-                    .launch(MediaGridInit {
-                        media,
-                        media_tile_display,
-                        api_client,
-                    })
-                    .detach();
-                root.append(grid.widget());
-                MediaListContents::Grid(grid)
-            }
+        let contents = {
+            let carousel = MediaCarousel::builder()
+                .launch(MediaCarouselInit {
+                    media,
+                    media_tile_display,
+                    api_client,
+                    label,
+                })
+                .detach();
+            root.append(carousel.widget());
+            MediaListContents::Carousel(carousel)
         };
 
         Self {

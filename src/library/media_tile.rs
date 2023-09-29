@@ -14,8 +14,6 @@ use crate::{
     jellyfin_api::api_client::ApiClient,
 };
 
-pub const MEDIA_TILE_COVER_WIDTH: i32 = 133;
-
 #[derive(Clone, Copy)]
 pub enum MediaTileDisplay {
     Cover,
@@ -23,31 +21,17 @@ pub enum MediaTileDisplay {
 }
 
 impl MediaTileDisplay {
-    fn width(&self) -> i32 {
+    pub fn width(&self) -> i32 {
         match self {
-            Self::Cover => MEDIA_TILE_COVER_WIDTH,
+            Self::Cover => 133,
             Self::Wide => 263,
         }
     }
 
-    fn height(&self) -> i32 {
+    pub fn height(&self) -> i32 {
         match self {
             Self::Cover => 200,
             Self::Wide => 150,
-        }
-    }
-
-    fn label_halign(&self) -> gtk::Align {
-        match self {
-            Self::Cover => gtk::Align::Fill,
-            Self::Wide => gtk::Align::Start,
-        }
-    }
-
-    fn label_max_width_characters(&self) -> i32 {
-        match self {
-            Self::Cover => 1,
-            Self::Wide => -1,
         }
     }
 }
@@ -118,7 +102,6 @@ impl AsyncComponent for MediaTile {
                 #[name = "image"]
                 gtk::Picture {
                     set_content_fit: gtk::ContentFit::Cover,
-                    // set_can_shrink: true,
 
                     set_width_request: tile_display.width(),
                     set_height_request: tile_display.height(),
@@ -151,10 +134,11 @@ impl AsyncComponent for MediaTile {
             },
 
             gtk::Label {
-                set_halign: tile_display.label_halign(),
+                set_halign: gtk::Align::Fill,
+                set_justify: gtk::Justification::Center,
                 set_cursor_from_name: Some("pointer"),
                 set_ellipsize: gtk::pango::EllipsizeMode::End,
-                set_max_width_chars: tile_display.label_max_width_characters(),
+                set_max_width_chars: 1,
                 #[watch]
                 set_markup: &get_item_label(&model.media),
 

@@ -31,17 +31,6 @@ impl Component for HomeSectionNextUp {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
             set_spacing: 16,
-
-            gtk::Label {
-                set_label: "Next Up",
-                add_css_class: "title-2",
-                set_halign: gtk::Align::Start,
-            },
-
-            #[name = "container"]
-            gtk::ScrolledWindow {
-                set_vscrollbar_policy: gtk::PolicyType::Never,
-            }
         }
     }
 
@@ -51,7 +40,6 @@ impl Component for HomeSectionNextUp {
         sender: relm4::ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let widgets = view_output!();
-        let container = &widgets.container;
 
         let media_grid = MediaList::builder()
             .launch(MediaListInit {
@@ -60,7 +48,7 @@ impl Component for HomeSectionNextUp {
                 label: "Next Up".to_string(),
             })
             .forward(sender.input_sender(), |o| o.into());
-        container.set_child(Some(media_grid.widget()));
+        root.append(media_grid.widget());
 
         let model = HomeSectionNextUp {
             _media_grid: media_grid,

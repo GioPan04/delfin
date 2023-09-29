@@ -8,7 +8,7 @@ use relm4::{
     ComponentParts,
 };
 
-use crate::{jellyfin_api::api_client::ApiClient, library::media_tile::MEDIA_TILE_COVER_WIDTH};
+use crate::jellyfin_api::api_client::ApiClient;
 
 use super::media_tile::{MediaTile, MediaTileDisplay};
 
@@ -31,6 +31,12 @@ pub(crate) enum MediaCarouselInput {
     Resize(i32),
     Left,
     Right,
+}
+
+impl MediaTileDisplay {
+    fn min_height(&self) -> i32 {
+        self.height() + 80
+    }
 }
 
 #[relm4::component(pub(crate))]
@@ -83,7 +89,10 @@ impl Component for MediaCarousel {
 
             #[name = "breakpoints"]
             adw::BreakpointBin {
-                set_size_request: (MEDIA_TILE_COVER_WIDTH * 2 + MIN_PADDING, 280),
+                set_size_request: (
+                    media_tile_display.width() * 2 + MIN_PADDING,
+                    media_tile_display.min_height(),
+                ),
                 set_hexpand: true,
 
                 #[wrap(Some)]
@@ -134,7 +143,7 @@ impl Component for MediaCarousel {
             pages: vec![],
         };
 
-        add_breakpoints(breakpoints, &sender);
+        add_breakpoints(breakpoints, &sender, media_tile_display);
 
         ComponentParts { model, widgets }
     }
@@ -209,10 +218,14 @@ impl Component for MediaCarousel {
     }
 }
 
-fn add_breakpoints(breakpoints: &adw::BreakpointBin, sender: &ComponentSender<MediaCarousel>) {
+fn add_breakpoints(
+    breakpoints: &adw::BreakpointBin,
+    sender: &ComponentSender<MediaCarousel>,
+    media_tile_display: MediaTileDisplay,
+) {
     for tiles_per_page in 2..=8 {
         let required =
-            (MEDIA_TILE_COVER_WIDTH * tiles_per_page) + (MIN_PADDING * (tiles_per_page - 1));
+            (media_tile_display.width() * tiles_per_page) + (MIN_PADDING * (tiles_per_page - 1));
 
         let breakpoint = adw::Breakpoint::new(adw::BreakpointCondition::new_length(
             adw::BreakpointConditionLengthType::MinWidth,
