@@ -18,7 +18,7 @@ fn load_css() {
     use regex::Regex;
 
     // TODO: compile sass in build.rs
-    let css = grass::from_path("src/app.scss", &grass::Options::default()).unwrap();
+    let css = grass::from_string(include_str!("app.scss"), &grass::Options::default()).unwrap();
 
     // Output GTK's at-rules. Sass doesn't support custom at-rules, so we wrap
     // them in a string and unwrap them after Sass has done it's thing.
