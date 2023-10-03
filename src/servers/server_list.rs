@@ -8,7 +8,7 @@ use crate::{config, globals::CONFIG, utils::constants::PAGE_MARGIN};
 
 use super::{
     add_server::{AddServerDialog, AddServerOutput},
-    server_list_item::ServerListItem,
+    server_list_item::{ServerListItem, ServerListItemOutput},
 };
 
 pub struct ServerList {
@@ -93,7 +93,9 @@ impl Component for ServerList {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let servers = FactoryVecDeque::new(gtk::ListBox::default(), sender.input_sender());
+        let servers = FactoryVecDeque::builder(gtk::ListBox::default())
+            .launch()
+            .forward(sender.input_sender(), convert_server_list_item_output);
 
         let model = ServerList {
             servers,
@@ -151,5 +153,11 @@ impl Component for ServerList {
 fn convert_add_server_output(output: AddServerOutput) -> ServerListInput {
     match output {
         AddServerOutput::ServerAdded(server) => ServerListInput::ServerAdded(server),
+    }
+}
+
+fn convert_server_list_item_output(output: ServerListItemOutput) -> ServerListInput {
+    match output {
+        ServerListItemOutput::ServerSelected(index) => ServerListInput::ServerSelected(index),
     }
 }

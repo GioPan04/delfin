@@ -12,8 +12,6 @@ use relm4::{
 
 use crate::{config::Account, jellyfin_api::api::user::get_user_avatar};
 
-use super::account_list::AccountListInput;
-
 pub struct AccountListItem {
     account: Account,
     avatar: Option<Texture>,
@@ -36,7 +34,6 @@ impl FactoryComponent for AccountListItem {
     type Output = AccountListItemOutput;
     type CommandOutput = AccountListItemCommandOutput;
     type ParentWidget = gtk::ListBox;
-    type ParentInput = AccountListInput;
 
     view! {
         adw::ActionRow {
@@ -80,14 +77,6 @@ impl FactoryComponent for AccountListItem {
         match message {
             AccountListItemCommandOutput::AvatarLoaded(avatar) => self.avatar = avatar.map(|a| *a),
         }
-    }
-
-    fn forward_to_parent(output: Self::Output) -> Option<Self::ParentInput> {
-        Some(match output {
-            AccountListItemOutput::AccountSelected(index) => {
-                AccountListInput::AcountSelected(index)
-            }
-        })
     }
 }
 

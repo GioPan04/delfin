@@ -6,8 +6,6 @@ use relm4::{
 
 use crate::config;
 
-use super::server_list::ServerListInput;
-
 pub struct ServerListItem {
     pub id: String,
     pub url: String,
@@ -26,7 +24,6 @@ impl FactoryComponent for ServerListItem {
     type Output = ServerListItemOutput;
     type CommandOutput = ();
     type ParentWidget = gtk::ListBox;
-    type ParentInput = ServerListInput;
 
     view! {
         adw::ActionRow {
@@ -54,11 +51,5 @@ impl FactoryComponent for ServerListItem {
             url: init.url,
             name: init.name,
         }
-    }
-
-    fn forward_to_parent(output: Self::Output) -> Option<Self::ParentInput> {
-        Some(match output {
-            ServerListItemOutput::ServerSelected(index) => ServerListInput::ServerSelected(index),
-        })
     }
 }

@@ -12,7 +12,7 @@ use crate::{
 };
 
 use super::{
-    account_list_item::AccountListItem,
+    account_list_item::{AccountListItem, AccountListItemOutput},
     add_account::{AddAccountDialog, AddAccountOutput},
 };
 
@@ -102,9 +102,13 @@ impl Component for AccountList {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+        let accounts = FactoryVecDeque::builder(gtk::ListBox::default())
+            .launch()
+            .forward(sender.input_sender(), convert_account_list_item_output);
+
         let model = AccountList {
             server: Server::default(),
-            accounts: FactoryVecDeque::new(gtk::ListBox::default(), sender.input_sender()),
+            accounts,
             add_account_dialog: None,
         };
 
@@ -188,5 +192,11 @@ impl Component for AccountList {
 fn convert_add_account_output(output: AddAccountOutput) -> AccountListInput {
     match output {
         AddAccountOutput::AccountAdded(auth_info) => AccountListInput::AccountAdded(auth_info),
+    }
+}
+
+fn convert_account_list_item_output(output: AccountListItemOutput) -> AccountListInput {
+    match output {
+        AccountListItemOutput::AccountSelected(index) => AccountListInput::AcountSelected(index),
     }
 }
