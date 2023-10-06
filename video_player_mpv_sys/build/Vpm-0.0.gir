@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<!-- This file was automatically generated from C sources - DO NOT EDIT!
+To affect the contents of this file, edit the original C definitions,
+and/or use gtk-doc annotations.  -->
+<repository version="1.2"
+            xmlns="http://www.gtk.org/introspection/core/1.0"
+            xmlns:c="http://www.gtk.org/introspection/c/1.0"
+            xmlns:glib="http://www.gtk.org/introspection/glib/1.0">
+  <include name="Gtk" version="4.0"/>
+  <c:include name="video-player-mpv/video-player-mpv.h"/>
+  <namespace name="Vpm"
+             version="0.0"
+             shared-library=""
+             c:identifier-prefixes="vpm,Vpm"
+             c:symbol-prefixes="vpm,vpm">
+    <class name="VideoPlayerMpv"
+           c:symbol-prefix="video_player_mpv"
+           c:type="VpmVideoPlayerMpv"
+           parent="Gtk.GLArea"
+           glib:type-name="VpmVideoPlayerMpv"
+           glib:get-type="vpm_video_player_mpv_get_type"
+           glib:type-struct="VideoPlayerMpvClass">
+      <source-position filename="video-player-mpv/video-player-mpv.h"
+                       line="7"/>
+      <implements name="Gtk.Accessible"/>
+      <implements name="Gtk.Buildable"/>
+      <implements name="Gtk.ConstraintTarget"/>
+      <constructor name="new" c:identifier="vpm_video_player_mpv_new">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="10"/>
+        <return-value transfer-ownership="none">
+          <type name="Gtk.Widget" c:type="GtkWidget*"/>
+        </return-value>
+      </constructor>
+    </class>
+    <record name="VideoPlayerMpvClass"
+            c:type="VpmVideoPlayerMpvClass"
+            glib:is-gtype-struct-for="VideoPlayerMpv">
+      <source-position filename="video-player-mpv/video-player-mpv.h"
+                       line="7"/>
+      <field name="parent_class">
+        <type name="Gtk.GLAreaClass" c:type="GtkGLAreaClass"/>
+      </field>
+      <function name="render" c:identifier="vpm_video_player_mpv_class_render">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="11"/>
+        <return-value transfer-ownership="none">
+          <type name="gboolean" c:type="gboolean"/>
+        </return-value>
+        <parameters>
+          <parameter name="widget" transfer-ownership="none">
+            <type name="Gtk.GLArea" c:type="GtkGLArea*"/>
+          </parameter>
+          <parameter name="ctx" transfer-ownership="none">
+            <type name="Gdk.GLContext" c:type="GdkGLContext*"/>
+          </parameter>
+        </parameters>
+      </function>
+    </record>
+    <function name="video_player_mpv_class_render"
+              c:identifier="vpm_video_player_mpv_class_render"
+              moved-to="VideoPlayerMpvClass.render">
+      <source-position filename="video-player-mpv/video-player-mpv.h"
+                       line="11"/>
+      <return-value transfer-ownership="none">
+        <type name="gboolean" c:type="gboolean"/>
+      </return-value>
+      <parameters>
+        <parameter name="widget" transfer-ownership="none">
+          <type name="Gtk.GLArea" c:type="GtkGLArea*"/>
+        </parameter>
+        <parameter name="ctx" transfer-ownership="none">
+          <type name="Gdk.GLContext" c:type="GdkGLContext*"/>
+        </parameter>
+      </parameters>
+    </function>
+  </namespace>
+</repository>

@@ -2087,6 +2087,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "shell-words"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24188a676b6ae68c3b2cb3a01be17fbf7240ce009799bb56d5b1409051e78fde"
+
+[[package]]
 name = "siphasher"
 version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2468,6 +2474,33 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
+
+[[package]]
+name = "video_player_mpv"
+version = "0.1.0"
+dependencies = [
+ "gdk4",
+ "glib",
+ "gtk4",
+ "gtk4-sys",
+ "libc",
+ "vpm-sys",
+]
+
+[[package]]
+name = "vpm-sys"
+version = "0.0.1"
+dependencies = [
+ "gdk4-sys",
+ "gio-sys",
+ "glib-sys",
+ "gobject-sys",
+ "gtk4-sys",
+ "libc",
+ "shell-words",
+ "system-deps",
+ "tempfile",
+]
 
 [[package]]
 name = "walkdir"

@@ -1,0 +1,31 @@
+[package]
+name = "video_player_mpv"
+version = "0.1.0"
+edition = "2021"
+
+[package.metadata.docs.rs]
+all-features = true
+# For build.rs scripts
+rustc-args = ["--cfg", "docsrs"]
+# For rustdoc
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+libc = "0.2"
+gtk4-sys = "*"
+
+[dependencies.ffi]
+package = "vpm-sys"
+path = "../video_player_mpv_sys/"
+
+[dependencies.glib]
+package = "glib"
+version = "*"
+
+[dependencies.gdk]
+package = "gdk4"
+version = "*"
+
+[dependencies.gtk]
+package = "gtk4"
+version = "*"

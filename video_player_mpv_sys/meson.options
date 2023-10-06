@@ -1,0 +1,1 @@
+option('generate_gir', type: 'boolean', value: false)

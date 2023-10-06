@@ -1,0 +1,48 @@
+[package]
+name = "vpm-sys"
+version = "0.0.1"
+edition = "2021"
+build = "build.rs"
+link = "libvideo-player-mpv"
+
+[package.metadata.system-deps]
+
+[package.metadata.docs.rs]
+rustc-args = ["--cfg", "docsrs"]
+rustdoc-args = ["--cfg", "docsrs", "--generate-link-to-definition"]
+all-features = true
+
+[lib]
+name = "vpm_sys"
+
+[dependencies]
+libc = "0.2"
+
+[dependencies.gio]
+package = "gio-sys"
+version = "*"
+
+[dependencies.glib]
+package = "glib-sys"
+version = "*"
+
+[dependencies.gobject]
+package = "gobject-sys"
+version = "*"
+
+[dependencies.gtk]
+package = "gtk4-sys"
+version = "*"
+
+[dependencies.gdk]
+package = "gdk4-sys"
+version = "*"
+
+[build-dependencies]
+system-deps = "6"
+
+[dev-dependencies]
+shell-words = "1.0.0"
+tempfile = "3"
+
+[features]
