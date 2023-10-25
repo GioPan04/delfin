@@ -1,3 +1,4 @@
+pub mod backends;
 mod controls;
 mod gst_play_widget;
 mod next_up;

@@ -1,17 +1,36 @@
-use std::rc::Rc;
+use std::{
+    cell::RefCell,
+    sync::{Arc, RwLock, RwLockReadGuard},
+};
 
 use gtk::prelude::*;
 use relm4::{gtk, ComponentParts, ComponentSender, MessageBroker, SimpleComponent};
 
-use crate::video_player::gst_play_widget::GstVideoPlayer;
+use crate::video_player::backends::VideoPlayerBackend;
+
+pub struct PlayPauseBroker(RwLock<MessageBroker<PlayPauseInput>>);
+
+impl PlayPauseBroker {
+    const fn new() -> Self {
+        Self(RwLock::new(MessageBroker::new()))
+    }
+
+    pub(crate) fn read(&self) -> RwLockReadGuard<MessageBroker<PlayPauseInput>> {
+        self.0.read().unwrap()
+    }
+
+    pub(crate) fn reset(&self) {
+        *self.0.write().unwrap() = MessageBroker::new();
+    }
+}
+
+pub static PLAY_PAUSE_BROKER: PlayPauseBroker = PlayPauseBroker::new();
 
 pub(crate) struct PlayPause {
-    video_player: Rc<GstVideoPlayer>,
+    video_player: Arc<RefCell<dyn VideoPlayerBackend>>,
     loading: bool,
     playing: bool,
 }
-
-pub static PLAY_PAUSE_BROKER: MessageBroker<PlayPauseInput> = MessageBroker::new();
 
 #[derive(Debug)]
 pub enum PlayPauseInput {
@@ -22,7 +41,7 @@ pub enum PlayPauseInput {
 
 #[relm4::component(pub(crate))]
 impl SimpleComponent for PlayPause {
-    type Init = Rc<GstVideoPlayer>;
+    type Init = Arc<RefCell<dyn VideoPlayerBackend>>;
     type Input = PlayPauseInput;
     type Output = ();
 
@@ -66,11 +85,11 @@ impl SimpleComponent for PlayPause {
         match message {
             PlayPauseInput::TogglePlaying => match self.playing {
                 true => {
-                    self.video_player.pause();
+                    self.video_player.borrow().pause();
                     self.playing = false;
                 }
                 false => {
-                    self.video_player.play();
+                    self.video_player.borrow().play();
                     self.playing = true;
                 }
             },

@@ -201,12 +201,39 @@ fn get_c_output(name: &str) -> Result<String, Box<dyn Error>> {
     Ok(String::from_utf8(out.stdout)?)
 }
 
-const RUST_LAYOUTS: &[(&str, Layout)] = &[(
-    "VpmVideoPlayerMpvClass",
-    Layout {
-        size: size_of::<VpmVideoPlayerMpvClass>(),
-        alignment: align_of::<VpmVideoPlayerMpvClass>(),
-    },
-)];
+const RUST_LAYOUTS: &[(&str, Layout)] = &[
+    (
+        "VpmTrack",
+        Layout {
+            size: size_of::<VpmTrack>(),
+            alignment: align_of::<VpmTrack>(),
+        },
+    ),
+    (
+        "VpmTrackList",
+        Layout {
+            size: size_of::<VpmTrackList>(),
+            alignment: align_of::<VpmTrackList>(),
+        },
+    ),
+    (
+        "VpmTrackType",
+        Layout {
+            size: size_of::<VpmTrackType>(),
+            alignment: align_of::<VpmTrackType>(),
+        },
+    ),
+    (
+        "VpmVideoPlayerMpvClass",
+        Layout {
+            size: size_of::<VpmVideoPlayerMpvClass>(),
+            alignment: align_of::<VpmVideoPlayerMpvClass>(),
+        },
+    ),
+];
 
-const RUST_CONSTANTS: &[(&str, &str)] = &[];
+const RUST_CONSTANTS: &[(&str, &str)] = &[
+    ("(gint) VPM_TRACK_TYPE_AUDIO", "1"),
+    ("(gint) VPM_TRACK_TYPE_SUBTITLE", "2"),
+    ("(gint) VPM_TRACK_TYPE_VIDEO", "0"),
+];

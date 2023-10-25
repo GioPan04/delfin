@@ -1,16 +1,34 @@
-use std::rc::Rc;
+use std::{
+    cell::RefCell,
+    sync::{Arc, RwLock, RwLockReadGuard},
+};
 
 use glib::closure;
-use gst::ClockTime;
 use gtk::{glib, prelude::*};
 use relm4::{
     gtk::{self, ExpressionWatch},
     Component, ComponentParts, MessageBroker,
 };
 
-use crate::video_player::gst_play_widget::GstVideoPlayer;
+use crate::video_player::backends::VideoPlayerBackend;
 
-pub static SCRUBBER_BROKER: MessageBroker<ScrubberInput> = MessageBroker::new();
+pub(crate) struct ScrubberBroker(RwLock<MessageBroker<ScrubberInput>>);
+
+impl ScrubberBroker {
+    const fn new() -> Self {
+        Self(RwLock::new(MessageBroker::new()))
+    }
+
+    pub(crate) fn read(&self) -> RwLockReadGuard<MessageBroker<ScrubberInput>> {
+        self.0.read().unwrap()
+    }
+
+    pub(crate) fn reset(&self) {
+        *self.0.write().unwrap() = MessageBroker::new();
+    }
+}
+
+pub(crate) static SCRUBBER_BROKER: ScrubberBroker = ScrubberBroker::new();
 
 #[derive(Clone, Copy, Debug)]
 enum DurationDisplay {
@@ -28,10 +46,10 @@ impl DurationDisplay {
 }
 
 pub(crate) struct Scrubber {
-    video_player: Rc<GstVideoPlayer>,
+    video_player: Arc<RefCell<dyn VideoPlayerBackend>>,
     loading: bool,
-    position: u64,
-    duration: u64,
+    position: usize,
+    duration: usize,
     scrubber_being_moved: bool,
     duration_display: DurationDisplay,
     // While the scrubber is being moved, we bind it's value to the position
@@ -45,13 +63,13 @@ pub enum ScrubberInput {
     SetPlaying,
     SetScrubberBeingMoved(bool),
     ToggleDurationDisplay,
-    SetPosition(gst::ClockTime),
-    SetDuration(gst::ClockTime),
+    SetPosition(usize),
+    SetDuration(usize),
 }
 
 #[relm4::component(pub(crate))]
 impl Component for Scrubber {
-    type Init = Rc<GstVideoPlayer>;
+    type Init = Arc<RefCell<dyn VideoPlayerBackend>>;
     type Input = ScrubberInput;
     type Output = ();
     type CommandOutput = ();
@@ -130,18 +148,18 @@ impl Component for Scrubber {
         let settings = scrubber.settings();
         settings.set_gtk_primary_button_warps_slider(true);
 
-        video_player.connect_position_updated({
+        video_player.borrow_mut().connect_position_updated({
             let sender = sender.clone();
-            move |position| {
+            Box::new(move |position| {
                 sender.input(ScrubberInput::SetPosition(position));
-            }
+            })
         });
 
-        video_player.connect_duration_changed({
+        video_player.borrow_mut().connect_duration_updated({
             let sender = sender.clone();
-            move |duration| {
+            Box::new(move |duration| {
                 sender.input(ScrubberInput::SetDuration(duration));
-            }
+            })
         });
 
         ComponentParts { model, widgets }
@@ -171,7 +189,7 @@ impl Component for Scrubber {
                 let position = &widgets.position;
 
                 if !scrubber_being_moved {
-                    self.position = scrubber.value() as u64;
+                    self.position = scrubber.value() as usize;
                 }
 
                 if scrubber_being_moved {
@@ -181,7 +199,7 @@ impl Component for Scrubber {
                             .property_expression("value")
                             .chain_closure::<String>(closure!(
                                 |_: Option<glib::Object>, position: f64| {
-                                    seconds_to_timestamp(position as u64)
+                                    seconds_to_timestamp(position as usize)
                                 }
                             ))
                             .bind(position, "label", gtk::Widget::NONE),
@@ -193,7 +211,8 @@ impl Component for Scrubber {
                     self.scrubber_moving_position_binding = None;
 
                     self.video_player
-                        .seek(ClockTime::from_seconds(scrubber.value() as u64));
+                        .borrow()
+                        .seek_to(scrubber.value() as usize);
                 }
             }
 
@@ -204,13 +223,13 @@ impl Component for Scrubber {
                 let scrubber = &widgets.scrubber;
 
                 if self.scrubber_being_moved {
-                    self.position = scrubber.value() as u64;
+                    self.position = scrubber.value() as usize;
                 } else {
-                    self.position = position.seconds();
+                    self.position = position;
                 }
             }
             ScrubberInput::SetDuration(duration) => {
-                self.duration = duration.seconds();
+                self.duration = duration;
             }
         }
 
@@ -218,26 +237,21 @@ impl Component for Scrubber {
     }
 }
 
-fn seconds_to_timestamp(seconds: u64) -> String {
+fn seconds_to_timestamp(seconds: usize) -> String {
     let minutes = seconds / 60;
     let seconds = seconds % 60;
     format!("{:0>2}:{:0>2}", minutes, seconds)
 }
 
 fn duration_to_timestamp(
-    position: u64,
-    duration: u64,
+    position: usize,
+    duration: usize,
     duration_display: DurationDisplay,
 ) -> String {
     match duration_display {
         DurationDisplay::Total => seconds_to_timestamp(duration),
         DurationDisplay::Remaining => {
-            let position = ClockTime::from_seconds(position);
-            let duration = ClockTime::from_seconds(duration);
-            format!(
-                "-{}",
-                seconds_to_timestamp(duration.wrapping_sub(position).seconds())
-            )
+            format!("-{}", seconds_to_timestamp(duration.wrapping_sub(position)))
         }
     }
 }

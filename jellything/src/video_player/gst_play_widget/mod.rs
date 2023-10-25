@@ -3,6 +3,7 @@ mod imp;
 use std::cell::OnceCell;
 
 use gst::glib::{Error, SignalHandlerId};
+use gst::prelude::ObjectExt;
 use gst::{ClockTime, Structure};
 use gstplay::{PlayAudioInfo, PlayMediaInfo, PlayState, PlaySubtitleInfo};
 use gtk::glib;
@@ -28,6 +29,22 @@ impl GstVideoPlayer {
 
     pub fn player(&self) -> OnceCell<gstplay::Play> {
         self.imp().player.clone()
+    }
+
+    pub fn signal_adapter_block_signal(&self, handler_id: &SignalHandlerId) {
+        self.imp()
+            .signal_adapter
+            .get()
+            .unwrap()
+            .block_signal(handler_id);
+    }
+
+    pub fn signal_adapter_unblock_signal(&self, handler_id: &SignalHandlerId) {
+        self.imp()
+            .signal_adapter
+            .get()
+            .unwrap()
+            .unblock_signal(handler_id);
     }
 
     pub fn play_uri(&self, uri: &str) {

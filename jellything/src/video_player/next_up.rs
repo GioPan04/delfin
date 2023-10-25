@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, rc::Rc, sync::Arc};
+use std::{cell::RefCell, collections::VecDeque, sync::Arc};
 
 use gtk::prelude::*;
 use jellyfin_api::types::BaseItemDto;
@@ -16,10 +16,10 @@ use crate::{
     jellyfin_api::api_client::ApiClient,
 };
 
-use super::gst_play_widget::GstVideoPlayer;
+use super::backends::VideoPlayerBackend;
 
 // How many seconds should be remaining when the next up popup appears
-const SHOW_NEXT_UP_AT: u64 = 30;
+const SHOW_NEXT_UP_AT: usize = 30;
 
 pub(crate) static NEXT_UP_VISIBILE: SharedState<bool> = SharedState::new();
 
@@ -27,14 +27,14 @@ pub(crate) static NEXT_UP_VISIBILE: SharedState<bool> = SharedState::new();
 pub(crate) struct NextUp {
     state: NextUpState,
     next_up: Option<BaseItemDto>,
-    duration: Option<gst::ClockTime>,
+    duration: Option<usize>,
     thumbnail: Option<Texture>,
 }
 
 #[derive(Debug)]
 enum NextUpState {
     Ready,
-    Shown(u64),
+    Shown(usize),
     Hidden,
 }
 
@@ -42,8 +42,8 @@ enum NextUpState {
 pub(crate) enum NextUpInput {
     Reset,
     SetNextUp((Box<Option<BaseItemDto>>, Arc<ApiClient>)),
-    SetDuration(gst::ClockTime),
-    SetPosition(gst::ClockTime),
+    SetDuration(usize),
+    SetPosition(usize),
     PlayNext,
     Hide,
 }
@@ -55,7 +55,7 @@ pub(crate) enum NextUpCommandOutput {
 
 #[relm4::component(pub(crate))]
 impl Component for NextUp {
-    type Init = Rc<GstVideoPlayer>;
+    type Init = Arc<RefCell<dyn VideoPlayerBackend>>;
     type Input = NextUpInput;
     type Output = ();
     type CommandOutput = NextUpCommandOutput;
@@ -132,18 +132,18 @@ impl Component for NextUp {
             thumbnail: None,
         };
 
-        video_player.connect_position_updated({
+        video_player.borrow_mut().connect_position_updated({
             let sender = sender.clone();
-            move |position| {
+            Box::new(move |position| {
                 sender.input(NextUpInput::SetPosition(position));
-            }
+            })
         });
 
-        video_player.connect_duration_changed({
+        video_player.borrow_mut().connect_duration_updated({
             let sender = sender.clone();
-            move |duration| {
+            Box::new(move |duration| {
                 sender.input(NextUpInput::SetDuration(duration));
-            }
+            })
         });
 
         let widgets = view_output!();
@@ -169,15 +169,14 @@ impl Component for NextUp {
             NextUpInput::SetPosition(position) => match self.state {
                 NextUpState::Ready => {
                     if let (Some(_), Some(duration)) = (&self.next_up, &self.duration) {
-                        if duration.saturating_sub(position).seconds() <= SHOW_NEXT_UP_AT {
+                        if duration.saturating_sub(position) <= SHOW_NEXT_UP_AT {
                             self.set_visible(true);
                         }
                     }
                 }
                 NextUpState::Shown(_) => {
                     if let Some(duration) = &self.duration {
-                        self.state =
-                            NextUpState::Shown(duration.saturating_sub(position).seconds());
+                        self.state = NextUpState::Shown(duration.saturating_sub(position));
                     }
                 }
                 _ => {}

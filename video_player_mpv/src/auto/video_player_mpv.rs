@@ -3,7 +3,14 @@
 // from ../video_player_mpv_sys/gir-files
 // DO NOT EDIT
 
-use glib::{object as gobject, prelude::*, translate::*};
+use crate::TrackList;
+use glib::{
+    object as gobject,
+    prelude::*,
+    signal::{connect_raw, SignalHandlerId},
+    translate::*,
+};
+use std::boxed::Box as Box_;
 
 glib::wrapper! {
     #[doc(alias = "VpmVideoPlayerMpv")]
@@ -19,6 +26,338 @@ impl VideoPlayerMpv {
     pub fn new() -> VideoPlayerMpv {
         assert_initialized_main_thread!();
         unsafe { gtk::Widget::from_glib_none(ffi::vpm_video_player_mpv_new()).unsafe_cast() }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_current_audio_track")]
+    pub fn current_audio_track(&self) -> i32 {
+        unsafe { ffi::vpm_video_player_mpv_current_audio_track(self.to_glib_none().0) }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_current_subtitle_track")]
+    pub fn current_subtitle_track(&self) -> i32 {
+        unsafe { ffi::vpm_video_player_mpv_current_subtitle_track(self.to_glib_none().0) }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_mute")]
+    pub fn mute(&self) -> bool {
+        unsafe { ffi::vpm_video_player_mpv_mute(self.to_glib_none().0) }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_pause")]
+    pub fn pause(&self) {
+        unsafe {
+            ffi::vpm_video_player_mpv_pause(self.to_glib_none().0);
+        }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_play")]
+    pub fn play(&self) {
+        unsafe {
+            ffi::vpm_video_player_mpv_play(self.to_glib_none().0);
+        }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_play_uri")]
+    pub fn play_uri(&self, uri: &str) {
+        unsafe {
+            ffi::vpm_video_player_mpv_play_uri(self.to_glib_none().0, uri.to_glib_none().0);
+        }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_position")]
+    pub fn position(&self) -> f64 {
+        unsafe { ffi::vpm_video_player_mpv_position(self.to_glib_none().0) }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_seek_by")]
+    pub fn seek_by(&self, seconds: i32) {
+        unsafe {
+            ffi::vpm_video_player_mpv_seek_by(self.to_glib_none().0, seconds);
+        }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_seek_to")]
+    pub fn seek_to(&self, seconds: u32) {
+        unsafe {
+            ffi::vpm_video_player_mpv_seek_to(self.to_glib_none().0, seconds);
+        }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_set_audio_track")]
+    pub fn set_audio_track(&self, audio_track_id: u32) {
+        unsafe {
+            ffi::vpm_video_player_mpv_set_audio_track(self.to_glib_none().0, audio_track_id);
+        }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_set_mute")]
+    pub fn set_mute(&self, mute: bool) {
+        unsafe {
+            ffi::vpm_video_player_mpv_set_mute(self.to_glib_none().0, mute);
+        }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_set_subtitle_track")]
+    pub fn set_subtitle_track(&self, subtitle_track_id: u32) {
+        unsafe {
+            ffi::vpm_video_player_mpv_set_subtitle_track(self.to_glib_none().0, subtitle_track_id);
+        }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_set_volume")]
+    pub fn set_volume(&self, volume: f64) {
+        unsafe {
+            ffi::vpm_video_player_mpv_set_volume(self.to_glib_none().0, volume);
+        }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_stop")]
+    pub fn stop(&self) {
+        unsafe {
+            ffi::vpm_video_player_mpv_stop(self.to_glib_none().0);
+        }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_volume")]
+    pub fn volume(&self) -> f64 {
+        unsafe { ffi::vpm_video_player_mpv_volume(self.to_glib_none().0) }
+    }
+
+    #[doc(alias = "core-idle")]
+    pub fn connect_core_idle<F: Fn(&Self, bool) + 'static>(&self, f: F) -> SignalHandlerId {
+        unsafe extern "C" fn core_idle_trampoline<F: Fn(&VideoPlayerMpv, bool) + 'static>(
+            this: *mut ffi::VpmVideoPlayerMpv,
+            object: glib::ffi::gboolean,
+            f: glib::ffi::gpointer,
+        ) {
+            let f: &F = &*(f as *const F);
+            f(&from_glib_borrow(this), from_glib(object))
+        }
+        unsafe {
+            let f: Box_<F> = Box_::new(f);
+            connect_raw(
+                self.as_ptr() as *mut _,
+                b"core-idle\0".as_ptr() as *const _,
+                Some(std::mem::transmute::<_, unsafe extern "C" fn()>(
+                    core_idle_trampoline::<F> as *const (),
+                )),
+                Box_::into_raw(f),
+            )
+        }
+    }
+
+    #[doc(alias = "current-ao")]
+    pub fn connect_current_ao<F: Fn(&Self, &str) + 'static>(&self, f: F) -> SignalHandlerId {
+        unsafe extern "C" fn current_ao_trampoline<F: Fn(&VideoPlayerMpv, &str) + 'static>(
+            this: *mut ffi::VpmVideoPlayerMpv,
+            object: *mut libc::c_char,
+            f: glib::ffi::gpointer,
+        ) {
+            let f: &F = &*(f as *const F);
+            f(
+                &from_glib_borrow(this),
+                &glib::GString::from_glib_borrow(object),
+            )
+        }
+        unsafe {
+            let f: Box_<F> = Box_::new(f);
+            connect_raw(
+                self.as_ptr() as *mut _,
+                b"current-ao\0".as_ptr() as *const _,
+                Some(std::mem::transmute::<_, unsafe extern "C" fn()>(
+                    current_ao_trampoline::<F> as *const (),
+                )),
+                Box_::into_raw(f),
+            )
+        }
+    }
+
+    #[doc(alias = "duration-updated")]
+    pub fn connect_duration_updated<F: Fn(&Self, f64) + 'static>(&self, f: F) -> SignalHandlerId {
+        unsafe extern "C" fn duration_updated_trampoline<F: Fn(&VideoPlayerMpv, f64) + 'static>(
+            this: *mut ffi::VpmVideoPlayerMpv,
+            object: libc::c_double,
+            f: glib::ffi::gpointer,
+        ) {
+            let f: &F = &*(f as *const F);
+            f(&from_glib_borrow(this), object)
+        }
+        unsafe {
+            let f: Box_<F> = Box_::new(f);
+            connect_raw(
+                self.as_ptr() as *mut _,
+                b"duration-updated\0".as_ptr() as *const _,
+                Some(std::mem::transmute::<_, unsafe extern "C" fn()>(
+                    duration_updated_trampoline::<F> as *const (),
+                )),
+                Box_::into_raw(f),
+            )
+        }
+    }
+
+    #[doc(alias = "end-of-file")]
+    pub fn connect_end_of_file<F: Fn(&Self) + 'static>(&self, f: F) -> SignalHandlerId {
+        unsafe extern "C" fn end_of_file_trampoline<F: Fn(&VideoPlayerMpv) + 'static>(
+            this: *mut ffi::VpmVideoPlayerMpv,
+            f: glib::ffi::gpointer,
+        ) {
+            let f: &F = &*(f as *const F);
+            f(&from_glib_borrow(this))
+        }
+        unsafe {
+            let f: Box_<F> = Box_::new(f);
+            connect_raw(
+                self.as_ptr() as *mut _,
+                b"end-of-file\0".as_ptr() as *const _,
+                Some(std::mem::transmute::<_, unsafe extern "C" fn()>(
+                    end_of_file_trampoline::<F> as *const (),
+                )),
+                Box_::into_raw(f),
+            )
+        }
+    }
+
+    #[doc(alias = "mute-updated")]
+    pub fn connect_mute_updated<F: Fn(&Self, bool) + 'static>(&self, f: F) -> SignalHandlerId {
+        unsafe extern "C" fn mute_updated_trampoline<F: Fn(&VideoPlayerMpv, bool) + 'static>(
+            this: *mut ffi::VpmVideoPlayerMpv,
+            object: glib::ffi::gboolean,
+            f: glib::ffi::gpointer,
+        ) {
+            let f: &F = &*(f as *const F);
+            f(&from_glib_borrow(this), from_glib(object))
+        }
+        unsafe {
+            let f: Box_<F> = Box_::new(f);
+            connect_raw(
+                self.as_ptr() as *mut _,
+                b"mute-updated\0".as_ptr() as *const _,
+                Some(std::mem::transmute::<_, unsafe extern "C" fn()>(
+                    mute_updated_trampoline::<F> as *const (),
+                )),
+                Box_::into_raw(f),
+            )
+        }
+    }
+
+    #[doc(alias = "pause")]
+    pub fn connect_pause<F: Fn(&Self, bool) + 'static>(&self, f: F) -> SignalHandlerId {
+        unsafe extern "C" fn pause_trampoline<F: Fn(&VideoPlayerMpv, bool) + 'static>(
+            this: *mut ffi::VpmVideoPlayerMpv,
+            object: glib::ffi::gboolean,
+            f: glib::ffi::gpointer,
+        ) {
+            let f: &F = &*(f as *const F);
+            f(&from_glib_borrow(this), from_glib(object))
+        }
+        unsafe {
+            let f: Box_<F> = Box_::new(f);
+            connect_raw(
+                self.as_ptr() as *mut _,
+                b"pause\0".as_ptr() as *const _,
+                Some(std::mem::transmute::<_, unsafe extern "C" fn()>(
+                    pause_trampoline::<F> as *const (),
+                )),
+                Box_::into_raw(f),
+            )
+        }
+    }
+
+    #[doc(alias = "position-updated")]
+    pub fn connect_position_updated<F: Fn(&Self, f64) + 'static>(&self, f: F) -> SignalHandlerId {
+        unsafe extern "C" fn position_updated_trampoline<F: Fn(&VideoPlayerMpv, f64) + 'static>(
+            this: *mut ffi::VpmVideoPlayerMpv,
+            object: libc::c_double,
+            f: glib::ffi::gpointer,
+        ) {
+            let f: &F = &*(f as *const F);
+            f(&from_glib_borrow(this), object)
+        }
+        unsafe {
+            let f: Box_<F> = Box_::new(f);
+            connect_raw(
+                self.as_ptr() as *mut _,
+                b"position-updated\0".as_ptr() as *const _,
+                Some(std::mem::transmute::<_, unsafe extern "C" fn()>(
+                    position_updated_trampoline::<F> as *const (),
+                )),
+                Box_::into_raw(f),
+            )
+        }
+    }
+
+    #[doc(alias = "seeking")]
+    pub fn connect_seeking<F: Fn(&Self, bool) + 'static>(&self, f: F) -> SignalHandlerId {
+        unsafe extern "C" fn seeking_trampoline<F: Fn(&VideoPlayerMpv, bool) + 'static>(
+            this: *mut ffi::VpmVideoPlayerMpv,
+            object: glib::ffi::gboolean,
+            f: glib::ffi::gpointer,
+        ) {
+            let f: &F = &*(f as *const F);
+            f(&from_glib_borrow(this), from_glib(object))
+        }
+        unsafe {
+            let f: Box_<F> = Box_::new(f);
+            connect_raw(
+                self.as_ptr() as *mut _,
+                b"seeking\0".as_ptr() as *const _,
+                Some(std::mem::transmute::<_, unsafe extern "C" fn()>(
+                    seeking_trampoline::<F> as *const (),
+                )),
+                Box_::into_raw(f),
+            )
+        }
+    }
+
+    #[doc(alias = "tracks-updated")]
+    pub fn connect_tracks_updated<F: Fn(&Self, &TrackList) + 'static>(
+        &self,
+        f: F,
+    ) -> SignalHandlerId {
+        unsafe extern "C" fn tracks_updated_trampoline<
+            F: Fn(&VideoPlayerMpv, &TrackList) + 'static,
+        >(
+            this: *mut ffi::VpmVideoPlayerMpv,
+            object: *mut ffi::VpmTrackList,
+            f: glib::ffi::gpointer,
+        ) {
+            let f: &F = &*(f as *const F);
+            f(&from_glib_borrow(this), &from_glib_borrow(object))
+        }
+        unsafe {
+            let f: Box_<F> = Box_::new(f);
+            connect_raw(
+                self.as_ptr() as *mut _,
+                b"tracks-updated\0".as_ptr() as *const _,
+                Some(std::mem::transmute::<_, unsafe extern "C" fn()>(
+                    tracks_updated_trampoline::<F> as *const (),
+                )),
+                Box_::into_raw(f),
+            )
+        }
+    }
+
+    #[doc(alias = "volume-updated")]
+    pub fn connect_volume_updated<F: Fn(&Self, f64) + 'static>(&self, f: F) -> SignalHandlerId {
+        unsafe extern "C" fn volume_updated_trampoline<F: Fn(&VideoPlayerMpv, f64) + 'static>(
+            this: *mut ffi::VpmVideoPlayerMpv,
+            object: libc::c_double,
+            f: glib::ffi::gpointer,
+        ) {
+            let f: &F = &*(f as *const F);
+            f(&from_glib_borrow(this), object)
+        }
+        unsafe {
+            let f: Box_<F> = Box_::new(f);
+            connect_raw(
+                self.as_ptr() as *mut _,
+                b"volume-updated\0".as_ptr() as *const _,
+                Some(std::mem::transmute::<_, unsafe extern "C" fn()>(
+                    volume_updated_trampoline::<F> as *const (),
+                )),
+                Box_::into_raw(f),
+            )
+        }
     }
 }
 

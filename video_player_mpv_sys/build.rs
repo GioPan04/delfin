@@ -24,6 +24,7 @@ fn main() {
 
     println!("cargo:rustc-link-lib=gtk-4");
     println!("cargo:rustc-link-lib=epoxy");
+    println!("cargo:rustc-link-lib=mpv");
 
     if let Err(s) = system_deps::Config::new().probe() {
         println!("cargo:warning={s}");

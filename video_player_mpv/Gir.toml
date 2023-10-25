@@ -13,7 +13,7 @@ generate_safety_asserts = true
 deprecate_by_min_version = true
 external_libraries = ["GLib", "Gtk", "Gdk", "GObject"]
 
-generate = ["Vpm.VideoPlayerMpv"]
+generate = ["Vpm.VideoPlayerMpv", "Vpm.Track", "Vpm.TrackList", "Vpm.TrackType"]
 
 manual = [
   "GObject.InitiallyUnowned",
@@ -23,4 +23,5 @@ manual = [
   "Gtk.ConstraintTarget",
   "Gtk.GLArea",
   "Gtk.Widget",
+  "GLib.String",
 ]

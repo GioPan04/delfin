@@ -1,15 +1,14 @@
-use std::cell::OnceCell;
-use std::rc::Rc;
+use std::cell::RefCell;
+use std::sync::atomic::{self, AtomicBool};
 use std::sync::Arc;
 
 use adw::prelude::*;
-use gst::ClockTime;
-use gstplay::PlayState;
 use jellyfin_api::types::{BaseItemDto, BaseItemKind};
 use relm4::{gtk, ComponentParts};
 use relm4::{prelude::*, JoinHandle};
 
 use crate::app::{AppInput, APP_BROKER};
+use crate::globals::CONFIG;
 use crate::jellyfin_api::api::shows::GetEpisodesOptionsBuilder;
 use crate::jellyfin_api::api_client::ApiClient;
 use crate::utils::ticks::ticks_to_seconds;
@@ -19,9 +18,9 @@ use crate::video_player::controls::skip_forwards_backwards::{
 use crate::video_player::controls::video_player_controls::{
     VideoPlayerControls, VideoPlayerControlsInit,
 };
-use crate::video_player::gst_play_widget::GstVideoPlayer;
 use crate::video_player::next_up::NextUp;
 
+use super::backends::{PlayerState, VideoPlayerBackend};
 use super::controls::play_pause::{PlayPauseInput, PLAY_PAUSE_BROKER};
 use super::controls::scrubber::{ScrubberInput, SCRUBBER_BROKER};
 use super::controls::video_player_controls::VideoPlayerControlsInput;
@@ -29,21 +28,18 @@ use super::next_up::NextUpInput;
 use super::session::start_session_reporting;
 
 pub struct VideoPlayer {
-    controls: OnceCell<Controller<VideoPlayerControls>>,
-    next_up: OnceCell<Controller<NextUp>>,
+    backend: Arc<RefCell<dyn VideoPlayerBackend>>,
     media: Option<BaseItemDto>,
     api_client: Option<Arc<ApiClient>>,
+    hiding: Arc<AtomicBool>,
+
     show_controls: bool,
     session_reporting_handle: Option<JoinHandle<()>>,
-    player_state: VideoPlayerState,
+    player_state: PlayerState,
     next: Option<BaseItemDto>,
-}
 
-#[derive(Debug, Clone, Copy)]
-enum VideoPlayerState {
-    Loading,
-    Buffering,
-    Playing { paused: bool },
+    controls: Controller<VideoPlayerControls>,
+    next_up: Controller<NextUp>,
 }
 
 #[derive(Debug)]
@@ -53,8 +49,7 @@ pub enum VideoPlayerInput {
     ToggleControls,
     EndOfStream,
     StopPlayer,
-    PlayerStateChanged(PlayState),
-    PositionUpdated,
+    PlayerStateChanged(PlayerState),
 }
 
 #[derive(Debug)]
@@ -86,10 +81,9 @@ impl Component for VideoPlayer {
             set_child = &adw::ToastOverlay {
                 add_css_class: "video-player",
 
-                #[name = "overlay"]
                 gtk::Overlay {
                     #[local_ref]
-                    video_player -> GstVideoPlayer {
+                    video_player -> gtk::Widget {
                         add_controller = gtk::GestureClick {
                             connect_pressed[sender] => move |_, _, _, _| {
                                 sender.input(VideoPlayerInput::ToggleControls);
@@ -107,13 +101,17 @@ impl Component for VideoPlayer {
                     #[name = "spinner"]
                     add_overlay = &gtk::Spinner {
                         #[watch]
-                        set_visible: matches!(model.player_state, VideoPlayerState::Loading | VideoPlayerState::Buffering),
+                        set_visible: matches!(model.player_state, PlayerState::Loading | PlayerState::Buffering),
                         set_spinning: true,
                         set_halign: gtk::Align::Center,
                         set_valign: gtk::Align::Center,
                         set_width_request: 48,
                         set_height_request: 48,
                     },
+
+                    add_overlay: model.controls.widget(),
+
+                    add_overlay: model.next_up.widget(),
                 },
             },
 
@@ -130,73 +128,72 @@ impl Component for VideoPlayer {
     ) -> relm4::ComponentParts<Self> {
         let show_controls = true;
 
-        let model = VideoPlayer {
-            media: None,
-            controls: OnceCell::new(),
-            next_up: OnceCell::new(),
-            api_client: None,
-            show_controls,
-            session_reporting_handle: None,
-            player_state: VideoPlayerState::Loading,
-            next: None,
-        };
-
-        let video_player = GstVideoPlayer::new();
-
-        video_player.connect_state_changed({
-            let sender = sender.clone();
-            move |play_state| {
-                sender.input(VideoPlayerInput::PlayerStateChanged(*play_state));
-            }
-        });
-
-        video_player.connect_position_updated({
-            let sender = sender.clone();
-            move |_| sender.input(VideoPlayerInput::PositionUpdated)
-        });
-
-        video_player.connect_end_of_stream({
-            let sender = sender.clone();
-            move || {
-                sender.input(VideoPlayerInput::EndOfStream);
-            }
-        });
-
-        video_player.connect_error({
-            let sender = sender.clone();
-            move |err, details| {
-                println!("Video player error: {err:#?}");
-                println!("Details: {details:#?}");
-                sender.input(VideoPlayerInput::Toast(format!(
-                    "Video player error: {}",
-                    err.message()
-                )));
-            }
-        });
-
-        let widgets = view_output!();
-        let overlay: &gtk::Overlay = &widgets.overlay;
-
-        let video_player = Rc::new(video_player);
+        let backend: Arc<RefCell<dyn VideoPlayerBackend>> =
+            CONFIG.read().video_player.backend.into();
 
         let controls = VideoPlayerControls::builder()
             .launch(VideoPlayerControlsInit {
-                player: video_player.clone(),
+                player: backend.clone(),
                 default_show_controls: show_controls,
             })
             .detach();
-        overlay.add_overlay(controls.widget());
-        model
-            .controls
-            .set(controls)
-            .unwrap_or_else(|_| panic!("Failed to set controls"));
 
-        let next_up = NextUp::builder().launch(video_player.clone()).detach();
-        overlay.add_overlay(next_up.widget());
-        model
-            .next_up
-            .set(next_up)
-            .unwrap_or_else(|_| panic!("Failed to set next_up"));
+        let next_up = NextUp::builder().launch(backend.clone()).detach();
+
+        let model = VideoPlayer {
+            backend,
+            media: None,
+            api_client: None,
+            hiding: Arc::new(AtomicBool::new(false)),
+
+            show_controls,
+            session_reporting_handle: None,
+            player_state: PlayerState::Loading,
+            next: None,
+
+            controls,
+            next_up,
+        };
+
+        model.backend.borrow_mut().connect_player_state_changed({
+            let sender = sender.clone();
+            Box::new(move |state| {
+                if cfg!(debug_assertions) {
+                    println!("Player state changed: {state:#?}");
+                }
+
+                sender.input(VideoPlayerInput::PlayerStateChanged(state));
+            })
+        });
+
+        model.backend.borrow_mut().connect_end_of_stream({
+            let sender = sender.clone();
+            let hiding = model.hiding.clone();
+            Box::new(move || {
+                if !hiding.load(atomic::Ordering::Relaxed) {
+                    sender.input(VideoPlayerInput::EndOfStream);
+                }
+            })
+        });
+
+        // TODO
+        // video_player.connect_error({
+        //     let sender = sender.clone();
+        //     move |err, details| {
+        //         println!("Video player error: {err:#?}");
+        //         println!("Details: {details:#?}");
+        //         sender.input(VideoPlayerInput::Toast(format!(
+        //             "Video player error: {}",
+        //             err.message()
+        //         )));
+        //     }
+        // });
+
+        let binding = model.backend.clone();
+        let binding = binding.borrow();
+        let video_player = binding.widget();
+
+        let widgets = view_output!();
 
         ComponentParts { model, widgets }
     }
@@ -214,14 +211,13 @@ impl Component for VideoPlayer {
                 widgets.toaster.add_toast(toast);
             }
             VideoPlayerInput::PlayVideo(api_client, item) => {
-                let video_player = &widgets.video_player;
-
-                self.set_player_state(VideoPlayerState::Loading);
+                self.set_player_state(PlayerState::Loading);
                 self.next = None;
+                self.hiding.store(false, atomic::Ordering::Relaxed);
 
                 self.media = Some(*item.clone());
                 let url = api_client.get_stream_url(&item.id.unwrap());
-                video_player.play_uri(&url);
+                self.backend.borrow_mut().play_uri(&url);
 
                 if let Some(playback_position_ticks) = item
                     .user_data
@@ -229,14 +225,13 @@ impl Component for VideoPlayer {
                     .and_then(|user_data| user_data.playback_position_ticks)
                 {
                     let playback_position = ticks_to_seconds(playback_position_ticks);
-                    video_player.seek(ClockTime::from_seconds(playback_position as u64));
+                    self.backend.borrow().seek_to(playback_position as usize);
                 }
 
-                if let Some(controls) = self.controls.get() {
-                    controls.emit(VideoPlayerControlsInput::SetPlaying(Box::new(
+                self.controls
+                    .emit(VideoPlayerControlsInput::SetPlaying(Box::new(
                         *item.clone(),
                     )));
-                }
 
                 // Report start of playback
                 if let Some(item_id) = item.id {
@@ -252,11 +247,11 @@ impl Component for VideoPlayer {
                 }
 
                 // Starts a background task that continuously reports playback progress
-                self.session_reporting_handle = Some(start_session_reporting(
+                start_session_reporting(
                     api_client.clone(),
                     &item.id.unwrap(),
-                    video_player,
-                ));
+                    self.backend.clone(),
+                );
 
                 self.api_client = Some(api_client);
 
@@ -264,34 +259,43 @@ impl Component for VideoPlayer {
             }
             VideoPlayerInput::ToggleControls => {
                 self.show_controls = !self.show_controls;
-                let controls = self.controls.get().unwrap();
-                controls.emit(VideoPlayerControlsInput::SetShowControls(
-                    self.show_controls,
-                ));
+                self.controls
+                    .emit(VideoPlayerControlsInput::SetShowControls(
+                        self.show_controls,
+                    ));
             }
             VideoPlayerInput::EndOfStream => {
+                match self.player_state {
+                    PlayerState::Playing { paused: _ } => {}
+                    _ => {
+                        return;
+                    }
+                };
+
+                // Play next episode if available
                 if let Some(next) = &self.next {
                     APP_BROKER.send(AppInput::PlayVideo(next.clone()));
                     return;
                 }
-                sender.input(VideoPlayerInput::StopPlayer);
+
                 sender.output(VideoPlayerOutput::NavigateBack).unwrap();
             }
             VideoPlayerInput::StopPlayer => {
-                widgets.video_player.stop();
-                let position = widgets.video_player.position();
+                self.hiding.store(true, atomic::Ordering::Relaxed);
+
+                self.backend.borrow_mut().stop();
+
+                let position = self.backend.borrow().position();
 
                 // Report end of playback
-                if let (Some(api_client), Some(media), Some(position)) =
-                    (&self.api_client, &self.media, position)
-                {
+                if let (Some(api_client), Some(media)) = (&self.api_client, &self.media) {
                     // Report end of playback
                     relm4::spawn({
                         let api_client = api_client.clone();
                         let item_id = media.id.unwrap();
                         async move {
                             api_client
-                                .report_playback_stopped(&item_id, position.seconds() as usize)
+                                .report_playback_stopped(&item_id, position)
                                 .await
                                 .unwrap();
                         }
@@ -308,27 +312,7 @@ impl Component for VideoPlayer {
                 }
             }
             VideoPlayerInput::PlayerStateChanged(play_state) => {
-                match (&self.player_state, play_state) {
-                    (player_state, PlayState::Playing) => match player_state {
-                        // We switch from Loading to Playing when we get the first position update
-                        VideoPlayerState::Loading => {}
-                        _ => {
-                            self.set_player_state(VideoPlayerState::Playing { paused: false });
-                        }
-                    },
-                    (_, PlayState::Paused) => {
-                        self.set_player_state(VideoPlayerState::Playing { paused: true });
-                    }
-                    (VideoPlayerState::Playing { paused: _ }, PlayState::Buffering) => {
-                        self.set_player_state(VideoPlayerState::Buffering);
-                    }
-                    _ => {}
-                }
-            }
-            VideoPlayerInput::PositionUpdated => {
-                if let VideoPlayerState::Loading = self.player_state {
-                    self.set_player_state(VideoPlayerState::Playing { paused: false });
-                }
+                self.set_player_state(play_state);
             }
         }
 
@@ -346,15 +330,15 @@ impl Component for VideoPlayer {
                 self.next = next.clone();
 
                 let next = Box::new(next);
-                if let Some(controls) = self.controls.get() {
-                    controls.emit(VideoPlayerControlsInput::SetNextPreviousEpisodes(
+                self.controls
+                    .emit(VideoPlayerControlsInput::SetNextPreviousEpisodes(
                         Box::new(prev),
                         next.clone(),
                     ));
-                }
 
-                if let (Some(next_up), Some(api_client)) = (self.next_up.get(), &self.api_client) {
-                    next_up.emit(NextUpInput::SetNextUp((next, api_client.clone())));
+                if let Some(api_client) = &self.api_client {
+                    self.next_up
+                        .emit(NextUpInput::SetNextUp((next, api_client.clone())));
                 }
             }
         }
@@ -362,25 +346,51 @@ impl Component for VideoPlayer {
 }
 
 impl VideoPlayer {
-    fn set_player_state(&mut self, state: VideoPlayerState) {
-        self.player_state = state;
-
-        match state {
-            VideoPlayerState::Loading => {
-                SCRUBBER_BROKER.send(ScrubberInput::Reset);
-                PLAY_PAUSE_BROKER.send(PlayPauseInput::SetLoading);
-                SKIP_FORWARDS_BROKER.send(SkipForwardsBackwardsInput::SetLoading(true));
-                SKIP_BACKWARDS_BROKER.send(SkipForwardsBackwardsInput::SetLoading(true));
-                self.next_up.get().unwrap().emit(NextUpInput::Reset);
+    fn set_player_state(&mut self, new_state: PlayerState) {
+        // Seek once playback begins
+        // If we seek too early, MPV ignores it
+        if matches!(self.player_state, PlayerState::Loading)
+            && matches!(new_state, PlayerState::Playing { paused: _ })
+        {
+            if let Some(playback_position_ticks) = self
+                .media
+                .as_ref()
+                .and_then(|m| m.user_data.clone())
+                .and_then(|user_data| user_data.playback_position_ticks)
+            {
+                let playback_position = ticks_to_seconds(playback_position_ticks);
+                self.backend.borrow().seek_to(playback_position as usize);
             }
-            VideoPlayerState::Playing { paused } => {
-                SCRUBBER_BROKER.send(ScrubberInput::SetPlaying);
-                PLAY_PAUSE_BROKER.send(PlayPauseInput::SetPlaying(!paused));
-                SKIP_FORWARDS_BROKER.send(SkipForwardsBackwardsInput::SetLoading(false));
-                SKIP_BACKWARDS_BROKER.send(SkipForwardsBackwardsInput::SetLoading(false));
+        }
+
+        match new_state {
+            PlayerState::Loading => {
+                SCRUBBER_BROKER.read().send(ScrubberInput::Reset);
+                PLAY_PAUSE_BROKER.read().send(PlayPauseInput::SetLoading);
+                SKIP_FORWARDS_BROKER
+                    .read()
+                    .send(SkipForwardsBackwardsInput::SetLoading(true));
+                SKIP_BACKWARDS_BROKER
+                    .read()
+                    .send(SkipForwardsBackwardsInput::SetLoading(true));
+                self.next_up.emit(NextUpInput::Reset);
+            }
+            PlayerState::Playing { paused } => {
+                SCRUBBER_BROKER.read().send(ScrubberInput::SetPlaying);
+                PLAY_PAUSE_BROKER
+                    .read()
+                    .send(PlayPauseInput::SetPlaying(!paused));
+                SKIP_FORWARDS_BROKER
+                    .read()
+                    .send(SkipForwardsBackwardsInput::SetLoading(false));
+                SKIP_BACKWARDS_BROKER
+                    .read()
+                    .send(SkipForwardsBackwardsInput::SetLoading(false));
             }
             _ => {}
         }
+
+        self.player_state = new_state;
     }
 
     fn fetch_next_prev(&self, sender: &ComponentSender<Self>, item: &BaseItemDto) {

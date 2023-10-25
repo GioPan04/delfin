@@ -1,7 +1,10 @@
 use adw::prelude::*;
 use jellyfin_api::types::BaseItemDto;
 use relm4::{prelude::*, MessageBroker};
-use std::sync::{Arc, RwLock};
+use std::{
+    cell::OnceCell,
+    sync::{Arc, RwLock},
+};
 
 use crate::{
     accounts::account_list::{AccountList, AccountListInput, AccountListOutput},
@@ -49,7 +52,7 @@ pub struct App {
     account_list: Controller<AccountList>,
     library: Option<Controller<Library>>,
     media_details: Option<Controller<MediaDetails>>,
-    video_player: Controller<VideoPlayer>,
+    video_player: OnceCell<Controller<VideoPlayer>>,
     server: Option<config::Server>,
     account: Option<config::Account>,
 }
@@ -90,9 +93,6 @@ impl Component for App {
                 add = model.account_list.widget() {
                     set_tag: Some(AppPage::Accounts.into()),
                 },
-                add = model.video_player.widget() {
-                    set_tag: Some(AppPage::VideoPlayer.into()),
-                },
             },
         }
     }
@@ -102,6 +102,9 @@ impl Component for App {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+        // TODO: debug wrong theme
+        // adw::StyleManager::default().set_color_scheme(adw::ColorScheme::ForceDark);
+
         // Use development styles when running debug build
         #[cfg(debug_assertions)]
         root.add_css_class("devel");
@@ -114,17 +117,13 @@ impl Component for App {
             .launch(())
             .forward(sender.input_sender(), convert_account_list_output);
 
-        let video_player = VideoPlayer::builder()
-            .launch(())
-            .forward(sender.input_sender(), convert_video_player_output);
-
         let model = App {
             api_client: None,
             servers,
             account_list,
             library: None,
             media_details: None,
-            video_player,
+            video_player: OnceCell::new(),
             server: None,
             account: None,
         };
@@ -198,11 +197,25 @@ impl Component for App {
                 }
             }
             AppInput::PlayVideo(item) => {
+                if self.video_player.get().is_none() {
+                    let video_player = VideoPlayer::builder()
+                        .launch(())
+                        .forward(sender.input_sender(), convert_video_player_output);
+                    let video_player_widget = video_player.widget();
+                    video_player_widget.set_tag(Some(AppPage::VideoPlayer.into()));
+                    widgets.navigation.add(video_player_widget);
+                    // We already checked that video_player is unset, ignore result
+                    let _ = self.video_player.set(video_player);
+                }
+
                 if let Some(api_client) = &self.api_client {
-                    self.video_player.emit(VideoPlayerInput::PlayVideo(
-                        api_client.clone(),
-                        Box::new(item),
-                    ));
+                    self.video_player
+                        .get()
+                        .unwrap()
+                        .emit(VideoPlayerInput::PlayVideo(
+                            api_client.clone(),
+                            Box::new(item),
+                        ));
                     navigation.push_by_tag(AppPage::VideoPlayer.into());
                 }
             }

@@ -1,0 +1,307 @@
+use std::{
+    cell::{Cell, RefCell},
+    collections::HashMap,
+    rc::Rc,
+};
+
+use glib::SignalHandlerId;
+use relm4::gtk::{self, glib, prelude::*};
+use uuid::Uuid;
+use video_player_mpv::{Track, TrackType, VideoPlayerMpv};
+
+use super::{
+    AudioTrack, PlayerState, PlayerStateChangedCallback, SubtitleTrack, VideoPlayerBackend,
+};
+
+macro_rules! set_player_state {
+    ($state:expr, $player_state_changed_callbacks:expr, $new_state:expr$(,)?) => {
+        $state.replace($new_state);
+        for callback in $player_state_changed_callbacks.borrow().values() {
+            callback($new_state);
+        }
+    };
+}
+
+pub struct VideoPlayerBackendMpv {
+    widget: VideoPlayerMpv,
+    state: Rc<Cell<PlayerState>>,
+    player_state_changed_callbacks: Rc<RefCell<HashMap<Uuid, PlayerStateChangedCallback>>>,
+    signal_handler_ids: Vec<SignalHandlerId>,
+}
+
+impl std::fmt::Debug for VideoPlayerBackendMpv {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("VideoPlayerBackendMpv")
+            .field("widget", &self.widget)
+            .field("state", &self.state)
+            .field("signal_handler_ids", &self.signal_handler_ids)
+            .finish()
+    }
+}
+
+impl Default for VideoPlayerBackendMpv {
+    fn default() -> Self {
+        let widget = VideoPlayerMpv::new();
+        let state = Rc::new(Cell::new(PlayerState::Loading));
+        let player_state_changed_callbacks = Rc::default();
+        let mpv = Self {
+            widget,
+            state,
+            player_state_changed_callbacks,
+            signal_handler_ids: vec![],
+        };
+
+        mpv.widget.connect_core_idle({
+            let state = mpv.state.clone();
+            let player_state_changed_callbacks = mpv.player_state_changed_callbacks.clone();
+            move |_, core_idle| {
+                if !core_idle && matches!(state.get(), PlayerState::Loading) {
+                    set_player_state!(
+                        state,
+                        player_state_changed_callbacks,
+                        PlayerState::Playing { paused: false },
+                    );
+                }
+            }
+        });
+
+        mpv.widget.connect_pause({
+            let state = mpv.state.clone();
+            let player_state_changed_callbacks = mpv.player_state_changed_callbacks.clone();
+            move |_, cur_paused| {
+                match state.get() {
+                    PlayerState::Playing { paused } if paused != cur_paused => {
+                        set_player_state!(
+                            state,
+                            player_state_changed_callbacks,
+                            PlayerState::Playing { paused: cur_paused },
+                        );
+                    }
+                    _ => {}
+                };
+            }
+        });
+
+        mpv.widget.connect_seeking({
+            let state = mpv.state.clone();
+            let player_state_changed_callbacks = mpv.player_state_changed_callbacks.clone();
+            move |_, seeking| {
+                let new_state = match (state.get(), seeking) {
+                    (PlayerState::Playing { paused: _ }, true) => Some(PlayerState::Buffering),
+                    (PlayerState::Buffering, false) => Some(PlayerState::Playing { paused: false }),
+                    _ => None,
+                };
+                if let Some(new_state) = new_state {
+                    set_player_state!(state, player_state_changed_callbacks, new_state,);
+                }
+            }
+        });
+
+        mpv
+    }
+}
+
+impl VideoPlayerBackendMpv {
+    fn set_player_state(&mut self, state: PlayerState) {
+        set_player_state!(self.state, self.player_state_changed_callbacks, state);
+    }
+}
+
+impl VideoPlayerBackend for VideoPlayerBackendMpv {
+    fn widget(&self) -> &gtk::Widget {
+        self.widget.upcast_ref()
+    }
+
+    fn connect_player_state_changed(&mut self, callback: PlayerStateChangedCallback) -> Uuid {
+        let id = Uuid::new_v4();
+        self.player_state_changed_callbacks
+            .borrow_mut()
+            .insert(id, callback);
+        id
+    }
+
+    fn disconnect_player_state_changed(&mut self, id: Uuid) {
+        self.player_state_changed_callbacks.borrow_mut().remove(&id);
+    }
+
+    fn play_uri(&mut self, uri: &str) {
+        self.widget.play_uri(uri);
+        self.widget.play();
+        self.set_player_state(PlayerState::Loading);
+    }
+
+    fn play(&self) {
+        self.widget.play();
+    }
+
+    fn pause(&self) {
+        self.widget.pause();
+    }
+
+    fn stop(&mut self) {
+        self.widget.stop();
+    }
+
+    fn seek_to(&self, seconds: usize) {
+        self.widget.seek_to(seconds as u32);
+    }
+
+    fn seek_by(&self, seconds: isize) {
+        self.widget.seek_by(seconds as i32);
+    }
+
+    fn muted(&self) -> bool {
+        self.widget.mute()
+    }
+
+    fn set_muted(&self, muted: bool) {
+        self.widget.set_mute(muted);
+    }
+
+    fn volume(&self) -> f64 {
+        self.widget.volume() / 100.0
+    }
+
+    fn set_volume(&self, volume: f64) {
+        self.widget.set_volume(volume * 100.0);
+    }
+
+    fn position(&self) -> usize {
+        self.widget.position() as usize
+    }
+
+    fn current_subtitle_track(&self) -> Option<usize> {
+        match self.widget.current_subtitle_track() {
+            id @ 0.. => Some(id as usize),
+            _ => None,
+        }
+    }
+
+    fn set_subtitle_track(&self, subtitle_track_id: Option<usize>) {
+        self.widget
+            .set_subtitle_track(subtitle_track_id.map(|id| id as u32).unwrap_or(0));
+    }
+
+    fn current_audio_track(&self) -> Option<usize> {
+        match self.widget.current_audio_track() {
+            id @ 0.. => Some(id as usize),
+            _ => None,
+        }
+    }
+
+    fn set_audio_track(&self, audio_track_id: Option<usize>) {
+        self.widget
+            .set_audio_track(audio_track_id.map(|id| id as u32).unwrap_or(0));
+    }
+
+    fn connect_end_of_stream(&mut self, callback: Box<dyn Fn() + Send + 'static>) {
+        self.signal_handler_ids
+            .push(self.widget.connect_end_of_file(move |_| {
+                callback();
+            }))
+    }
+
+    fn connect_position_updated(&mut self, callback: Box<dyn Fn(usize) + Send + Sync + 'static>) {
+        self.signal_handler_ids
+            .push(self.widget.connect_position_updated(move |_, val| {
+                callback(val as usize);
+            }));
+    }
+
+    fn connect_duration_updated(&mut self, callback: Box<dyn Fn(usize) + Send + Sync + 'static>) {
+        self.signal_handler_ids
+            .push(self.widget.connect_duration_updated(move |_, val| {
+                callback(val as usize);
+            }));
+    }
+
+    fn connect_mute_updated(&mut self, callback: Box<dyn Fn(bool) + Send + Sync + 'static>) {
+        self.signal_handler_ids
+            .push(self.widget.connect_mute_updated(move |_, muted| {
+                callback(muted);
+            }))
+    }
+
+    fn connect_volume_updated(&mut self, callback: Box<dyn Fn(f64) + Send + Sync + 'static>) {
+        self.signal_handler_ids
+            .push(self.widget.connect_volume_updated(move |_, volume| {
+                callback(volume / 100.0);
+            }))
+    }
+
+    fn connect_subtitle_tracks_updated(
+        &mut self,
+        callback: Box<dyn Fn(Vec<SubtitleTrack>) + Send + Sync + 'static>,
+    ) {
+        self.signal_handler_ids
+            .push(
+                self.widget
+                    .connect_tracks_updated(move |_player, track_list| {
+                        let mut subtitle_tracks: Vec<SubtitleTrack> = vec![];
+                        for i in 0..track_list.len() {
+                            if let Some(track) = track_list.track(i) {
+                                if let TrackType::Subtitle = track.type_() {
+                                    subtitle_tracks.push(track.into());
+                                }
+                            }
+                        }
+
+                        callback(subtitle_tracks);
+                    }),
+            );
+    }
+
+    fn connect_audio_tracks_updated(
+        &mut self,
+        callback: Box<dyn Fn(Vec<AudioTrack>) + Send + Sync + 'static>,
+    ) {
+        self.signal_handler_ids
+            .push(
+                self.widget
+                    .connect_tracks_updated(move |_player, track_list| {
+                        let mut audio_tracks: Vec<AudioTrack> = vec![];
+                        for i in 0..track_list.len() {
+                            if let Some(track) = track_list.track(i) {
+                                if let TrackType::Audio = track.type_() {
+                                    audio_tracks.push(track.into());
+                                }
+                            }
+                        }
+
+                        callback(audio_tracks);
+                    }),
+            );
+    }
+}
+
+impl From<Track> for SubtitleTrack {
+    fn from(value: Track) -> Self {
+        assert!(value.type_() == TrackType::Subtitle);
+        Self {
+            id: value.id() as usize,
+            name: value
+                .title()
+                .map(|s| s.to_string())
+                .unwrap_or(String::from("")),
+        }
+    }
+}
+
+impl From<Track> for AudioTrack {
+    fn from(value: Track) -> Self {
+        assert!(value.type_() == TrackType::Audio);
+
+        let id = value.id() as usize;
+        let title = value.title().map(|s| s.to_string());
+        let language = value.language().map(|s| s.to_string());
+
+        let name = match (title, language) {
+            (Some(title), Some(language)) => format!("{title} - {language}"),
+            (Some(title), None) => title,
+            (None, Some(language)) => format!("Track {id} - {language}"),
+            _ => format!("Track {id}"),
+        };
+
+        Self { id, name }
+    }
+}

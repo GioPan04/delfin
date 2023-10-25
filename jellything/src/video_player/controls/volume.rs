@@ -1,12 +1,12 @@
-use std::rc::Rc;
+use std::{cell::RefCell, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::{gtk, ComponentParts, SimpleComponent};
 
-use crate::video_player::gst_play_widget::GstVideoPlayer;
+use crate::video_player::backends::VideoPlayerBackend;
 
 pub struct Volume {
-    video_player: Rc<GstVideoPlayer>,
+    video_player: Arc<RefCell<dyn VideoPlayerBackend>>,
     muted: bool,
     volume: f64,
 }
@@ -23,7 +23,7 @@ pub enum VolumeInput {
 
 #[relm4::component(pub)]
 impl SimpleComponent for Volume {
-    type Init = Rc<GstVideoPlayer>;
+    type Init = Arc<RefCell<dyn VideoPlayerBackend>>;
     type Input = VolumeInput;
     type Output = ();
 
@@ -77,22 +77,24 @@ impl SimpleComponent for Volume {
     ) -> relm4::ComponentParts<Self> {
         let model = Volume {
             video_player: video_player.clone(),
-            muted: false,
-            volume: 1.0,
+            muted: video_player.borrow().muted(),
+            volume: video_player.borrow().volume(),
         };
 
         let widgets = view_output!();
 
-        video_player.connect_mute_changed({
+        video_player.borrow_mut().connect_mute_updated({
             let sender = sender.clone();
-            move |muted| {
+            Box::new(move |muted| {
                 sender.input(VolumeInput::UpdateMute(muted));
-            }
+            })
         });
 
-        video_player.connect_volume_changed(move |volume| {
-            sender.input(VolumeInput::UpdateVolume(volume));
-        });
+        video_player
+            .borrow_mut()
+            .connect_volume_updated(Box::new(move |volume| {
+                sender.input(VolumeInput::UpdateVolume(volume));
+            }));
 
         ComponentParts { model, widgets }
     }
@@ -101,12 +103,12 @@ impl SimpleComponent for Volume {
         match message {
             VolumeInput::ToggleMute => {
                 self.muted = !self.muted;
-                self.video_player.set_mute(self.muted);
+                self.video_player.borrow().set_muted(self.muted);
             }
             VolumeInput::UpdateMute(muted) => self.muted = muted,
             VolumeInput::SetVolume(volume) => {
                 self.volume = volume;
-                self.video_player.set_volume(volume);
+                self.video_player.borrow().set_volume(volume);
             }
             VolumeInput::UpdateVolume(volume) => self.volume = volume,
         }

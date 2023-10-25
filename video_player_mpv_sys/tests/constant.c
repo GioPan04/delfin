@@ -29,5 +29,8 @@
     printf("\n");
 
 int main() {
+    PRINT_CONSTANT((gint) VPM_TRACK_TYPE_AUDIO);
+    PRINT_CONSTANT((gint) VPM_TRACK_TYPE_SUBTITLE);
+    PRINT_CONSTANT((gint) VPM_TRACK_TYPE_VIDEO);
     return 0;
 }

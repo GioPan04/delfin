@@ -10,9 +10,179 @@ and/or use gtk-doc annotations.  -->
   <c:include name="video-player-mpv/video-player-mpv.h"/>
   <namespace name="Vpm"
              version="0.0"
-             shared-library=""
+             shared-library="libvideo-player-mpv"
              c:identifier-prefixes="vpm,Vpm"
              c:symbol-prefixes="vpm,vpm">
+    <record name="Track"
+            c:type="VpmTrack"
+            glib:type-name="VpmTrack"
+            glib:get-type="vpm_track_get_type"
+            c:symbol-prefix="track">
+      <source-position filename="video-player-mpv/track.h" line="21"/>
+      <field name="type" writable="1">
+        <type name="TrackType" c:type="VpmTrackType"/>
+      </field>
+      <field name="id" writable="1">
+        <type name="gint" c:type="int"/>
+      </field>
+      <field name="title" writable="1">
+        <type name="utf8" c:type="char*"/>
+      </field>
+      <field name="language" writable="1">
+        <type name="utf8" c:type="char*"/>
+      </field>
+      <constructor name="new" c:identifier="vpm_track_new">
+        <source-position filename="video-player-mpv/track.h" line="24"/>
+        <return-value transfer-ownership="full">
+          <type name="Track" c:type="VpmTrack*"/>
+        </return-value>
+      </constructor>
+      <method name="copy" c:identifier="vpm_track_copy">
+        <source-position filename="video-player-mpv/track.h" line="25"/>
+        <return-value transfer-ownership="full">
+          <type name="Track" c:type="VpmTrack*"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="t" transfer-ownership="none">
+            <type name="Track" c:type="VpmTrack*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="free" c:identifier="vpm_track_free">
+        <source-position filename="video-player-mpv/track.h" line="26"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="Track" c:type="VpmTrack*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="id" c:identifier="vpm_track_id">
+        <source-position filename="video-player-mpv/track.h" line="28"/>
+        <return-value transfer-ownership="none">
+          <type name="gint" c:type="int"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="Track" c:type="const VpmTrack*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="language" c:identifier="vpm_track_language">
+        <source-position filename="video-player-mpv/track.h" line="30"/>
+        <return-value transfer-ownership="full">
+          <type name="utf8" c:type="char*"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="Track" c:type="const VpmTrack*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="title" c:identifier="vpm_track_title">
+        <source-position filename="video-player-mpv/track.h" line="29"/>
+        <return-value transfer-ownership="full">
+          <type name="utf8" c:type="char*"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="Track" c:type="const VpmTrack*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="type" c:identifier="vpm_track_type">
+        <source-position filename="video-player-mpv/track.h" line="27"/>
+        <return-value transfer-ownership="none">
+          <type name="TrackType" c:type="VpmTrackType"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="Track" c:type="const VpmTrack*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+    </record>
+    <record name="TrackList"
+            c:type="VpmTrackList"
+            glib:type-name="VpmTrackList"
+            glib:get-type="vpm_track_list_get_type"
+            c:symbol-prefix="track_list">
+      <source-position filename="video-player-mpv/track-list.h" line="13"/>
+      <field name="tracks" writable="1">
+        <type name="GLib.List" c:type="GList*">
+          <type name="gpointer" c:type="gpointer"/>
+        </type>
+      </field>
+      <method name="copy" c:identifier="vpm_track_list_copy">
+        <source-position filename="video-player-mpv/track-list.h" line="16"/>
+        <return-value transfer-ownership="full">
+          <type name="TrackList" c:type="VpmTrackList*"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="t" transfer-ownership="none">
+            <type name="TrackList" c:type="VpmTrackList*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="free" c:identifier="vpm_track_list_free">
+        <source-position filename="video-player-mpv/track-list.h" line="17"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="TrackList" c:type="VpmTrackList*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="is_empty" c:identifier="vpm_track_list_is_empty">
+        <source-position filename="video-player-mpv/track-list.h" line="19"/>
+        <return-value transfer-ownership="none">
+          <type name="gboolean" c:type="gboolean"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="TrackList" c:type="const VpmTrackList*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="len" c:identifier="vpm_track_list_len">
+        <source-position filename="video-player-mpv/track-list.h" line="18"/>
+        <return-value transfer-ownership="none">
+          <type name="guint" c:type="uint"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="TrackList" c:type="const VpmTrackList*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="track" c:identifier="vpm_track_list_track">
+        <source-position filename="video-player-mpv/track-list.h" line="20"/>
+        <return-value transfer-ownership="full">
+          <type name="Track" c:type="VpmTrack*"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="TrackList" c:type="const VpmTrackList*"/>
+          </instance-parameter>
+          <parameter name="index" transfer-ownership="none">
+            <type name="guint" c:type="uint"/>
+          </parameter>
+        </parameters>
+      </method>
+    </record>
+    <enumeration name="TrackType" c:type="VpmTrackType">
+      <source-position filename="video-player-mpv/track.h" line="14"/>
+      <member name="video" value="0" c:identifier="VPM_TRACK_TYPE_VIDEO">
+      </member>
+      <member name="audio" value="1" c:identifier="VPM_TRACK_TYPE_AUDIO">
+      </member>
+      <member name="subtitle" value="2" c:identifier="VPM_TRACK_TYPE_SUBTITLE">
+      </member>
+    </enumeration>
     <class name="VideoPlayerMpv"
            c:symbol-prefix="video_player_mpv"
            c:type="VpmVideoPlayerMpv"
@@ -21,58 +191,326 @@ and/or use gtk-doc annotations.  -->
            glib:get-type="vpm_video_player_mpv_get_type"
            glib:type-struct="VideoPlayerMpvClass">
       <source-position filename="video-player-mpv/video-player-mpv.h"
-                       line="7"/>
+                       line="10"/>
       <implements name="Gtk.Accessible"/>
       <implements name="Gtk.Buildable"/>
       <implements name="Gtk.ConstraintTarget"/>
       <constructor name="new" c:identifier="vpm_video_player_mpv_new">
         <source-position filename="video-player-mpv/video-player-mpv.h"
-                         line="10"/>
+                         line="13"/>
         <return-value transfer-ownership="none">
           <type name="Gtk.Widget" c:type="GtkWidget*"/>
         </return-value>
       </constructor>
+      <method name="current_audio_track"
+              c:identifier="vpm_video_player_mpv_current_audio_track">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="29"/>
+        <return-value transfer-ownership="none">
+          <type name="gint" c:type="int"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="current_subtitle_track"
+              c:identifier="vpm_video_player_mpv_current_subtitle_track">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="33"/>
+        <return-value transfer-ownership="none">
+          <type name="gint" c:type="int"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="mute" c:identifier="vpm_video_player_mpv_mute">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="24"/>
+        <return-value transfer-ownership="none">
+          <type name="gboolean" c:type="_Bool"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="pause" c:identifier="vpm_video_player_mpv_pause">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="17"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="play" c:identifier="vpm_video_player_mpv_play">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="16"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="play_uri" c:identifier="vpm_video_player_mpv_play_uri">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="15"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+          <parameter name="uri" transfer-ownership="none">
+            <type name="utf8" c:type="const char*"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="position" c:identifier="vpm_video_player_mpv_position">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="20"/>
+        <return-value transfer-ownership="none">
+          <type name="gdouble" c:type="double"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="seek_by" c:identifier="vpm_video_player_mpv_seek_by">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="22"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+          <parameter name="seconds" transfer-ownership="none">
+            <type name="gint" c:type="int"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="seek_to" c:identifier="vpm_video_player_mpv_seek_to">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="21"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+          <parameter name="seconds" transfer-ownership="none">
+            <type name="guint" c:type="uint"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="set_audio_track"
+              c:identifier="vpm_video_player_mpv_set_audio_track">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="30"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+          <parameter name="audio_track_id" transfer-ownership="none">
+            <type name="guint" c:type="uint"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="set_mute" c:identifier="vpm_video_player_mpv_set_mute">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="25"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+          <parameter name="mute" transfer-ownership="none">
+            <type name="gboolean" c:type="_Bool"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="set_subtitle_track"
+              c:identifier="vpm_video_player_mpv_set_subtitle_track">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="34"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+          <parameter name="subtitle_track_id" transfer-ownership="none">
+            <type name="guint" c:type="uint"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="set_volume" c:identifier="vpm_video_player_mpv_set_volume">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="27"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+          <parameter name="volume" transfer-ownership="none">
+            <type name="gdouble" c:type="double"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="stop" c:identifier="vpm_video_player_mpv_stop">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="18"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="volume" c:identifier="vpm_video_player_mpv_volume">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="26"/>
+        <return-value transfer-ownership="none">
+          <type name="gdouble" c:type="double"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <glib:signal name="core-idle" when="last">
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="object" transfer-ownership="none">
+            <type name="gboolean" c:type="gboolean"/>
+          </parameter>
+        </parameters>
+      </glib:signal>
+      <glib:signal name="current-ao" when="last">
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="object" transfer-ownership="none">
+            <type name="utf8" c:type="gchar*"/>
+          </parameter>
+        </parameters>
+      </glib:signal>
+      <glib:signal name="duration-updated" when="last">
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="object" transfer-ownership="none">
+            <type name="gdouble" c:type="gdouble"/>
+          </parameter>
+        </parameters>
+      </glib:signal>
+      <glib:signal name="end-of-file" when="last">
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+      </glib:signal>
+      <glib:signal name="mute-updated" when="last">
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="object" transfer-ownership="none">
+            <type name="gboolean" c:type="gboolean"/>
+          </parameter>
+        </parameters>
+      </glib:signal>
+      <glib:signal name="pause" when="last">
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="object" transfer-ownership="none">
+            <type name="gboolean" c:type="gboolean"/>
+          </parameter>
+        </parameters>
+      </glib:signal>
+      <glib:signal name="position-updated" when="last">
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="object" transfer-ownership="none">
+            <type name="gdouble" c:type="gdouble"/>
+          </parameter>
+        </parameters>
+      </glib:signal>
+      <glib:signal name="seeking" when="last">
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="object" transfer-ownership="none">
+            <type name="gboolean" c:type="gboolean"/>
+          </parameter>
+        </parameters>
+      </glib:signal>
+      <glib:signal name="tracks-updated" when="last">
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="object" transfer-ownership="none">
+            <type name="TrackList"/>
+          </parameter>
+        </parameters>
+      </glib:signal>
+      <glib:signal name="volume-updated" when="last">
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <parameter name="object" transfer-ownership="none">
+            <type name="gdouble" c:type="gdouble"/>
+          </parameter>
+        </parameters>
+      </glib:signal>
     </class>
     <record name="VideoPlayerMpvClass"
             c:type="VpmVideoPlayerMpvClass"
             glib:is-gtype-struct-for="VideoPlayerMpv">
       <source-position filename="video-player-mpv/video-player-mpv.h"
-                       line="7"/>
+                       line="10"/>
       <field name="parent_class">
         <type name="Gtk.GLAreaClass" c:type="GtkGLAreaClass"/>
       </field>
-      <function name="render" c:identifier="vpm_video_player_mpv_class_render">
-        <source-position filename="video-player-mpv/video-player-mpv.h"
-                         line="11"/>
-        <return-value transfer-ownership="none">
-          <type name="gboolean" c:type="gboolean"/>
-        </return-value>
-        <parameters>
-          <parameter name="widget" transfer-ownership="none">
-            <type name="Gtk.GLArea" c:type="GtkGLArea*"/>
-          </parameter>
-          <parameter name="ctx" transfer-ownership="none">
-            <type name="Gdk.GLContext" c:type="GdkGLContext*"/>
-          </parameter>
-        </parameters>
-      </function>
     </record>
-    <function name="video_player_mpv_class_render"
-              c:identifier="vpm_video_player_mpv_class_render"
-              moved-to="VideoPlayerMpvClass.render">
-      <source-position filename="video-player-mpv/video-player-mpv.h"
-                       line="11"/>
-      <return-value transfer-ownership="none">
-        <type name="gboolean" c:type="gboolean"/>
-      </return-value>
-      <parameters>
-        <parameter name="widget" transfer-ownership="none">
-          <type name="Gtk.GLArea" c:type="GtkGLArea*"/>
-        </parameter>
-        <parameter name="ctx" transfer-ownership="none">
-          <type name="Gdk.GLContext" c:type="GdkGLContext*"/>
-        </parameter>
-      </parameters>
-    </function>
   </namespace>
 </repository>

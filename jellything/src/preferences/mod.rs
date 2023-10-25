@@ -1,7 +1,10 @@
 use adw::prelude::*;
 use relm4::prelude::*;
 
-use crate::{config::video_player_config::VideoPlayerSkipAmount, globals::CONFIG};
+use crate::{
+    config::video_player_config::{VideoPlayerBackendPreference, VideoPlayerSkipAmount},
+    globals::CONFIG,
+};
 
 pub struct Preferences;
 
@@ -9,6 +12,7 @@ pub struct Preferences;
 pub enum PreferencesInput {
     SkipBackwardsAmount(u32),
     SkipForwardsAmount(u32),
+    Backend(u32),
     HlsPlayback(bool),
 }
 
@@ -47,6 +51,16 @@ impl SimpleComponent for Preferences {
                         set_selected: if let VideoPlayerSkipAmount::Ten = video_player_config.skip_forwards_amount { 0 } else { 1 },
                         connect_selected_notify[sender] => move |cb| {
                             sender.input(PreferencesInput::SkipForwardsAmount(cb.selected()));
+                        },
+                    },
+
+                    add = &adw::ComboRow {
+                        set_title: "Video player backend",
+                        #[wrap(Some)]
+                        set_model = &gtk::StringList::new(&["MPV", "GStreamer"]),
+                        set_selected: if let VideoPlayerBackendPreference::Mpv = video_player_config.backend { 0 } else { 1 },
+                        connect_selected_notify[sender] => move |cb| {
+                            sender.input(PreferencesInput::Backend(cb.selected()));
                         },
                     },
 
@@ -89,6 +103,12 @@ impl SimpleComponent for Preferences {
                 config.video_player.skip_forwards_amount = match index {
                     0 => VideoPlayerSkipAmount::Ten,
                     _ => VideoPlayerSkipAmount::Thirty,
+                };
+            }
+            PreferencesInput::Backend(index) => {
+                config.video_player.backend = match index {
+                    0 => VideoPlayerBackendPreference::Mpv,
+                    _ => VideoPlayerBackendPreference::Gst,
                 };
             }
             PreferencesInput::HlsPlayback(active) => {

@@ -1,18 +1,37 @@
-use std::rc::Rc;
+use std::{
+    cell::RefCell,
+    sync::{Arc, RwLock, RwLockReadGuard},
+};
 
-use gst::ClockTime;
 use gtk::prelude::*;
 use relm4::{prelude::*, ComponentParts, ComponentSender, MessageBroker, SimpleComponent};
 
 use crate::{
     config::video_player_config::VideoPlayerSkipAmount, globals::CONFIG,
-    video_player::gst_play_widget::GstVideoPlayer,
+    video_player::backends::VideoPlayerBackend,
 };
 
 use super::scrubber::SCRUBBER_BROKER;
 
-pub static SKIP_FORWARDS_BROKER: MessageBroker<SkipForwardsBackwardsInput> = MessageBroker::new();
-pub static SKIP_BACKWARDS_BROKER: MessageBroker<SkipForwardsBackwardsInput> = MessageBroker::new();
+pub struct SkipForwardsBackwardsBroker(RwLock<MessageBroker<SkipForwardsBackwardsInput>>);
+
+impl SkipForwardsBackwardsBroker {
+    const fn new() -> Self {
+        Self(RwLock::new(MessageBroker::new()))
+    }
+
+    pub fn read(&self) -> RwLockReadGuard<MessageBroker<SkipForwardsBackwardsInput>> {
+        self.0.read().unwrap()
+    }
+    pub fn reset(&self) {
+        *self.0.write().unwrap() = MessageBroker::new();
+    }
+}
+
+pub(crate) static SKIP_FORWARDS_BROKER: SkipForwardsBackwardsBroker =
+    SkipForwardsBackwardsBroker::new();
+pub(crate) static SKIP_BACKWARDS_BROKER: SkipForwardsBackwardsBroker =
+    SkipForwardsBackwardsBroker::new();
 
 #[derive(Debug, Clone)]
 pub(super) enum SkipForwardsBackwardsDirection {
@@ -23,7 +42,7 @@ pub(super) enum SkipForwardsBackwardsDirection {
 #[derive(Debug)]
 pub(super) struct SkipForwardsBackwards {
     direction: SkipForwardsBackwardsDirection,
-    player: Rc<GstVideoPlayer>,
+    player: Arc<RefCell<dyn VideoPlayerBackend>>,
     skip_amount: VideoPlayerSkipAmount,
     loading: bool,
 }
@@ -37,7 +56,10 @@ pub enum SkipForwardsBackwardsInput {
 
 #[relm4::component(pub(super))]
 impl SimpleComponent for SkipForwardsBackwards {
-    type Init = (SkipForwardsBackwardsDirection, Rc<GstVideoPlayer>);
+    type Init = (
+        SkipForwardsBackwardsDirection,
+        Arc<RefCell<dyn VideoPlayerBackend>>,
+    );
     type Input = SkipForwardsBackwardsInput;
     type Output = ();
 
@@ -75,18 +97,19 @@ impl SimpleComponent for SkipForwardsBackwards {
     fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
         match message {
             SkipForwardsBackwardsInput::Skip => {
-                if let Some(position) = self.player.position() {
-                    let skip_amount = ClockTime::from_seconds(self.skip_amount as u64);
-                    let seek_to = if let SkipForwardsBackwardsDirection::Forwards = self.direction {
-                        position.saturating_add(skip_amount)
-                    } else {
-                        position.saturating_sub(skip_amount)
-                    };
-                    SKIP_FORWARDS_BROKER.send(SkipForwardsBackwardsInput::SetLoading(true));
-                    SKIP_BACKWARDS_BROKER.send(SkipForwardsBackwardsInput::SetLoading(true));
-                    SCRUBBER_BROKER.send(super::scrubber::ScrubberInput::SetPosition(seek_to));
-                    self.player.seek(seek_to);
-                }
+                let position = self.player.borrow().position();
+                let skip_amount = self.skip_amount as isize;
+                let seek_to = if let SkipForwardsBackwardsDirection::Forwards = self.direction {
+                    self.player.borrow().seek_by(skip_amount);
+                    position + (skip_amount as usize)
+                } else {
+                    self.player.borrow().seek_by(-skip_amount);
+                    position - (skip_amount as usize)
+                };
+
+                SCRUBBER_BROKER
+                    .read()
+                    .send(super::scrubber::ScrubberInput::SetPosition(seek_to));
             }
             SkipForwardsBackwardsInput::SetLoading(loading) => {
                 self.loading = loading;
@@ -99,7 +122,10 @@ impl SimpleComponent for SkipForwardsBackwards {
 }
 
 impl SkipForwardsBackwards {
-    fn new(direction: SkipForwardsBackwardsDirection, player: Rc<GstVideoPlayer>) -> Self {
+    fn new(
+        direction: SkipForwardsBackwardsDirection,
+        player: Arc<RefCell<dyn VideoPlayerBackend>>,
+    ) -> Self {
         let config = CONFIG.read();
         let skip_amount = if let SkipForwardsBackwardsDirection::Forwards = direction {
             config.video_player.skip_forwards_amount

@@ -1,9 +1,5 @@
-use std::{
-    rc::Rc,
-    sync::{Arc, RwLock},
-};
+use std::{cell::RefCell, sync::Arc};
 
-use gstplay::{traits::PlayStreamInfoExt, PlaySubtitleInfo};
 use gtk::prelude::*;
 use relm4::{
     actions::{ActionGroupName, ActionName, RelmAction, RelmActionGroup},
@@ -11,7 +7,7 @@ use relm4::{
     Component, ComponentParts,
 };
 
-use crate::video_player::gst_play_widget::GstVideoPlayer;
+use crate::video_player::backends::{SubtitleTrack, VideoPlayerBackend};
 
 relm4::new_action_group!(SubtitleActionGroup, "subtitle_actions");
 relm4::new_stateful_action!(
@@ -24,21 +20,20 @@ relm4::new_stateful_action!(
 
 #[derive(Debug)]
 pub struct Subtitles {
-    video_player: Rc<GstVideoPlayer>,
+    video_player: Arc<RefCell<dyn VideoPlayerBackend>>,
     menu: gio::Menu,
-    subtitle_count: Arc<RwLock<Option<usize>>>,
     subtitles_available: bool,
 }
 
 #[derive(Debug)]
 pub enum SubtitlesInput {
     Reset,
-    SubtitlesUpdated(Vec<PlaySubtitleInfo>),
+    SubtitlesUpdated(Vec<SubtitleTrack>),
 }
 
 #[relm4::component(pub)]
 impl Component for Subtitles {
-    type Init = Rc<GstVideoPlayer>;
+    type Init = Arc<RefCell<dyn VideoPlayerBackend>>;
     type Input = SubtitlesInput;
     type Output = ();
     type CommandOutput = ();
@@ -63,26 +58,15 @@ impl Component for Subtitles {
         let model = Subtitles {
             video_player,
             menu: gio::Menu::new(),
-            subtitle_count: Arc::new(RwLock::new(None)),
             subtitles_available: false,
         };
 
-        model.video_player.connect_media_info_updated({
-            let subtitle_count = model.subtitle_count.clone();
-            move |media_info| {
-                let subtitle_streams = media_info.subtitle_streams();
-                let subtitle_stream_count = subtitle_streams.len();
-                // subtitle_count keeps track of the current subtitle track count for the
-                // currently playing media. If a different number is reported we update the
-                // subtitles menu.
-                match *subtitle_count.read().unwrap() {
-                    Some(subtitle_count) if subtitle_count == subtitle_stream_count => {}
-                    _ => {
-                        sender.input(SubtitlesInput::SubtitlesUpdated(subtitle_streams));
-                    }
-                };
-            }
-        });
+        model
+            .video_player
+            .borrow_mut()
+            .connect_subtitle_tracks_updated(Box::new(move |tracks| {
+                sender.input(SubtitlesInput::SubtitlesUpdated(tracks.clone()));
+            }));
 
         let widgets = view_output!();
 
@@ -91,13 +75,9 @@ impl Component for Subtitles {
                 let video_player = model.video_player.clone();
                 move |_, state, value: Option<i32>| {
                     *state = value;
-
-                    video_player.set_subtitle_track_enabled(value.is_some());
-                    if let Some(value) = value {
-                        video_player
-                            .set_subtitle_track(value)
-                            .expect("Error setting subtitle track");
-                    }
+                    video_player
+                        .borrow()
+                        .set_subtitle_track(value.map(|id| id as usize));
                 }
             });
 
@@ -117,16 +97,9 @@ impl Component for Subtitles {
     ) {
         match message {
             SubtitlesInput::Reset => {
-                let mut subtitle_count = self.subtitle_count.write().unwrap();
-                *subtitle_count = None;
-
                 self.subtitles_available = false;
             }
             SubtitlesInput::SubtitlesUpdated(subtitle_streams) => {
-                // Keep track of sub count so we don't update subtitles again
-                let mut subtitle_count = self.subtitle_count.write().unwrap();
-                *subtitle_count = Some(subtitle_streams.len());
-
                 if subtitle_streams.is_empty() {
                     return;
                 }
@@ -139,8 +112,8 @@ impl Component for Subtitles {
                     .iter()
                     .map(|subtitle_stream| {
                         RelmAction::<SelectedSubtitleAction>::to_menu_item_with_target_value(
-                            &subtitle_stream.display_name(),
-                            &Some(subtitle_stream.index()),
+                            &subtitle_stream.name,
+                            &Some(subtitle_stream.id as i32),
                         )
                     })
                     .for_each(|menu_item| subs_menu.append_item(&menu_item));
@@ -154,43 +127,22 @@ impl Component for Subtitles {
                 self.menu.append_section(Some("Subtitle Track"), &subs_menu);
 
                 // Select current subtitle track in menu
-                if let Some(current_subtitle_track) = self.video_player.current_subtitle_track() {
+                if let Some(current_subtitle_track) =
+                    self.video_player.borrow().current_subtitle_track()
+                {
                     root.activate_action(
                         &format!(
                             "{}.{}",
                             SubtitleActionGroup::NAME,
                             SelectedSubtitleAction::NAME
                         ),
-                        Some(&Some(current_subtitle_track.index()).to_variant()),
+                        Some(&Some(current_subtitle_track as i32).to_variant()),
                     )
-                    .unwrap();
+                    .expect("Error selecting current subtitle track.");
                 }
             }
         }
 
         self.update_view(widgets, sender);
-    }
-}
-
-trait PlaySubtitleInfoExt {
-    fn display_name(&self) -> String;
-}
-
-impl PlaySubtitleInfoExt for PlaySubtitleInfo {
-    fn display_name(&self) -> String {
-        let mut display_name = self
-            .language()
-            .map(|l| l.to_string())
-            .unwrap_or(self.index().to_string());
-
-        let tags = self.tags();
-        if let Some(tags) = tags {
-            if let Some(title) = tags.get::<gst::tags::Title>() {
-                let title = title.get();
-                display_name = format!("{display_name} - {title}");
-            }
-        }
-
-        display_name
     }
 }

@@ -1309,6 +1309,7 @@ dependencies = [
  "toml",
  "tracing",
  "uuid",
+ "video_player_mpv",
  "whoami",
 ]
 

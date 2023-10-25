@@ -5,3 +5,12 @@
 
 mod video_player_mpv;
 pub use self::video_player_mpv::VideoPlayerMpv;
+
+mod track;
+pub use self::track::Track;
+
+mod track_list;
+pub use self::track_list::TrackList;
+
+mod enums;
+pub use self::enums::TrackType;

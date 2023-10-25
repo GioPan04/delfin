@@ -8,6 +8,9 @@
 #include <stdio.h>
 
 int main() {
+    printf("%s;%zu;%zu\n", "VpmTrack", sizeof(VpmTrack), alignof(VpmTrack));
+    printf("%s;%zu;%zu\n", "VpmTrackList", sizeof(VpmTrackList), alignof(VpmTrackList));
+    printf("%s;%zu;%zu\n", "VpmTrackType", sizeof(VpmTrackType), alignof(VpmTrackType));
     printf("%s;%zu;%zu\n", "VpmVideoPlayerMpvClass", sizeof(VpmVideoPlayerMpvClass), alignof(VpmVideoPlayerMpvClass));
     return 0;
 }

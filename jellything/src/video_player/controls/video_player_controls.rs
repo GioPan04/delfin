@@ -1,8 +1,12 @@
-use std::{cell::OnceCell, rc::Rc};
+use std::{
+    cell::{OnceCell, RefCell},
+    sync::Arc,
+};
 
 use crate::{
     app::APP_BROKER,
     video_player::{
+        backends::VideoPlayerBackend,
         controls::{
             next_prev_episode::NextPrevEpisodeDirection,
             play_pause::PLAY_PAUSE_BROKER,
@@ -11,7 +15,6 @@ use crate::{
                 SkipForwardsBackwardsDirection, SKIP_BACKWARDS_BROKER, SKIP_FORWARDS_BROKER,
             },
         },
-        gst_play_widget::GstVideoPlayer,
         next_up::NEXT_UP_VISIBILE,
     },
 };
@@ -50,7 +53,7 @@ pub struct VideoPlayerControls {
 }
 
 pub struct VideoPlayerControlsInit {
-    pub player: Rc<GstVideoPlayer>,
+    pub player: Arc<RefCell<dyn VideoPlayerBackend>>,
     pub default_show_controls: bool,
 }
 
@@ -115,8 +118,13 @@ impl SimpleComponent for VideoPlayerControls {
         let widgets = view_output!();
         let second_row = &widgets.second_row;
 
+        SCRUBBER_BROKER.reset();
+        SKIP_FORWARDS_BROKER.reset();
+        SKIP_BACKWARDS_BROKER.reset();
+        PLAY_PAUSE_BROKER.reset();
+
         let scrubber = Scrubber::builder()
-            .launch_with_broker(player.clone(), &SCRUBBER_BROKER)
+            .launch_with_broker(player.clone(), &SCRUBBER_BROKER.read())
             .detach();
         root.prepend(scrubber.widget());
         model._scrubber = Some(scrubber);
@@ -131,13 +139,13 @@ impl SimpleComponent for VideoPlayerControls {
         let skip_backwards = SkipForwardsBackwards::builder()
             .launch_with_broker(
                 (SkipForwardsBackwardsDirection::Backwards, player.clone()),
-                &SKIP_BACKWARDS_BROKER,
+                &SKIP_BACKWARDS_BROKER.read(),
             )
             .detach();
         second_row.append(skip_backwards.widget());
 
         let play_pause = PlayPause::builder()
-            .launch_with_broker(player.clone(), &PLAY_PAUSE_BROKER)
+            .launch_with_broker(player.clone(), &PLAY_PAUSE_BROKER.read())
             .detach();
         second_row.append(play_pause.widget());
         model._play_pause = Some(play_pause);
@@ -145,7 +153,7 @@ impl SimpleComponent for VideoPlayerControls {
         let skip_forwards = SkipForwardsBackwards::builder()
             .launch_with_broker(
                 (SkipForwardsBackwardsDirection::Forwards, player.clone()),
-                &SKIP_FORWARDS_BROKER,
+                &SKIP_FORWARDS_BROKER.read(),
             )
             .detach();
         second_row.append(skip_forwards.widget());
