@@ -15,6 +15,7 @@ use relm4::{
 use crate::{
     app::{AppInput, APP_BROKER},
     jellyfin_api::api_client::ApiClient,
+    utils::item_name::ItemName,
 };
 
 use super::backends::VideoPlayerBackend;
@@ -103,6 +104,13 @@ impl Component for NextUp {
 
                 add_css_class: "next-up__thumbnail",
                 set_width_request: 300,
+            },
+
+            gtk::Label {
+                #[watch]
+                set_label: &model.next_up.as_ref().and_then(|n| n.episode_name_with_number().or(n.name.clone())).unwrap_or("".to_string()),
+
+                set_halign: gtk::Align::Start,
             },
 
             gtk::Box {

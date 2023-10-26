@@ -12,6 +12,7 @@ use relm4::{
 use crate::{
     app::{AppInput, APP_BROKER},
     jellyfin_api::api_client::ApiClient,
+    utils::item_name::ItemName,
 };
 
 #[derive(Clone, Copy)]
@@ -37,23 +38,14 @@ impl MediaTileDisplay {
 }
 
 fn get_item_label(item: &BaseItemDto) -> String {
-    if let Some(name) = &item.name {
-        if let (Some(series_name), Some(index_number), Some(parent_index_number)) = (
-            &item.series_name,
-            &item.index_number,
-            &item.parent_index_number,
-        ) {
-            return format!(
-                r#"{series_name}
-<span size="small">S{parent_index_number}:E{index_number} - {}</span>"#,
-                name
-            );
-        }
-
-        return format!("{}\n", name);
+    match (&item.series_name, item.episode_name_with_number()) {
+        (Some(series_name), Some(name)) => format!(
+            r#"{series_name}
+<span size="small">{name}</span>"#
+        ),
+        (_, Some(name)) => name,
+        _ => "Unnamed Item".to_string(),
     }
-
-    "Unnamed Item".to_string()
 }
 
 pub struct MediaTile {
