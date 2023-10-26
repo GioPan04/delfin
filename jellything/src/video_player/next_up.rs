@@ -1,3 +1,4 @@
+use core::fmt;
 use std::{cell::RefCell, collections::VecDeque, sync::Arc};
 
 use gtk::prelude::*;
@@ -38,6 +39,20 @@ enum NextUpState {
     Hidden,
 }
 
+impl fmt::Display for NextUpState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let remaining = match *self {
+            NextUpState::Shown(remaining) => remaining,
+            _ => 0,
+        };
+        write!(
+            f,
+            "Next episode starting in {remaining} {}...",
+            if remaining == 1 { "second" } else { "seconds" }
+        )
+    }
+}
+
 #[derive(Debug)]
 pub(crate) enum NextUpInput {
     Reset,
@@ -76,9 +91,7 @@ impl Component for NextUp {
 
             gtk::Label {
                 #[watch]
-                set_label: &format!("Next episode starting in {} seconds...", if let NextUpState::Shown(remaining) = model.state {
-                    remaining
-                } else { 0 }),
+                set_label: &model.state.to_string(),
 
                 add_css_class: "body",
                 set_halign: gtk::Align::Start,
