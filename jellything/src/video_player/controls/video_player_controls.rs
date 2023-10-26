@@ -34,7 +34,6 @@ use super::{
 };
 
 pub struct VideoPlayerControls {
-    visibility_locked: bool,
     show_controls: bool,
     next_prev_episodes: (Option<BaseItemDto>, Option<BaseItemDto>),
     // We need to keep these controllers around, even if we don't read them
@@ -59,8 +58,8 @@ pub struct VideoPlayerControlsInit {
 
 #[derive(Debug)]
 pub enum VideoPlayerControlsInput {
+    Noop,
     SetShowControls(bool),
-    SetVisibilityLocked(bool),
     SetPlaying(Box<BaseItemDto>),
     SetNextPreviousEpisodes(Box<Option<BaseItemDto>>, Box<Option<BaseItemDto>>),
     PlayPreviousEpisode,
@@ -102,7 +101,6 @@ impl SimpleComponent for VideoPlayerControls {
         } = init;
 
         let mut model = VideoPlayerControls {
-            visibility_locked: false,
             show_controls: default_show_controls,
             _skip_forwards_backwards: OnceCell::new(),
             next_prev_episodes: (None, None),
@@ -193,7 +191,11 @@ impl SimpleComponent for VideoPlayerControls {
         model._fullscreen = Some(fullscreen);
 
         NEXT_UP_VISIBILE.subscribe(sender.input_sender(), |visible| {
-            VideoPlayerControlsInput::SetVisibilityLocked(*visible)
+            if *visible {
+                VideoPlayerControlsInput::SetShowControls(false)
+            } else {
+                VideoPlayerControlsInput::Noop
+            }
         });
 
         ComponentParts { model, widgets }
@@ -202,15 +204,7 @@ impl SimpleComponent for VideoPlayerControls {
     fn update(&mut self, message: Self::Input, _sender: relm4::ComponentSender<Self>) {
         match message {
             VideoPlayerControlsInput::SetShowControls(show_controls) => {
-                if !self.visibility_locked {
-                    self.show_controls = show_controls
-                }
-            }
-            VideoPlayerControlsInput::SetVisibilityLocked(lock) => {
-                self.visibility_locked = lock;
-                if lock {
-                    self.show_controls = false;
-                }
+                self.show_controls = show_controls
             }
             VideoPlayerControlsInput::SetPlaying(_) => {
                 if let Some(subtitles) = self.subtitles.get() {
@@ -246,6 +240,7 @@ impl SimpleComponent for VideoPlayerControls {
                     APP_BROKER.send(crate::app::AppInput::PlayVideo(next.clone()));
                 }
             }
+            VideoPlayerControlsInput::Noop => {}
         }
     }
 }

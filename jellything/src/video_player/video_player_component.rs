@@ -18,7 +18,7 @@ use crate::video_player::controls::skip_forwards_backwards::{
 use crate::video_player::controls::video_player_controls::{
     VideoPlayerControls, VideoPlayerControlsInit,
 };
-use crate::video_player::next_up::NextUp;
+use crate::video_player::next_up::{NextUp, NEXT_UP_VISIBILE};
 
 use super::backends::{PlayerState, VideoPlayerBackend};
 use super::controls::play_pause::{PlayPauseInput, PLAY_PAUSE_BROKER};
@@ -34,6 +34,7 @@ pub struct VideoPlayer {
     hiding: Arc<AtomicBool>,
 
     show_controls: bool,
+    show_controls_locked: bool,
     session_reporting_handle: Option<JoinHandle<()>>,
     player_state: PlayerState,
     next: Option<BaseItemDto>,
@@ -46,6 +47,7 @@ pub struct VideoPlayer {
 pub enum VideoPlayerInput {
     Toast(String),
     PlayVideo(Arc<ApiClient>, Box<BaseItemDto>),
+    SetShowControls { show: bool, locked: bool },
     ToggleControls,
     EndOfStream,
     StopPlayer,
@@ -147,6 +149,7 @@ impl Component for VideoPlayer {
             hiding: Arc::new(AtomicBool::new(false)),
 
             show_controls,
+            show_controls_locked: false,
             session_reporting_handle: None,
             player_state: PlayerState::Loading,
             next: None,
@@ -194,6 +197,13 @@ impl Component for VideoPlayer {
         let video_player = binding.widget();
 
         let widgets = view_output!();
+
+        NEXT_UP_VISIBILE.subscribe(sender.input_sender(), |visible| {
+            VideoPlayerInput::SetShowControls {
+                show: *visible,
+                locked: *visible,
+            }
+        });
 
         ComponentParts { model, widgets }
     }
@@ -257,12 +267,21 @@ impl Component for VideoPlayer {
 
                 self.fetch_next_prev(&sender, &item);
             }
-            VideoPlayerInput::ToggleControls => {
-                self.show_controls = !self.show_controls;
+            VideoPlayerInput::SetShowControls { show, locked } => {
+                self.show_controls = show;
+                self.show_controls_locked = locked;
                 self.controls
-                    .emit(VideoPlayerControlsInput::SetShowControls(
-                        self.show_controls,
-                    ));
+                    .emit(VideoPlayerControlsInput::SetShowControls(!locked && show));
+            }
+            VideoPlayerInput::ToggleControls => {
+                if self.show_controls_locked {
+                    return;
+                }
+
+                sender.input(VideoPlayerInput::SetShowControls {
+                    show: !self.show_controls,
+                    locked: false,
+                });
             }
             VideoPlayerInput::EndOfStream => {
                 match self.player_state {
