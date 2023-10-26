@@ -104,7 +104,7 @@ impl SimpleComponent for SkipForwardsBackwards {
                     position + (skip_amount as usize)
                 } else {
                     self.player.borrow().seek_by(-skip_amount);
-                    position - (skip_amount as usize)
+                    position.saturating_sub(skip_amount as usize)
                 };
 
                 SCRUBBER_BROKER
