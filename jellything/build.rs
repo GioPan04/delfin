@@ -3,7 +3,7 @@ fn main() {
         "cargo:rerun-if-changed={}",
         std::env::current_dir()
             .unwrap()
-            .join("../video_player_mpv_sys/build/libvideo-player-mpv.a")
+            .join("../video_player_mpv/sys/build/libvideo-player-mpv.a")
             .to_str()
             .unwrap()
     );

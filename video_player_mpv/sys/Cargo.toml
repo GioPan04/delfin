@@ -3,7 +3,6 @@ name = "vpm-sys"
 version = "0.0.1"
 edition = "2021"
 build = "build.rs"
-link = "libvideo-player-mpv"
 
 [package.metadata.system-deps]
 

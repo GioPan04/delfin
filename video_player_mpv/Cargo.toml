@@ -16,7 +16,7 @@ gtk4-sys = "*"
 
 [dependencies.ffi]
 package = "vpm-sys"
-path = "../video_player_mpv_sys/"
+path = "./sys"
 
 [dependencies.glib]
 package = "glib"

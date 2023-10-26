@@ -1,8 +1,8 @@
 [submodule "video_player_mpv_sys/gir"]
-	path = video_player_mpv_sys/gir
+	path = video_player_mpv/sys/gir
 	url = https://github.com/gtk-rs/gir
 	update = none
 	branch = master
 [submodule "video_player_mpv_sys/gir-files"]
-	path = video_player_mpv_sys/gir-files
+	path = video_player_mpv/sys/gir-files
 	url = git@github.com:gtk-rs/gir-files.git

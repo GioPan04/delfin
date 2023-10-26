@@ -1,4 +1,4 @@
 [workspace]
 resolver = "2"
-members = ["jellything", "video_player_mpv_sys", "video_player_mpv"]
-exclude = ["video_player_mpv_sys/gir"]
+members = ["jellything", "video_player_mpv/sys", "video_player_mpv"]
+exclude = ["video_player_mpv/sys/gir"]
