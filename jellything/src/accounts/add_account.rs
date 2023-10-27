@@ -95,7 +95,7 @@ impl Component for AddAccountDialog {
                                     add_css_class: "pill",
                                     add_css_class: "suggested-action",
                                     #[watch]
-                                    set_sensitive: !model.username.is_empty() && !model.password.is_empty(),
+                                    set_sensitive: !model.username.is_empty(),
                                     connect_clicked[sender] => move |_| {
                                         sender.input(AddAccountInput::SignIn);
                                     }
