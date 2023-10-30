@@ -59,7 +59,7 @@ impl Component for BorgarMenu {
             },
             section! {
                 "Preferences" => PreferencesAction,
-                "About Jellything" => AboutAction,
+                "About Delfin" => AboutAction,
             },
         }
     }

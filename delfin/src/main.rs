@@ -1,4 +1,4 @@
-use jellything::app::{App, APP_BROKER};
+use delfin::app::{App, APP_BROKER};
 use relm4::RelmApp;
 
 fn main() {
@@ -7,7 +7,7 @@ fn main() {
     gst::init().expect("Error initializing GStreamer");
     gstgtk4::plugin_register_static().expect("Error registering GST GTK4 plugin");
 
-    let app = RelmApp::new("cafe.avery.jellything");
+    let app = RelmApp::new("cafe.avery.delfin");
     relm4_icons::initialize_icons();
     load_css();
     app.with_broker(&APP_BROKER).run::<App>(());

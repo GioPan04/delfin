@@ -71,7 +71,6 @@ impl Component for MediaDetailsHeader {
                 add_overlay = &adw::Clamp {
                     set_maximum_size: MAX_LIBRARY_WIDTH,
                     set_tightening_threshold: MAX_LIBRARY_WIDTH,
-                    connect_maximum_size_notify => |_| {},
 
                     gtk::Overlay {
                         gtk::Picture {
@@ -120,66 +119,68 @@ impl Component for MediaDetailsHeader {
                                 set_visible: model.backdrop.is_some(),
                             },
                         },
-                    },
-                },
 
-                add_overlay = &gtk::Box {
-                    set_orientation: gtk::Orientation::Horizontal,
-                    add_css_class: "media-details-header-overlay",
-
-                    adw::Clamp {
-                        set_maximum_size: MAX_LIBRARY_WIDTH,
-                        set_tightening_threshold: MAX_LIBRARY_WIDTH,
-
-                        gtk::Box {
+                        add_overlay = &gtk::Box {
                             set_orientation: gtk::Orientation::Horizontal,
+                            add_css_class: "media-details-header-overlay",
                             set_valign: gtk::Align::End,
-                            set_margin_start:  32,
-                            set_margin_end: 32,
-                            set_spacing: 32,
 
-                            gtk::Label {
-                                set_label: &title,
-                                // Show full title in tooltip in case label is ellipsized
-                                set_tooltip: &title,
-                                set_valign: gtk::Align::Center,
-                                set_ellipsize: gtk::pango::EllipsizeMode::End,
-                                add_css_class: "media-details-header-title",
-                            },
+                            // adw::Clamp {
+                            //     set_maximum_size: MAX_LIBRARY_WIDTH,
+                            //     set_tightening_threshold: MAX_LIBRARY_WIDTH,
 
-                            gtk::Button {
-                                add_css_class: "pill",
-                                add_css_class: "suggested-action",
-                                set_halign: gtk::Align::End,
-                                set_valign: gtk::Align::Center,
-                                set_hexpand: true,
-                                set_vexpand: false,
-                                #[watch]
-                                set_sensitive: model.play_next_label.is_some() && model.play_next_media.is_some(),
-
-                                connect_clicked[sender] => move |_| {
-                                    sender.input(MediaDetailsHeaderInput::PlayNext);
-                                },
-
-                                #[wrap(Some)]
-                                set_child = &gtk::Box {
+                                gtk::Box {
                                     set_orientation: gtk::Orientation::Horizontal,
-                                    set_spacing: 8,
+                                    set_valign: gtk::Align::End,
+                                    set_margin_start:  32,
+                                    set_margin_end: 32,
+                                    set_spacing: 32,
 
-                                    gtk::Image::from_icon_name("play-filled"),
+                                    gtk::Label {
+                                        set_label: &title,
+                                        // Show full title in tooltip in case label is ellipsized
+                                        set_tooltip: &title,
+                                        set_valign: gtk::Align::Center,
+                                        set_ellipsize: gtk::pango::EllipsizeMode::End,
+                                        add_css_class: "media-details-header-title",
+                                    },
 
-                                    if model.play_next_label.is_some() {
-                                        gtk::Label {
-                                            #[watch]
-                                            set_label: model.play_next_label.as_ref().unwrap(),
-                                        }
-                                    } else { gtk::Spinner { set_spinning: true } },
+                                    gtk::Button {
+                                        add_css_class: "pill",
+                                        add_css_class: "suggested-action",
+                                        set_halign: gtk::Align::End,
+                                        set_valign: gtk::Align::Center,
+                                        set_hexpand: true,
+                                        set_vexpand: false,
+                                        #[watch]
+                                        set_sensitive: model.play_next_label.is_some() && model.play_next_media.is_some(),
+
+                                        connect_clicked[sender] => move |_| {
+                                            sender.input(MediaDetailsHeaderInput::PlayNext);
+                                        },
+
+                                        #[wrap(Some)]
+                                        set_child = &gtk::Box {
+                                            set_orientation: gtk::Orientation::Horizontal,
+                                            set_spacing: 8,
+
+                                            gtk::Image::from_icon_name("play-filled"),
+
+                                            if model.play_next_label.is_some() {
+                                                gtk::Label {
+                                                    #[watch]
+                                                    set_label: model.play_next_label.as_ref().unwrap(),
+                                                }
+                                            } else { gtk::Spinner { set_spinning: true } },
+                                        },
+                                    },
                                 },
-                            },
-                        },
 
+                            // },
+                        },
                     },
                 },
+
             },
 
             add_breakpoint = adw::Breakpoint::new(BreakpointCondition::new_length(

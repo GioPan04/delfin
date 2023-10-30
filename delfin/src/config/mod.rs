@@ -57,7 +57,7 @@ fn get_config_file(create_dir: bool) -> Option<PathBuf> {
         None => return None,
     };
 
-    let dir = config_dir.join("jellything");
+    let dir = config_dir.join("delfin");
 
     if create_dir {
         fs::create_dir_all(&dir).expect("Error creating config directory");

@@ -15,11 +15,11 @@ impl SimpleComponent for About {
             set_modal: true,
             set_visible: true,
 
-            set_application_name: "Jellything",
+            set_application_name: "Delfin",
             set_developer_name: "Avery ❤️",
             set_version: "0.0",
             set_license_type: gtk::License::Agpl30,
-            set_website: "https://codeberg.org/avery42/jellything",
+            set_website: "https://codeberg.org/avery42/delfin",
         }
     }
 

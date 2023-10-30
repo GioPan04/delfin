@@ -76,7 +76,7 @@ impl Component for VideoPlayer {
             #[watch]
             set_title: &model.media.as_ref()
                 .and_then(|media| media.name.clone())
-                .unwrap_or("Jellything".to_string()),
+                .unwrap_or("Delfin".to_string()),
 
             #[wrap(Some)]
             #[name = "toaster"]

@@ -46,7 +46,7 @@ impl Component for SignOutDialog {
             set_visible: true,
             set_modal: true,
             set_heading: Some("Sign Out"),
-            set_body: "Do you want to sign out and remove this account from Jellything?",
+            set_body: "Do you want to sign out and remove this account from Delfin?",
             add_responses: &[
                 (Responses::Cancel.into(), "Cancel"),
                 (Responses::SignOut.into(), "Sign Out"),
@@ -62,7 +62,7 @@ impl Component for SignOutDialog {
             #[wrap(Some)]
             set_extra_child = &gtk::CheckButton {
                 set_visible: false,
-                set_label: Some("Remove this server from Jellything"),
+                set_label: Some("Remove this server from Delfin"),
             },
         }
     }

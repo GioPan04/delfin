@@ -78,7 +78,7 @@ impl Component for App {
     view! {
         adw::ApplicationWindow {
             set_widget_name: MAIN_APP_WINDOW_NAME,
-            set_title: Some("Jellything"),
+            set_title: Some("Delfin"),
             set_default_width: 960,
             set_default_height: 540,
 

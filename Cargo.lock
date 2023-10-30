@@ -264,6 +264,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "delfin"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "derive_builder",
+ "dirs",
+ "env_logger",
+ "grass",
+ "gst-plugin-gtk4",
+ "gstreamer",
+ "gstreamer-play",
+ "jellyfin_api",
+ "libadwaita",
+ "regex",
+ "relm4",
+ "relm4-icons",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "tokio",
+ "toml",
+ "tracing",
+ "uuid",
+ "video_player_mpv",
+ "whoami",
+]
+
+[[package]]
 name = "derive_builder"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1281,36 +1311,6 @@ dependencies = [
  "serde_json",
  "serde_urlencoded",
  "uuid",
-]
-
-[[package]]
-name = "jellything"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "derive_builder",
- "dirs",
- "env_logger",
- "grass",
- "gst-plugin-gtk4",
- "gstreamer",
- "gstreamer-play",
- "jellyfin_api",
- "libadwaita",
- "regex",
- "relm4",
- "relm4-icons",
- "reqwest",
- "serde",
- "serde_json",
- "serde_repr",
- "tokio",
- "toml",
- "tracing",
- "uuid",
- "video_player_mpv",
- "whoami",
 ]
 
 [[package]]

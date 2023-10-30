@@ -1,4 +1,4 @@
-const CLIENT_NAME: &str = "Jellything";
+const CLIENT_NAME: &str = "Delfin";
 
 pub fn get_auth_header(device_id: &str, access_token: Option<&str>) -> String {
     let device = whoami::devicename();
