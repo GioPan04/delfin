@@ -11,7 +11,7 @@ use crate::{
     config,
     globals::CONFIG,
     jellyfin_api::api_client::ApiClient,
-    library::library_component::{Library, LibraryOutput},
+    library::{Library, LibraryOutput},
     media_details::MediaDetails,
     servers::server_list::{ServerList, ServerListOutput},
     utils::{main_window::MAIN_APP_WINDOW_NAME, shift_state::shift_state_controller},
