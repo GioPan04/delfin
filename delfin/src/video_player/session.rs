@@ -5,7 +5,9 @@ use std::{
 
 use uuid::Uuid;
 
-use crate::{globals::CONFIG, jellyfin_api::api_client::ApiClient};
+use crate::{
+    globals::CONFIG, jellyfin_api::api_client::ApiClient, library::LIBRARY_REFRESH_QUEUED,
+};
 
 use super::backends::VideoPlayerBackend;
 
@@ -17,6 +19,8 @@ pub fn start_session_reporting(
     let config = CONFIG.read();
 
     let position_update_frequency = config.video_player.position_update_frequency;
+
+    *LIBRARY_REFRESH_QUEUED.write() = true;
 
     video_player
         .borrow_mut()

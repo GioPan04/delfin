@@ -11,6 +11,7 @@ use crate::app::{AppInput, APP_BROKER};
 use crate::globals::CONFIG;
 use crate::jellyfin_api::api::shows::GetEpisodesOptionsBuilder;
 use crate::jellyfin_api::api_client::ApiClient;
+use crate::library::LIBRARY_REFRESH_QUEUED;
 use crate::utils::ticks::ticks_to_seconds;
 use crate::video_player::controls::skip_forwards_backwards::{
     SkipForwardsBackwardsInput, SKIP_BACKWARDS_BROKER, SKIP_FORWARDS_BROKER,
@@ -317,6 +318,7 @@ impl Component for VideoPlayer {
                                 .report_playback_stopped(&item_id, position)
                                 .await
                                 .unwrap();
+                            *LIBRARY_REFRESH_QUEUED.write() = true;
                         }
                     });
 

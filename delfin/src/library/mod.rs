@@ -6,7 +6,7 @@ mod media_list;
 mod media_tile;
 
 use jellyfin_api::types::BaseItemDto;
-use relm4::ComponentController;
+use relm4::{ComponentController, SharedState};
 use std::sync::{Arc, RwLock};
 
 use adw::prelude::*;
@@ -25,6 +25,8 @@ use crate::{
 
 use self::home::{Home, HomeInit};
 
+pub static LIBRARY_REFRESH_QUEUED: SharedState<bool> = SharedState::new();
+
 enum LibraryState {
     Loading,
     Ready,
@@ -41,6 +43,7 @@ pub struct Library {
 pub enum LibraryInput {
     MediaSelected(BaseItemDto),
     Refresh,
+    Shown,
 }
 
 #[derive(Debug)]
@@ -149,6 +152,10 @@ impl Component for Library {
                     add_setter: (&view_switcher_bar, "reveal", &true.into()),
                 },
             },
+
+            connect_shown[sender] => move |_| {
+                sender.input(LibraryInput::Shown);
+            },
         }
     }
 
@@ -204,6 +211,12 @@ impl Component for Library {
                 }
 
                 self.initial_fetch(&sender);
+            }
+            LibraryInput::Shown => {
+                if *LIBRARY_REFRESH_QUEUED.read() {
+                    sender.input(LibraryInput::Refresh);
+                }
+                *LIBRARY_REFRESH_QUEUED.write() = false;
             }
         }
 
