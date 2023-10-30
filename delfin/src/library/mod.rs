@@ -40,6 +40,7 @@ pub struct Library {
 #[derive(Debug)]
 pub enum LibraryInput {
     MediaSelected(BaseItemDto),
+    Refresh,
 }
 
 #[derive(Debug)]
@@ -80,6 +81,12 @@ impl Component for Library {
                         },
 
                         pack_end = model.borgar_menu.widget(),
+                        pack_end = &gtk::Button::from_icon_name("refresh") {
+                            set_tooltip: "Refresh library",
+                            connect_clicked[sender] => move |_| {
+                                sender.input(LibraryInput::Refresh);
+                            },
+                        },
                     },
 
                     #[wrap(Some)]
@@ -170,14 +177,37 @@ impl Component for Library {
         relm4::ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
+    fn update_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        message: Self::Input,
+        sender: ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         match message {
             LibraryInput::MediaSelected(media) => {
                 sender
                     .output(LibraryOutput::PlayVideo(Box::new(media)))
                     .unwrap();
             }
+            LibraryInput::Refresh => {
+                let view_stack = &widgets.view_stack;
+
+                self.state = LibraryState::Loading;
+
+                // Clear the current set of pages before loading a new one
+                if let Some(home) = self.home.take() {
+                    view_stack.remove(home.widget());
+                }
+                while let Some(child) = view_stack.first_child() {
+                    view_stack.remove(&child);
+                }
+
+                self.initial_fetch(&sender);
+            }
         }
+
+        self.update_view(widgets, sender);
     }
 
     fn update_cmd_with_view(
