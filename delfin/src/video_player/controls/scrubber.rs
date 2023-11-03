@@ -116,6 +116,11 @@ impl Component for Scrubber {
             gtk::Button {
                 #[watch]
                 set_label: &duration_to_timestamp(model.position, model.duration, model.duration_display),
+                #[watch]
+                set_tooltip_text: Some(match model.duration_display {
+                    DurationDisplay::Total => "Swap to remaining time",
+                    DurationDisplay::Remaining => "Swap to total duration",
+                }),
                 add_css_class: "flat",
                 add_css_class: "scrubber-duration-label",
                 connect_clicked[sender] => move |_| {
