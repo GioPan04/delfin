@@ -15,7 +15,7 @@ use crate::{
     media_details::MediaDetails,
     servers::server_list::{ServerList, ServerListOutput},
     utils::{main_window::MAIN_APP_WINDOW_NAME, shift_state::shift_state_controller},
-    video_player::video_player_component::{VideoPlayer, VideoPlayerInput, VideoPlayerOutput},
+    video_player::{VideoPlayer, VideoPlayerInput, VideoPlayerOutput},
 };
 
 #[derive(Debug)]
