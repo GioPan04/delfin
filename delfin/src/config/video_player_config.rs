@@ -39,7 +39,7 @@ impl Default for VideoPlayerConfig {
             skip_backwards_amount: VideoPlayerSkipAmount::Ten,
             skip_forwards_amount: VideoPlayerSkipAmount::Thirty,
             backend: VideoPlayerBackendPreference::Mpv,
-            hls_playback: true,
+            hls_playback: false,
         }
     }
 }

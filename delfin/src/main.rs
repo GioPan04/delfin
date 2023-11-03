@@ -7,7 +7,12 @@ fn main() {
     gst::init().expect("Error initializing GStreamer");
     gstgtk4::plugin_register_static().expect("Error registering GST GTK4 plugin");
 
-    let app = RelmApp::new("cafe.avery.delfin");
+    let app = if cfg!(debug_assertions) {
+        RelmApp::new("cafe.avery.Delfin.Devel")
+    } else {
+        RelmApp::new("cafe.avery.Delfin")
+    };
+
     relm4_icons::initialize_icons();
     load_css();
     app.with_broker(&APP_BROKER).run::<App>(());

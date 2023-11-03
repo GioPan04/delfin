@@ -1,0 +1,12 @@
+option(
+  'profile',
+  type: 'combo',
+  choices: ['dev', 'release'],
+  value: 'dev',
+)
+
+option(
+  'flatpak',
+  type: 'boolean',
+  value: false,
+)

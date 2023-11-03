@@ -7,4 +7,5 @@ fn main() {
             .to_str()
             .unwrap()
     );
+    println!("cargo:rustc-link-search=/app/lib");
 }

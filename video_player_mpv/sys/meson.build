@@ -1,6 +1,5 @@
 project('video-player-mpv', 'c')
 
-
 depgtk = dependency('gtk4')
 depepoxy = dependency('epoxy')
 depmpv = dependency('mpv')
