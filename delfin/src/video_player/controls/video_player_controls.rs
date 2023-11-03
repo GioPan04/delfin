@@ -73,20 +73,26 @@ impl SimpleComponent for VideoPlayerControls {
     type Output = ();
 
     view! {
-        gtk::Box {
-            set_orientation: gtk::Orientation::Vertical,
+        gtk::Revealer {
             #[watch]
-            set_visible: model.show_controls,
+            set_reveal_child: model.show_controls,
+            set_transition_type: gtk::RevealerTransitionType::Crossfade,
             set_valign: gtk::Align::End,
-            add_css_class: "toolbar",
-            add_css_class: "osd",
-            add_css_class: "video-player-controls",
-            set_margin_start: 24,
-            set_margin_end: 24,
-            set_margin_bottom: 24,
 
-            #[name = "second_row"]
-            gtk::Box {},
+            #[name = "controls"]
+            #[wrap(Some)]
+            set_child = &gtk::Box {
+                set_orientation: gtk::Orientation::Vertical,
+                add_css_class: "toolbar",
+                add_css_class: "osd",
+                add_css_class: "video-player-controls",
+                set_margin_start: 24,
+                set_margin_end: 24,
+                set_margin_bottom: 24,
+
+                #[name = "second_row"]
+                gtk::Box {},
+            },
         }
     }
 
@@ -114,6 +120,7 @@ impl SimpleComponent for VideoPlayerControls {
         };
 
         let widgets = view_output!();
+        let controls = &widgets.controls;
         let second_row = &widgets.second_row;
 
         SCRUBBER_BROKER.reset();
@@ -124,7 +131,7 @@ impl SimpleComponent for VideoPlayerControls {
         let scrubber = Scrubber::builder()
             .launch_with_broker(player.clone(), &SCRUBBER_BROKER.read())
             .detach();
-        root.prepend(scrubber.widget());
+        controls.prepend(scrubber.widget());
         model._scrubber = Some(scrubber);
 
         let prev_episode = NextPrevEpisode::builder()

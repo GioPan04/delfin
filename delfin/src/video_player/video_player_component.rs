@@ -94,11 +94,16 @@ impl Component for VideoPlayer {
                         },
                     },
 
-                    add_overlay = &adw::HeaderBar {
+                    add_overlay = &gtk::Revealer {
                         #[watch]
-                        set_visible: model.show_controls,
+                        set_reveal_child: model.show_controls,
+                        set_transition_type: gtk::RevealerTransitionType::Crossfade,
                         set_valign: gtk::Align::Start,
-                        add_css_class: "osd",
+
+                        #[wrap(Some)]
+                        set_child = &adw::HeaderBar {
+                            add_css_class: "osd",
+                        },
                     },
 
                     #[name = "spinner"]
