@@ -4,7 +4,7 @@ use relm4::{
     Controller,
 };
 
-use crate::{config, globals::CONFIG, utils::constants::PAGE_MARGIN};
+use crate::{config, globals::CONFIG, tr, utils::constants::PAGE_MARGIN};
 
 use super::{
     add_server::{AddServerDialog, AddServerOutput},
@@ -38,7 +38,7 @@ impl Component for ServerList {
 
     view! {
         adw::NavigationPage {
-            set_title: "Servers",
+            set_title: tr!("server-list-page-title"),
 
             connect_showing[sender] => move |_| {
                 sender.input(ServerListInput::ReloadServers);

@@ -14,6 +14,7 @@ use crate::{
     library::{Library, LibraryOutput},
     media_details::MediaDetails,
     servers::server_list::{ServerList, ServerListOutput},
+    tr,
     utils::{main_window::MAIN_APP_WINDOW_NAME, shift_state::shift_state_controller},
     video_player::{VideoPlayer, VideoPlayerInput, VideoPlayerOutput},
 };
@@ -78,7 +79,7 @@ impl Component for App {
     view! {
         adw::ApplicationWindow {
             set_widget_name: MAIN_APP_WINDOW_NAME,
-            set_title: Some("Delfin"),
+            set_title: Some(tr!("app-name")),
             set_default_width: 960,
             set_default_height: 540,
 

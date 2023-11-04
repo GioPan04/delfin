@@ -5,6 +5,7 @@ pub mod config;
 pub mod globals;
 pub mod jellyfin_api;
 pub mod library;
+pub mod locales;
 pub mod media_details;
 pub mod preferences;
 pub mod servers;
