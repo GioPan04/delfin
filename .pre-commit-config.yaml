@@ -8,9 +8,10 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
 
-  - repo: https://github.com/doublify/pre-commit-rust
-    rev: eeee35a89e69d5772bdee97db1a6a898467b686e
+  - repo: https://codeberg.org/avery42/pre-commit-rust.git
+    rev: v1.0.0
     hooks:
-      - id: fmt
-      - id: clippy
-        args: [ "--", "-D", "warnings" ]
+      - id: cargo-clippy
+        args: ["--", "-Dwarnings"]
+      - id: cargo-test
+      - id: cargo-fmt
