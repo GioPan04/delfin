@@ -45,6 +45,7 @@ impl Component for AudioTracks {
         gtk::MenuButton {
             set_icon_name: "music-note-single",
             set_menu_model: Some(&model.menu),
+            set_tooltip_text: Some(tr!("vp-audio-track-tooltip")),
             #[watch]
             set_visible: model.audio_tracks_available,
         }

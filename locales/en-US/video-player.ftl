@@ -8,8 +8,6 @@ vp-next-up-action =
     .play = Play now
     .hide = Hide
 
-vp-audio-track-menu = Audio Track
-
 vp-fullscreen-tooltip = {
         $enter ->
             [true] Enter
@@ -42,7 +40,14 @@ vp-skip-forwards-backwards-tooltip = Skip {
                 *[other] seconds
         }
 
-vp-subtitle-track-tooltip = No Subtitle Tracks Available
+vp-audio-track-tooltip = Audio Tracks
+vp-audio-track-menu = Audio Track
+
+vp-subtitle-track-tooltip = {
+        $subtitlesAvailable ->
+            [true] Subtitle Tracks
+            *[false] No Subtitle Tracks Available
+    }
 vp-subtitle-track-menu = Subtitle Track
 vp-subtitle-track-off = Off
 

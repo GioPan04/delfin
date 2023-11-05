@@ -45,7 +45,11 @@ impl Component for Subtitles {
         gtk::MenuButton {
             set_icon_name: "closed-captioning",
             set_menu_model: Some(&model.menu),
-            set_tooltip_text: Some(tr!("vp-subtitle-track-tooltip")),
+            #[watch]
+            set_tooltip_text: Some(tr!(
+                "vp-subtitle-track-tooltip",
+                {"subtitlesAvailable" => model.subtitles_available.to_string()},
+            )),
             #[watch]
             set_sensitive: model.subtitles_available,
             #[watch]
