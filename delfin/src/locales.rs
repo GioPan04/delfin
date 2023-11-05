@@ -17,7 +17,7 @@ macro_rules! tr {
     }};
 
     // Lookup message with arguments
-    ($id:expr, {$($k:expr => $v:expr),* $(,)?}) => {{
+    ($id:expr, {$($k:expr => $v:expr),* $(,)?}$(,)?) => {{
         use fluent_templates::Loader;
         use std::collections::HashMap;
         use $crate::{globals::CONFIG, locales::LOCALES};
