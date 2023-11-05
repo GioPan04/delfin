@@ -1,5 +1,7 @@
 use jellyfin_api::types::BaseItemDto;
 
+use crate::tr;
+
 pub trait ItemName {
     fn episode_name_with_number(&self) -> Option<String>;
 }
@@ -16,7 +18,14 @@ impl ItemName for BaseItemDto {
         if let (Some(index_number), Some(parent_index_number)) =
             (self.index_number, self.parent_index_number)
         {
-            return Some(format!("S{parent_index_number}:E{index_number} - {name}"));
+            return Some(
+                tr!("library-episode-name-with-season-and-episode", {
+                    "seasonNumber" => parent_index_number,
+                    "episodeNumber" => index_number,
+                    "episodeName" => name.to_string(),
+                })
+                .to_string(),
+            );
         }
 
         Some(name.to_string())

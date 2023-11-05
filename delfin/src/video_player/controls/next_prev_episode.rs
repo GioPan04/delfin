@@ -1,10 +1,23 @@
+use std::fmt::Display;
+
 use gtk::prelude::*;
 use relm4::{prelude::*, ComponentParts, ComponentSender, SimpleComponent};
+
+use crate::tr;
 
 #[derive(Debug)]
 pub(super) enum NextPrevEpisodeDirection {
     Next,
     Previous,
+}
+
+impl Display for NextPrevEpisodeDirection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NextPrevEpisodeDirection::Next => write!(f, "next"),
+            NextPrevEpisodeDirection::Previous => write!(f, "previous"),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -41,11 +54,10 @@ impl SimpleComponent for NextPrevEpisode {
                 "rewind-filled"
             },
             #[watch]
-            set_tooltip_text: Some(if matches!(model.direction, NextPrevEpisodeDirection::Next) {
-                "Next episode"
-            } else {
-                "Previous episode"
-            }),
+            set_tooltip_text: Some(tr!(
+                "vp-next-prev-episode-tooltip",
+                {"direction" => model.direction.to_string()},
+            )),
 
             connect_clicked[sender] => move |_| {
                 sender.output(NextPrevEpisodeOutput::Clicked).unwrap();

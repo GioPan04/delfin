@@ -18,6 +18,7 @@ use crate::globals::CONFIG;
 use crate::jellyfin_api::api::shows::GetEpisodesOptionsBuilder;
 use crate::jellyfin_api::api_client::ApiClient;
 use crate::library::LIBRARY_REFRESH_QUEUED;
+use crate::tr;
 use crate::utils::ticks::ticks_to_seconds;
 use crate::video_player::controls::skip_forwards_backwards::{
     SkipForwardsBackwardsInput, SKIP_BACKWARDS_BROKER, SKIP_FORWARDS_BROKER,
@@ -81,7 +82,7 @@ impl Component for VideoPlayer {
             #[watch]
             set_title: &model.media.as_ref()
                 .and_then(|media| media.name.clone())
-                .unwrap_or("Delfin".to_string()),
+                .unwrap_or(tr!("app-name").to_string()),
 
             #[wrap(Some)]
             #[name = "toaster"]

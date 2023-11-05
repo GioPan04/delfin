@@ -7,7 +7,10 @@ use relm4::{
     Component, ComponentParts,
 };
 
-use crate::video_player::backends::{AudioTrack, VideoPlayerBackend};
+use crate::{
+    tr,
+    video_player::backends::{AudioTrack, VideoPlayerBackend},
+};
 
 relm4::new_action_group!(AudioTracksActionGroup, "audio_tracks_actions");
 relm4::new_stateful_action!(
@@ -117,7 +120,7 @@ impl Component for AudioTracks {
 
                 self.menu.remove_all();
                 self.menu
-                    .append_section(Some("Audio Track"), &audio_tracks_menu);
+                    .append_section(Some(tr!("vp-audio-track-menu")), &audio_tracks_menu);
 
                 // Select current audio track in menu
                 if let Some(current_audio_track) = self.video_player.borrow().current_audio_track()

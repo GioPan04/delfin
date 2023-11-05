@@ -1,6 +1,8 @@
 use chrono::prelude::*;
 use jellyfin_api::types::{BaseItemDto, BaseItemKind};
 
+use crate::tr;
+
 pub(crate) trait DisplayYears {
     fn display_years(&self) -> Option<String>;
 }
@@ -17,8 +19,11 @@ impl DisplayYears for BaseItemDto {
 
             if let Some("Continuing") = self.status.as_deref() {
                 return Some(match start_year {
-                    Some(start_year) => format!("{start_year} – Present"),
-                    _ => "Present".to_string(),
+                    Some(start_year) => {
+                        tr!("media-details-years.until-present", {"startYear" => start_year})
+                            .to_string()
+                    }
+                    _ => tr!("media-details-years.present").to_string(),
                 });
             }
 
@@ -28,7 +33,13 @@ impl DisplayYears for BaseItemDto {
                         return Some(start_year.to_string());
                     }
 
-                    return Some(format!("{start_year} – {end_year}"));
+                    return Some(
+                        tr!("media-details-years", {
+                            "startYear" => start_year,
+                            "endYear" => end_year,
+                        })
+                        .to_string(),
+                    );
                 }
             }
         }

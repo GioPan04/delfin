@@ -20,6 +20,7 @@ use crate::{
         api::views::UserView, api_client::ApiClient,
         models::display_preferences::DisplayPreferences,
     },
+    tr,
     utils::constants::{PAGE_MARGIN, WIDGET_NONE},
 };
 
@@ -66,7 +67,7 @@ impl Component for Library {
     view! {
         adw::NavigationPage {
             set_tag: Some(AppPage::Library.into()),
-            set_title: "Library",
+            set_title: tr!("library-page-title"),
 
             #[wrap(Some)]
             set_child = &adw::BreakpointBin {
@@ -85,7 +86,7 @@ impl Component for Library {
 
                         pack_end = model.borgar_menu.widget(),
                         pack_end = &gtk::Button::from_icon_name("refresh") {
-                            set_tooltip: "Refresh library",
+                            set_tooltip: tr!("library-refresh-button"),
                             connect_clicked[sender] => move |_| {
                                 sender.input(LibraryInput::Refresh);
                             },
@@ -116,7 +117,7 @@ impl Component for Library {
                                         },
 
                                         gtk::Label {
-                                            set_label: "Loading your library...",
+                                            set_label: tr!("library-loading"),
                                             add_css_class: "title-2",
                                         },
                                     }
@@ -283,7 +284,12 @@ impl Library {
                 user_views: user_views.clone(),
             })
             .detach();
-        view_stack.add_titled_with_icon(home.widget(), Some("home"), "Home", "home-filled");
+        view_stack.add_titled_with_icon(
+            home.widget(),
+            Some("home"),
+            tr!("library-page-home-title"),
+            "home-filled",
+        );
         self.home = Some(home);
 
         let user_views: Vec<&UserView> = user_views

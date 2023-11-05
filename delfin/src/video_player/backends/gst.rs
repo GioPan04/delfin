@@ -2,7 +2,7 @@ use gst::{glib::SignalHandlerId, prelude::Cast};
 use gstplay::{traits::PlayStreamInfoExt, PlayAudioInfo, PlaySubtitleInfo};
 use uuid::Uuid;
 
-use crate::video_player::gst_play_widget::GstVideoPlayer;
+use crate::{tr, video_player::gst_play_widget::GstVideoPlayer};
 
 use super::{AudioTrack, PlayerStateChangedCallback, SubtitleTrack, VideoPlayerBackend};
 
@@ -204,7 +204,11 @@ impl PlaySubtitleInfoExt for PlaySubtitleInfo {
         if let Some(tags) = tags {
             if let Some(title) = tags.get::<gst::tags::Title>() {
                 let title = title.get();
-                display_name = format!("{display_name} - {title}");
+                display_name = tr!("vp-backend-gst-track-name", {
+                    "displayName "=> display_name,
+                    "title" => title,
+                })
+                .to_string();
             }
         }
 
@@ -236,7 +240,11 @@ impl PlayAudioInfoExt for PlayAudioInfo {
         if let Some(tags) = tags {
             if let Some(title) = tags.get::<gst::tags::Title>() {
                 let title = title.get();
-                display_name = format!("{display_name} - {title}");
+                display_name = tr!("vp-backend-gst-track-name", {
+                    "displayName "=> display_name,
+                    "title" => title,
+                })
+                .to_string();
             }
         }
 

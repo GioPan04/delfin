@@ -1,7 +1,7 @@
 use adw::prelude::*;
 use relm4::prelude::*;
 
-use crate::{config, jellyfin_api::api::info::get_public_server_info};
+use crate::{config, jellyfin_api::api::info::get_public_server_info, tr};
 
 #[derive(Clone, Debug)]
 pub enum ValidationState {
@@ -42,7 +42,7 @@ impl Component for AddServerDialog {
 
     view! {
         adw::Window {
-            set_title: Some("Add a server"),
+            set_title: Some(tr!("server-list-add-server-title")),
             set_modal: true,
             set_visible: true,
 
@@ -60,7 +60,7 @@ impl Component for AddServerDialog {
                         adw::PreferencesGroup {
                             #[name = "url_entry"]
                             adw::EntryRow {
-                                set_title: "Server URL",
+                                set_title: tr!("server-list-add-server-url"),
                                 set_show_apply_button: true,
                                 #[watch]
                                 set_editable: !matches!(model.valid, ValidationState::Loading),
@@ -73,7 +73,7 @@ impl Component for AddServerDialog {
                             },
 
                             adw::ActionRow {
-                                set_title: "Server name",
+                                set_title: tr!("server-list-add-server-name"),
                                 #[watch]
                                 set_subtitle: if let ValidationState::Valid(server) = &model.valid {
                                     &server.name
@@ -95,7 +95,7 @@ impl Component for AddServerDialog {
                         #[name = "submit_btn"]
                         gtk::Button {
                             set_halign: gtk::Align::Center,
-                            set_label: "Add Server",
+                            set_label: tr!("server-list-add-server-submit-button"),
                             add_css_class: "pill",
                             add_css_class: "suggested-action",
                             #[watch]

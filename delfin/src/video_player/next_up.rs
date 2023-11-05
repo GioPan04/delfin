@@ -15,6 +15,7 @@ use relm4::{
 use crate::{
     app::{AppInput, APP_BROKER},
     jellyfin_api::api_client::ApiClient,
+    tr,
     utils::item_name::ItemName,
 };
 
@@ -48,8 +49,8 @@ impl fmt::Display for NextUpState {
         };
         write!(
             f,
-            "Next episode starting in {remaining} {}...",
-            if remaining == 1 { "second" } else { "seconds" }
+            "{}",
+            tr!("vp-next-up-starting", {"remaining" => remaining}),
         )
     }
 }
@@ -122,7 +123,7 @@ impl Component for NextUp {
                     add_css_class: "suggested-action",
                     adw::ButtonContent {
                         set_icon_name: "play-filled",
-                        set_label: "Play now",
+                        set_label: tr!("vp-next-up-action.play"),
                     },
 
                     connect_clicked[sender] => move |_| {
@@ -131,7 +132,7 @@ impl Component for NextUp {
                 },
 
                 gtk::Button {
-                    set_label: "Hide",
+                    set_label: tr!("vp-next-up-action.hide"),
 
                     connect_clicked[sender] => move |_| {
                         sender.input(NextUpInput::Hide);

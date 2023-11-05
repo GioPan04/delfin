@@ -1,5 +1,6 @@
 use std::{
     cell::RefCell,
+    fmt::Display,
     sync::{Arc, RwLock, RwLockReadGuard},
 };
 
@@ -7,7 +8,7 @@ use gtk::prelude::*;
 use relm4::{prelude::*, ComponentParts, ComponentSender, MessageBroker, SimpleComponent};
 
 use crate::{
-    config::video_player_config::VideoPlayerSkipAmount, globals::CONFIG,
+    config::video_player_config::VideoPlayerSkipAmount, globals::CONFIG, tr,
     video_player::backends::VideoPlayerBackend,
 };
 
@@ -39,6 +40,15 @@ pub(super) enum SkipForwardsBackwardsDirection {
     Backwards,
 }
 
+impl Display for SkipForwardsBackwardsDirection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SkipForwardsBackwardsDirection::Forwards => write!(f, "forwards"),
+            SkipForwardsBackwardsDirection::Backwards => write!(f, "backwards"),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub(super) struct SkipForwardsBackwards {
     direction: SkipForwardsBackwardsDirection,
@@ -68,7 +78,12 @@ impl SimpleComponent for SkipForwardsBackwards {
             #[watch]
             set_icon_name: &model.get_icon_name(),
             #[watch]
-            set_tooltip_text: Some(&model.get_tooltip()),
+            set_tooltip_text: Some(tr!(
+                "vp-skip-forwards-backwards-tooltip", {
+                    "direction" => model.direction.to_string(),
+                    "seconds" => model.skip_amount as usize,
+                },
+            )),
             #[watch]
             set_sensitive: !model.loading,
 
@@ -161,14 +176,6 @@ impl SkipForwardsBackwards {
             format!("skip-forward-{}", self.skip_amount as usize)
         } else {
             format!("skip-backwards-{}", self.skip_amount as usize)
-        }
-    }
-
-    fn get_tooltip(&self) -> String {
-        if let SkipForwardsBackwardsDirection::Forwards = self.direction {
-            format!("Skip forwards {} seconds", self.skip_amount as usize)
-        } else {
-            format!("Skip backwards {} seconds", self.skip_amount as usize)
         }
     }
 }

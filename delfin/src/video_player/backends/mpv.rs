@@ -9,6 +9,8 @@ use relm4::gtk::{self, glib, prelude::*};
 use uuid::Uuid;
 use video_player_mpv::{Track, TrackType, VideoPlayerMpv};
 
+use crate::tr;
+
 use super::{
     AudioTrack, PlayerState, PlayerStateChangedCallback, SubtitleTrack, VideoPlayerBackend,
 };
@@ -282,7 +284,7 @@ impl From<Track> for SubtitleTrack {
             name: value
                 .title()
                 .map(|s| s.to_string())
-                .unwrap_or(String::from("")),
+                .unwrap_or(tr!("vp-unnamed-track").to_string()),
         }
     }
 }
@@ -296,10 +298,24 @@ impl From<Track> for AudioTrack {
         let language = value.language().map(|s| s.to_string());
 
         let name = match (title, language) {
-            (Some(title), Some(language)) => format!("{title} - {language}"),
+            (Some(title), Some(language)) => tr!(
+                "vp-backend-mpv-track-name.title-and-language",
+                {
+                    "title" => title,
+                    "language" => language,
+                },
+            )
+            .to_string(),
             (Some(title), None) => title,
-            (None, Some(language)) => format!("Track {id} - {language}"),
-            _ => format!("Track {id}"),
+            (None, Some(language)) => tr!(
+                "vp-backend-mpv-track-name.id-and-language",
+                {
+                    "id" => id,
+                    "language" => language,
+                },
+            )
+            .to_string(),
+            _ => tr!("vp-backend-mpv-track-name.id", {"id" => id}).to_string(),
         };
 
         Self { id, name }

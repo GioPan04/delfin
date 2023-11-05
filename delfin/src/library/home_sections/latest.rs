@@ -13,6 +13,7 @@ use crate::{
     library::media_list::{
         MediaList, MediaListInit, MediaListOutput, MediaListType, MediaListTypeLatestParams,
     },
+    tr,
 };
 
 pub struct HomeSectionLatest {
@@ -117,12 +118,12 @@ impl SimpleComponent for LatestRow {
         let widgets = view_output!();
 
         let title_text = match view.collection_type.as_str() {
-            "movies" => "Latest Movies",
-            "tvshows" => "Latest Shows",
-            "music" => "Latest Music",
+            "movies" => tr!("library-section-title.latest-movies").to_string(),
+            "tvshows" => tr!("library-section-title.latest-shows").to_string(),
+            "music" => tr!("library-section-title.latest-music").to_string(),
             s => {
                 println!("Unknown collection type: {s}");
-                s
+                s.to_string()
             }
         };
 

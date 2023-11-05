@@ -2,6 +2,8 @@ use gtk::prelude::*;
 use jellyfin_api::types::BaseItemDto;
 use relm4::prelude::*;
 
+use crate::tr;
+
 use super::seasons::SeasonsInput;
 
 pub(crate) struct SeasonButtons;
@@ -58,7 +60,10 @@ impl SimpleComponent for SeasonButtons {
 fn create_season_btn(season: &BaseItemDto) -> gtk::ToggleButton {
     let btn_contents = gtk::Overlay::new();
 
-    let name = season.name.clone().unwrap_or("Unnamed Season".to_string());
+    let name = season
+        .name
+        .clone()
+        .unwrap_or(tr!("media-details-unnamed-season").to_string());
 
     btn_contents.set_child(Some(
         &gtk::Label::builder().label(name).hexpand(true).build(),
@@ -75,12 +80,9 @@ fn create_season_btn(season: &BaseItemDto) -> gtk::ToggleButton {
                     .valign(gtk::Align::Start)
                     .tooltip_text(
                         if let Some(unplayed_item_count) = user_data.unplayed_item_count {
-                            format!(
-                                "This season has {unplayed_item_count} unplayed episode{}",
-                                if unplayed_item_count > 1 { "s" } else { "" }
-                            )
+                            tr!("media-details-season-tooltip", {"unplayedItemCount" => unplayed_item_count}).to_string()
                         } else {
-                            "This season has unplayed episodes".to_string()
+                            tr!("media-details-season-tooltip.unknown-item-count").to_string()
                         },
                     )
                     .build(),

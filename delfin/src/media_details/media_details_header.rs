@@ -10,6 +10,7 @@ use relm4::{
 use crate::{
     app::APP_BROKER,
     jellyfin_api::{api::latest::GetNextUpOptionsBuilder, api_client::ApiClient},
+    tr,
     utils::constants::MAX_LIBRARY_WIDTH,
 };
 
@@ -239,7 +240,7 @@ impl Component for MediaDetailsHeader {
             .series_name
             .clone()
             .or(model.media.name.clone())
-            .unwrap_or("Unnamed Item".to_string());
+            .unwrap_or(tr!("media-details-unnamed-item").to_string());
 
         let widgets = view_output!();
 
@@ -283,31 +284,36 @@ async fn get_play_next(
     item: &BaseItemDto,
     media: &BaseItemDto,
 ) -> (String, Option<BaseItemDto>) {
-    let verb = if media
+    let resume = media
         .user_data
         .clone()
         .and_then(|user_data| user_data.playback_position_ticks)
         .unwrap_or(0)
-        == 0
-    {
-        "Play"
-    } else {
-        "Resume"
-    }
-    .to_string();
+        != 0;
 
     if !(matches!(
         media.type_,
         Some(BaseItemKind::Episode) | Some(BaseItemKind::Series)
     )) {
-        return (verb, Some(media.clone()));
+        return (
+            tr!("media-details-play-button", {"resume" => resume.to_string()}).to_string(),
+            Some(media.clone()),
+        );
     }
 
     if let (Some(parent_index_number), Some(index_number)) =
         (&media.parent_index_number, &media.index_number)
     {
         return (
-            format!("{verb} S{parent_index_number}:E{index_number}"),
+            tr!(
+                "media-details-play-button.with-episode-and-season",
+                {
+                    "resume" => resume.to_string(),
+                    "seasonNumber" => parent_index_number,
+                    "episodeNumber" => index_number,
+                },
+            )
+            .to_string(),
             Some(media.clone()),
         );
     }
@@ -336,12 +342,23 @@ async fn get_play_next(
                 (&next_up.parent_index_number, &next_up.index_number)
             {
                 return (
-                    format!("{verb} S{parent_index_number}:E{index_number}"),
+                    tr!(
+                        "media-details-play-button.with-episode-and-season",
+                        {
+                            "resume" => resume.to_string(),
+                            "seasonNumber" => parent_index_number,
+                            "episodeNumber" => index_number,
+                        },
+                    )
+                    .to_string(),
                     Some(next_up),
                 );
             }
         }
     }
 
-    ("Play next episode".to_string(), None)
+    (
+        tr!("media-details-play-button.next-episode").to_string(),
+        None,
+    )
 }

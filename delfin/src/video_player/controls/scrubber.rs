@@ -10,7 +10,7 @@ use relm4::{
     Component, ComponentParts, MessageBroker,
 };
 
-use crate::video_player::backends::VideoPlayerBackend;
+use crate::{tr, video_player::backends::VideoPlayerBackend};
 
 pub(crate) struct ScrubberBroker(RwLock<MessageBroker<ScrubberInput>>);
 
@@ -117,9 +117,9 @@ impl Component for Scrubber {
                 #[watch]
                 set_label: &duration_to_timestamp(model.position, model.duration, model.duration_display),
                 #[watch]
-                set_tooltip_text: Some(match model.duration_display {
-                    DurationDisplay::Total => "Swap to remaining time",
-                    DurationDisplay::Remaining => "Swap to total duration",
+                set_tooltip_text: Some(&match model.duration_display {
+                    DurationDisplay::Total => tr!("vp-duration-tooltip.total").to_string(),
+                    DurationDisplay::Remaining => tr!("vp-duration-tooltip.remaining").to_string(),
                 }),
                 add_css_class: "flat",
                 add_css_class: "scrubber-duration-label",

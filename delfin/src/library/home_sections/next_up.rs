@@ -9,6 +9,7 @@ use relm4::{
 use crate::{
     jellyfin_api::api_client::ApiClient,
     library::media_list::{MediaList, MediaListInit, MediaListOutput, MediaListType},
+    tr,
 };
 
 pub struct HomeSectionNextUp {
@@ -45,7 +46,7 @@ impl Component for HomeSectionNextUp {
             .launch(MediaListInit {
                 api_client,
                 list_type: MediaListType::NextUp,
-                label: "Next Up".to_string(),
+                label: tr!("library-section-title.next-up").to_string(),
             })
             .forward(sender.input_sender(), |o| o.into());
         root.append(media_grid.widget());

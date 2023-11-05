@@ -7,7 +7,10 @@ use relm4::{
     Component, ComponentParts,
 };
 
-use crate::video_player::backends::{SubtitleTrack, VideoPlayerBackend};
+use crate::{
+    tr,
+    video_player::backends::{SubtitleTrack, VideoPlayerBackend},
+};
 
 relm4::new_action_group!(SubtitleActionGroup, "subtitle_actions");
 relm4::new_stateful_action!(
@@ -42,7 +45,7 @@ impl Component for Subtitles {
         gtk::MenuButton {
             set_icon_name: "closed-captioning",
             set_menu_model: Some(&model.menu),
-            set_tooltip_text: Some("No Subtitle Tracks Available"),
+            set_tooltip_text: Some(tr!("vp-subtitle-track-tooltip")),
             #[watch]
             set_sensitive: model.subtitles_available,
             #[watch]
@@ -119,12 +122,14 @@ impl Component for Subtitles {
                     .for_each(|menu_item| subs_menu.append_item(&menu_item));
                 subs_menu.append_item(
                     &RelmAction::<SelectedSubtitleAction>::to_menu_item_with_target_value(
-                        "Off", &None,
+                        tr!("vp-subtitle-track-off"),
+                        &None,
                     ),
                 );
 
                 self.menu.remove_all();
-                self.menu.append_section(Some("Subtitle Track"), &subs_menu);
+                self.menu
+                    .append_section(Some(tr!("vp-subtitle-track-menu")), &subs_menu);
 
                 // Select current subtitle track in menu
                 if let Some(current_subtitle_track) =

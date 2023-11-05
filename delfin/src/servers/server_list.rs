@@ -53,8 +53,8 @@ impl Component for ServerList {
                     set_margin_top: PAGE_MARGIN,
 
                     adw::PreferencesGroup {
-                        set_title: "Select a server",
-                        set_description: Some("Choose which Jellyfin server you'd like to use"),
+                        set_title: tr!("server-list.title"),
+                        set_description: Some(tr!("server-list.description")),
                         #[wrap(Some)]
                         set_header_suffix = &gtk::Button {
                             connect_clicked[sender] => move |_| {
@@ -62,7 +62,7 @@ impl Component for ServerList {
                             },
                             adw::ButtonContent {
                                 set_icon_name: "list-add-symbolic",
-                                set_label: "Add a server",
+                                set_label: tr!("server-list-add-server-button"),
                             },
                         },
 
@@ -78,8 +78,8 @@ impl Component for ServerList {
                             #[watch]
                             set_visible: model.servers.is_empty(),
                             adw::ActionRow {
-                                set_title: "No Servers Available",
-                                set_subtitle: "Add a server to start watching",
+                                set_title: tr!("server-list-empty.title"),
+                                set_subtitle: tr!("server-list-empty.subtitle"),
                             },
                         },
                     },

@@ -12,6 +12,7 @@ use relm4::{
 use crate::{
     app::{AppInput, APP_BROKER},
     jellyfin_api::api_client::ApiClient,
+    tr,
 };
 
 pub const EPISODE_THUMBNAIL_SIZE: i32 = 75;
@@ -66,7 +67,7 @@ impl SimpleComponent for Episode {
         let title = match (&model.media.index_number, &model.media.name) {
             (Some(index_number), Some(name)) => format!("{index_number}. {name}"),
             (_, Some(name)) => name.clone(),
-            _ => "Unnamed Episode".to_string(),
+            _ => tr!("media-details-unnamed-episode").to_string(),
         };
 
         let widgets = view_output!();

@@ -6,6 +6,7 @@ use crate::{
     app::{AppInput, AppPage, APP_BROKER},
     config::{Account, Config, Server},
     jellyfin_api::api_client::ApiClient,
+    tr,
 };
 
 enum Responses {
@@ -45,11 +46,11 @@ impl Component for SignOutDialog {
         adw::MessageDialog {
             set_visible: true,
             set_modal: true,
-            set_heading: Some("Sign Out"),
-            set_body: "Do you want to sign out and remove this account from Delfin?",
+            set_heading: Some(tr!("borgar-sign-out-dialog.heading")),
+            set_body: tr!("borgar-sign-out-dialog.body"),
             add_responses: &[
-                (Responses::Cancel.into(), "Cancel"),
-                (Responses::SignOut.into(), "Sign Out"),
+                (Responses::Cancel.into(), tr!("borgar-sign-out-dialog.response-cancel")),
+                (Responses::SignOut.into(), tr!("borgar-sign-out-dialog.response-sign-out")),
             ],
             set_default_response: Some(Responses::Cancel.into()),
             set_close_response: Responses::Cancel.into(),
@@ -62,7 +63,7 @@ impl Component for SignOutDialog {
             #[wrap(Some)]
             set_extra_child = &gtk::CheckButton {
                 set_visible: false,
-                set_label: Some("Remove this server from Delfin"),
+                set_label: Some(tr!("borgar-sign-out-dialog-remove-server")),
             },
         }
     }

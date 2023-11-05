@@ -11,6 +11,7 @@ use crate::{
     config::{Account, Config, Server},
     jellyfin_api::api_client::ApiClient,
     preferences::Preferences,
+    tr,
 };
 
 use super::about::About;
@@ -55,11 +56,11 @@ impl Component for BorgarMenu {
     menu! {
         menu: {
             section! {
-                "Sign Out" => SignOutAction,
+                &*tr!("borgar-sign-out") => SignOutAction,
             },
             section! {
-                "Preferences" => PreferencesAction,
-                "About Delfin" => AboutAction,
+                &*tr!("borgar-preferences") => PreferencesAction,
+                &*tr!("borgar-about") => AboutAction,
             },
         }
     }

@@ -4,7 +4,7 @@ use glib::SignalHandlerId;
 use gtk::{glib, prelude::*};
 use relm4::{gtk, ComponentParts, SimpleComponent};
 
-use crate::utils::main_window::get_main_window;
+use crate::{tr, utils::main_window::get_main_window};
 
 pub struct Fullscreen {
     fullscreen: bool,
@@ -33,11 +33,10 @@ impl SimpleComponent for Fullscreen {
                 "view-fullscreen"
             },
             #[watch]
-            set_tooltip_text: Some(if model.fullscreen {
-                "Exit fullscreen"
-            } else {
-                "Enter fullscreen"
-            }),
+            set_tooltip_text: Some(tr!(
+                "vp-fullscreen-tooltip",
+                {"enter" => (!model.fullscreen).to_string()},
+            )),
             connect_clicked[sender] => move |_| {
                 sender.input(FullscreenInput::ToggleFullscreen);
             },

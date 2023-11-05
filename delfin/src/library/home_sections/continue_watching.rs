@@ -9,6 +9,7 @@ use relm4::{
 use crate::{
     jellyfin_api::api_client::ApiClient,
     library::media_list::{MediaList, MediaListInit, MediaListOutput, MediaListType},
+    tr,
 };
 
 pub struct HomeSectionContinueWatching {
@@ -45,7 +46,7 @@ impl Component for HomeSectionContinueWatching {
             .launch(MediaListInit {
                 api_client,
                 list_type: MediaListType::ContinueWatching,
-                label: "Continue Watching".to_string(),
+                label: tr!("library-section-title.continue-watching").to_string(),
             })
             .forward(sender.input_sender(), |o| o.into());
         root.append(media_grid.widget());

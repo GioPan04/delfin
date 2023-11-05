@@ -4,6 +4,7 @@ use relm4::{adw, gtk, prelude::*, Component, ComponentParts};
 use crate::{
     config::Server,
     jellyfin_api::api::user::{authenticate_by_name, AuthenticateByNameRes},
+    tr,
 };
 
 #[derive(Debug, Default)]
@@ -51,7 +52,7 @@ impl Component for AddAccountDialog {
 
     view! {
         adw::Window {
-            set_title: Some("Add an account"),
+            set_title: Some(tr!("account-list-add-account-title")),
             set_modal: true,
             set_visible: true,
 
@@ -71,14 +72,14 @@ impl Component for AddAccountDialog {
 
                             adw::PreferencesGroup {
                                 adw::EntryRow {
-                                    set_title: "Username",
+                                    set_title: tr!("account-list-add-account-username"),
                                     set_activates_default: true,
                                     connect_changed[sender] => move |entry| {
                                         sender.input(AddAccountInput::UsernameChanged(entry.text().to_string()))
                                     },
                                 },
                                 adw::PasswordEntryRow {
-                                    set_title: "Password",
+                                    set_title: tr!("account-list-add-account-password"),
                                     set_activates_default: true,
                                     connect_changed[sender] => move |entry| {
                                         sender.input(AddAccountInput::PasswordChanged(entry.text().to_string()))
@@ -91,7 +92,7 @@ impl Component for AddAccountDialog {
                                 #[name = "submit_btn"]
                                 gtk::Button {
                                     set_halign: gtk::Align::Center,
-                                    set_label: "Sign in",
+                                    set_label: tr!("account-list-add-account-submit-button"),
                                     add_css_class: "pill",
                                     add_css_class: "suggested-action",
                                     #[watch]

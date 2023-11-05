@@ -3,7 +3,7 @@ use std::{cell::RefCell, sync::Arc};
 use gtk::prelude::*;
 use relm4::{gtk, ComponentParts, SimpleComponent};
 
-use crate::video_player::backends::VideoPlayerBackend;
+use crate::{tr, video_player::backends::VideoPlayerBackend};
 
 pub struct Volume {
     video_player: Arc<RefCell<dyn VideoPlayerBackend>>,
@@ -40,11 +40,10 @@ impl SimpleComponent for Volume {
                     "audio-volume-high"
                 },
                 #[watch]
-                set_tooltip_text: Some(if model.muted {
-                    "Unmute"
-                } else {
-                    "Mute"
-                }),
+                set_tooltip_text: Some(tr!(
+                    "vp-volume-mute-tooltip",
+                    {"muted" => model.muted.to_string()},
+                )),
                 // set_halign: gtk::Align::End,
                 // set_hexpand: true,
                 connect_clicked[sender] => move |_| {

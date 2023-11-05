@@ -6,7 +6,7 @@ use std::{
 use gtk::prelude::*;
 use relm4::{gtk, ComponentParts, ComponentSender, MessageBroker, SimpleComponent};
 
-use crate::video_player::backends::VideoPlayerBackend;
+use crate::{tr, video_player::backends::VideoPlayerBackend};
 
 pub struct PlayPauseBroker(RwLock<MessageBroker<PlayPauseInput>>);
 
@@ -54,11 +54,10 @@ impl SimpleComponent for PlayPause {
                 "play-filled"
             },
             #[watch]
-            set_tooltip_text: Some(if model.playing {
-                "Pause"
-            } else {
-                "Play"
-            }),
+            set_tooltip_text: Some(tr!(
+                "vp-play-pause-tooltip",
+                {"playing" => model.playing.to_string()},
+            )),
             #[watch]
             set_sensitive: !model.loading,
             connect_clicked[sender] => move |_| {

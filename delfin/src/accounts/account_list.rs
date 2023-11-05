@@ -8,6 +8,7 @@ use crate::{
     config::{Account, Server},
     globals::CONFIG,
     jellyfin_api::api::user::AuthenticateByNameRes,
+    tr,
     utils::constants::PAGE_MARGIN,
 };
 
@@ -45,7 +46,7 @@ impl Component for AccountList {
 
     view! {
         adw::NavigationPage {
-            set_title: "Accounts",
+            set_title: tr!("account-list-page-title"),
 
             connect_showing[sender] => move |_| {
                 sender.input(AccountListInput::ReloadAccounts);
@@ -61,8 +62,8 @@ impl Component for AccountList {
 
                     adw::PreferencesGroup {
                         #[watch]
-                        set_title: &format!("Sign in to {}", &model.server.name),
-                        set_description: Some("Choose which account you'd like to sign in as"),
+                        set_title: tr!("account-list.title", { "serverName" => &*model.server.name }),
+                        set_description: Some(tr!("account-list.description")),
                         #[wrap(Some)]
                         set_header_suffix = &gtk::Button {
                             connect_clicked[sender] => move |_| {
@@ -70,7 +71,7 @@ impl Component for AccountList {
                             },
                             adw::ButtonContent {
                                 set_icon_name: "list-add-symbolic",
-                                set_label: "Add an account",
+                                set_label: tr!("account-list-add-account-button"),
                             },
                         },
 
@@ -87,8 +88,8 @@ impl Component for AccountList {
                             #[watch]
                             set_visible: model.accounts.is_empty(),
                             adw::ActionRow {
-                                set_title: "No Accounts Available",
-                                set_subtitle: "Add an account to start watching",
+                                set_title: tr!("account-list-empty.title"),
+                                set_subtitle: tr!("account-list-empty.subtitle"),
                             },
                         },
                     },

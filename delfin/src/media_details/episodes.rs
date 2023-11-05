@@ -10,7 +10,10 @@ use relm4::{
 };
 use uuid::Uuid;
 
-use crate::jellyfin_api::{api::shows::GetEpisodesOptionsBuilder, api_client::ApiClient};
+use crate::{
+    jellyfin_api::{api::shows::GetEpisodesOptionsBuilder, api_client::ApiClient},
+    tr,
+};
 
 use super::episode::Episode;
 
@@ -49,7 +52,7 @@ impl AsyncComponent for Episodes {
                 #[watch]
                 set_visible: model.episodes.is_empty(),
                 adw::ActionRow {
-                    set_title: "No episodes were found for this season.",
+                    set_title: tr!("media-details-episode-list-empty"),
                 },
             },
         }

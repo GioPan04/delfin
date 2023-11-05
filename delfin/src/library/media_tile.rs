@@ -12,6 +12,7 @@ use relm4::{
 use crate::{
     app::{AppInput, APP_BROKER},
     jellyfin_api::api_client::ApiClient,
+    tr,
     utils::item_name::ItemName,
 };
 
@@ -44,7 +45,7 @@ fn get_item_label(item: &BaseItemDto) -> String {
 <span size="small">{name}</span>"#
         ),
         (_, Some(name)) => name,
-        _ => "Unnamed Item".to_string(),
+        _ => tr!("library-media-tile-unnamed-item").to_string(),
     }
 }
 

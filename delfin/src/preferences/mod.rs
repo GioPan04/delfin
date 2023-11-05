@@ -4,6 +4,7 @@ use relm4::prelude::*;
 use crate::{
     config::video_player_config::{VideoPlayerBackendPreference, VideoPlayerSkipAmount},
     globals::CONFIG,
+    tr,
 };
 
 pub struct Preferences;
@@ -26,28 +27,34 @@ impl SimpleComponent for Preferences {
         adw::PreferencesWindow {
             set_visible: true,
             set_modal: true,
-            set_title: Some("Preferences"),
+            set_title: Some(tr!("preferences-window-title")),
 
             add = &adw::PreferencesPage {
-                set_title: "General",
+                set_title: tr!("preferences-page-general"),
                 add = &adw::PreferencesGroup {
-                    set_title: "Video Player",
+                    set_title: tr!("preferences-group-video-player"),
 
                     add = &adw::ComboRow {
-                        set_title: "Skip backwards amount",
-                        set_subtitle: "How many seconds to skip backwards at a time",
+                        set_title: tr!("preferences-video-player-skip-backwards.title"),
+                        set_subtitle: tr!("preferences-video-player-skip-backwards.subtitle"),
                         #[wrap(Some)]
-                        set_model = &gtk::StringList::new(&["10 seconds", "30 seconds"]),
+                        set_model = &gtk::StringList::new(&[
+                            tr!("preferences-skip-amount", {"seconds" => 10}),
+                            tr!("preferences-skip-amount", {"seconds" => 30}),
+                        ]),
                         set_selected: if let VideoPlayerSkipAmount::Ten = video_player_config.skip_backwards_amount { 0 } else { 1 },
                         connect_selected_notify[sender] => move |cb| {
                             sender.input(PreferencesInput::SkipBackwardsAmount(cb.selected()));
                         },
                     },
                     add = &adw::ComboRow {
-                        set_title: "Skip forwards amount",
-                        set_subtitle: "How many seconds to skip forwards at a time",
+                        set_title: tr!("preferences-video-player-skip-forwards.title"),
+                        set_subtitle: tr!("preferences-video-player-skip-forwards.subtitle"),
                         #[wrap(Some)]
-                        set_model = &gtk::StringList::new(&["10 seconds", "30 seconds"]),
+                        set_model = &gtk::StringList::new(&[
+                            tr!("preferences-skip-amount", {"seconds" => 10}),
+                            tr!("preferences-skip-amount", {"seconds" => 30}),
+                        ]),
                         set_selected: if let VideoPlayerSkipAmount::Ten = video_player_config.skip_forwards_amount { 0 } else { 1 },
                         connect_selected_notify[sender] => move |cb| {
                             sender.input(PreferencesInput::SkipForwardsAmount(cb.selected()));
@@ -55,9 +62,12 @@ impl SimpleComponent for Preferences {
                     },
 
                     add = &adw::ComboRow {
-                        set_title: "Video player backend",
+                        set_title: tr!("preferences-video-player-backend.title"),
                         #[wrap(Some)]
-                        set_model = &gtk::StringList::new(&["MPV", "GStreamer"]),
+                        set_model = &gtk::StringList::new(&[
+                            tr!("preferences-video-player-backend.value-mpv"),
+                            tr!("preferences-video-player-backend.value-gstreamer"),
+                        ]),
                         set_selected: if let VideoPlayerBackendPreference::Mpv = video_player_config.backend { 0 } else { 1 },
                         connect_selected_notify[sender] => move |cb| {
                             sender.input(PreferencesInput::Backend(cb.selected()));
@@ -65,7 +75,7 @@ impl SimpleComponent for Preferences {
                     },
 
                     add = &adw::SwitchRow {
-                        set_title: "HLS playback",
+                        set_title: tr!("preferences-video-player-hls-playback"),
                         set_active: video_player_config.hls_playback,
                         connect_active_notify[sender] => move |sr| {
                             sender.input(PreferencesInput::HlsPlayback(sr.is_active()));

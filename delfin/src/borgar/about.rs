@@ -1,6 +1,8 @@
 use gtk::prelude::*;
 use relm4::{prelude::*, ComponentParts, SimpleComponent};
 
+use crate::tr;
+
 pub(crate) struct About;
 
 #[relm4::component(pub(crate))]
@@ -15,7 +17,7 @@ impl SimpleComponent for About {
             set_modal: true,
             set_visible: true,
 
-            set_application_name: "Delfin",
+            set_application_name: tr!("app-name"),
             set_developer_name: "Avery ❤️",
             set_version: "0.0",
             set_license_type: gtk::License::Agpl30,
