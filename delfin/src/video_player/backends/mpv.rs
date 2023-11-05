@@ -276,15 +276,39 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
     }
 }
 
+fn get_track_name(track: Track) -> String {
+    let id = track.id() as usize;
+    let title = track.title().map(|s| s.to_string());
+    let language = track.language().map(|s| s.to_string());
+
+    match (title, language) {
+        (Some(title), Some(language)) => tr!(
+            "vp-backend-mpv-track-name.title-and-language",
+            {
+                "title" => title,
+                "language" => language,
+            },
+        )
+        .to_string(),
+        (Some(title), None) => title,
+        (None, Some(language)) => tr!(
+            "vp-backend-mpv-track-name.id-and-language",
+            {
+                "id" => id,
+                "language" => language,
+            },
+        )
+        .to_string(),
+        _ => tr!("vp-backend-mpv-track-name.id", {"id" => id}).to_string(),
+    }
+}
+
 impl From<Track> for SubtitleTrack {
     fn from(value: Track) -> Self {
         assert!(value.type_() == TrackType::Subtitle);
         Self {
             id: value.id() as usize,
-            name: value
-                .title()
-                .map(|s| s.to_string())
-                .unwrap_or(tr!("vp-unnamed-track").to_string()),
+            name: get_track_name(value),
         }
     }
 }
@@ -292,32 +316,9 @@ impl From<Track> for SubtitleTrack {
 impl From<Track> for AudioTrack {
     fn from(value: Track) -> Self {
         assert!(value.type_() == TrackType::Audio);
-
-        let id = value.id() as usize;
-        let title = value.title().map(|s| s.to_string());
-        let language = value.language().map(|s| s.to_string());
-
-        let name = match (title, language) {
-            (Some(title), Some(language)) => tr!(
-                "vp-backend-mpv-track-name.title-and-language",
-                {
-                    "title" => title,
-                    "language" => language,
-                },
-            )
-            .to_string(),
-            (Some(title), None) => title,
-            (None, Some(language)) => tr!(
-                "vp-backend-mpv-track-name.id-and-language",
-                {
-                    "id" => id,
-                    "language" => language,
-                },
-            )
-            .to_string(),
-            _ => tr!("vp-backend-mpv-track-name.id", {"id" => id}).to_string(),
-        };
-
-        Self { id, name }
+        Self {
+            id: value.id() as usize,
+            name: get_track_name(value),
+        }
     }
 }
