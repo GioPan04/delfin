@@ -41,6 +41,7 @@ pub struct VideoPlayer {
 
     show_controls: bool,
     show_controls_locked: bool,
+    revealer_reveal_child: bool,
     session_playback_reporter: SessionPlaybackReporter,
     player_state: PlayerState,
     next: Option<BaseItemDto>,
@@ -58,6 +59,7 @@ pub enum VideoPlayerInput {
     EndOfStream,
     StopPlayer,
     PlayerStateChanged(PlayerState),
+    SetRevealerRevealChild(bool),
 }
 
 #[derive(Debug)]
@@ -99,7 +101,10 @@ impl Component for VideoPlayer {
                         },
                     },
 
+                    #[name = "revealer"]
                     add_overlay = &gtk::Revealer {
+                        #[watch]
+                        set_visible: model.show_controls || model.revealer_reveal_child,
                         #[watch]
                         set_reveal_child: model.show_controls,
                         set_transition_type: gtk::RevealerTransitionType::Crossfade,
@@ -161,6 +166,7 @@ impl Component for VideoPlayer {
 
             show_controls,
             show_controls_locked: false,
+            revealer_reveal_child: show_controls,
             session_playback_reporter: SessionPlaybackReporter::default(),
             player_state: PlayerState::Loading,
             next: None,
@@ -208,6 +214,16 @@ impl Component for VideoPlayer {
         let video_player = binding.widget();
 
         let widgets = view_output!();
+        let revealer = &widgets.revealer;
+
+        revealer.connect_child_revealed_notify({
+            let sender = sender.clone();
+            move |revealer| {
+                sender.input(VideoPlayerInput::SetRevealerRevealChild(
+                    revealer.is_child_revealed(),
+                ));
+            }
+        });
 
         NEXT_UP_VISIBILE.subscribe(sender.input_sender(), |visible| {
             VideoPlayerInput::SetShowControls {
@@ -341,6 +357,9 @@ impl Component for VideoPlayer {
             }
             VideoPlayerInput::PlayerStateChanged(play_state) => {
                 self.set_player_state(play_state);
+            }
+            VideoPlayerInput::SetRevealerRevealChild(reveal) => {
+                self.revealer_reveal_child = reveal;
             }
         }
 
