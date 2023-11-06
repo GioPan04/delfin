@@ -1,0 +1,5 @@
+video_player_mpv/sys/build/
+video_player_mpv/sys/gir/
+video_player_mpv/sys/gir-files/
+video_player_mpv/sys/src/
+video_player_mpv/sys/tests/
