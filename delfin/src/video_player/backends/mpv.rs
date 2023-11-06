@@ -15,6 +15,10 @@ use super::{
     AudioTrack, PlayerState, PlayerStateChangedCallback, SubtitleTrack, VideoPlayerBackend,
 };
 
+fn uuid() -> Uuid {
+    Uuid::new_v4()
+}
+
 macro_rules! set_player_state {
     ($state:expr, $player_state_changed_callbacks:expr, $new_state:expr$(,)?) => {
         $state.replace($new_state);
@@ -28,7 +32,7 @@ pub struct VideoPlayerBackendMpv {
     widget: VideoPlayerMpv,
     state: Rc<Cell<PlayerState>>,
     player_state_changed_callbacks: Rc<RefCell<HashMap<Uuid, PlayerStateChangedCallback>>>,
-    signal_handler_ids: Vec<SignalHandlerId>,
+    signal_handler_ids: HashMap<Uuid, SignalHandlerId>,
 }
 
 impl std::fmt::Debug for VideoPlayerBackendMpv {
@@ -50,7 +54,7 @@ impl Default for VideoPlayerBackendMpv {
             widget,
             state,
             player_state_changed_callbacks,
-            signal_handler_ids: vec![],
+            signal_handler_ids: HashMap::default(),
         };
 
         mpv.widget.connect_core_idle({
@@ -196,83 +200,109 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
             .set_audio_track(audio_track_id.map(|id| id as u32).unwrap_or(0));
     }
 
-    fn connect_end_of_stream(&mut self, callback: Box<dyn Fn() + Send + 'static>) {
-        self.signal_handler_ids
-            .push(self.widget.connect_end_of_file(move |_| {
-                callback();
-            }))
+    fn disconnect_signal_handler(&mut self, id: &Uuid) {
+        match self.signal_handler_ids.remove(id) {
+            Some(signal_handler_id) => {
+                self.widget.disconnect(signal_handler_id);
+            }
+            None => {
+                println!("Signal handler not found when trying to disconnect: {id}");
+            }
+        };
     }
 
-    fn connect_position_updated(&mut self, callback: Box<dyn Fn(usize) + Send + Sync + 'static>) {
-        self.signal_handler_ids
-            .push(self.widget.connect_position_updated(move |_, val| {
+    fn connect_end_of_stream(&mut self, callback: Box<dyn Fn() + Send + 'static>) {
+        self.signal_handler_ids.insert(
+            uuid(),
+            self.widget.connect_end_of_file(move |_| {
+                callback();
+            }),
+        );
+    }
+
+    fn connect_position_updated(
+        &mut self,
+        callback: Box<dyn Fn(usize) + Send + Sync + 'static>,
+    ) -> Uuid {
+        let id = uuid();
+        self.signal_handler_ids.insert(
+            id,
+            self.widget.connect_position_updated(move |_, val| {
                 callback(val as usize);
-            }));
+            }),
+        );
+        id
     }
 
     fn connect_duration_updated(&mut self, callback: Box<dyn Fn(usize) + Send + Sync + 'static>) {
-        self.signal_handler_ids
-            .push(self.widget.connect_duration_updated(move |_, val| {
+        self.signal_handler_ids.insert(
+            uuid(),
+            self.widget.connect_duration_updated(move |_, val| {
                 callback(val as usize);
-            }));
+            }),
+        );
     }
 
     fn connect_mute_updated(&mut self, callback: Box<dyn Fn(bool) + Send + Sync + 'static>) {
-        self.signal_handler_ids
-            .push(self.widget.connect_mute_updated(move |_, muted| {
+        self.signal_handler_ids.insert(
+            uuid(),
+            self.widget.connect_mute_updated(move |_, muted| {
                 callback(muted);
-            }))
+            }),
+        );
     }
 
     fn connect_volume_updated(&mut self, callback: Box<dyn Fn(f64) + Send + Sync + 'static>) {
-        self.signal_handler_ids
-            .push(self.widget.connect_volume_updated(move |_, volume| {
+        self.signal_handler_ids.insert(
+            uuid(),
+            self.widget.connect_volume_updated(move |_, volume| {
                 callback(volume / 100.0);
-            }))
+            }),
+        );
     }
 
     fn connect_subtitle_tracks_updated(
         &mut self,
         callback: Box<dyn Fn(Vec<SubtitleTrack>) + Send + Sync + 'static>,
     ) {
-        self.signal_handler_ids
-            .push(
-                self.widget
-                    .connect_tracks_updated(move |_player, track_list| {
-                        let mut subtitle_tracks: Vec<SubtitleTrack> = vec![];
-                        for i in 0..track_list.len() {
-                            if let Some(track) = track_list.track(i) {
-                                if let TrackType::Subtitle = track.type_() {
-                                    subtitle_tracks.push(track.into());
-                                }
+        self.signal_handler_ids.insert(
+            uuid(),
+            self.widget
+                .connect_tracks_updated(move |_player, track_list| {
+                    let mut subtitle_tracks: Vec<SubtitleTrack> = vec![];
+                    for i in 0..track_list.len() {
+                        if let Some(track) = track_list.track(i) {
+                            if let TrackType::Subtitle = track.type_() {
+                                subtitle_tracks.push(track.into());
                             }
                         }
+                    }
 
-                        callback(subtitle_tracks);
-                    }),
-            );
+                    callback(subtitle_tracks);
+                }),
+        );
     }
 
     fn connect_audio_tracks_updated(
         &mut self,
         callback: Box<dyn Fn(Vec<AudioTrack>) + Send + Sync + 'static>,
     ) {
-        self.signal_handler_ids
-            .push(
-                self.widget
-                    .connect_tracks_updated(move |_player, track_list| {
-                        let mut audio_tracks: Vec<AudioTrack> = vec![];
-                        for i in 0..track_list.len() {
-                            if let Some(track) = track_list.track(i) {
-                                if let TrackType::Audio = track.type_() {
-                                    audio_tracks.push(track.into());
-                                }
+        self.signal_handler_ids.insert(
+            uuid(),
+            self.widget
+                .connect_tracks_updated(move |_player, track_list| {
+                    let mut audio_tracks: Vec<AudioTrack> = vec![];
+                    for i in 0..track_list.len() {
+                        if let Some(track) = track_list.track(i) {
+                            if let TrackType::Audio = track.type_() {
+                                audio_tracks.push(track.into());
                             }
                         }
+                    }
 
-                        callback(audio_tracks);
-                    }),
-            );
+                    callback(audio_tracks);
+                }),
+        );
     }
 }
 

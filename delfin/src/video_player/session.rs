@@ -11,11 +11,32 @@ use crate::{
 
 use super::backends::VideoPlayerBackend;
 
-pub fn start_session_reporting(
+#[derive(Default)]
+pub struct SessionPlaybackReporter(Option<Uuid>);
+
+impl SessionPlaybackReporter {
+    pub fn start(
+        &mut self,
+        api_client: Arc<ApiClient>,
+        item_id: &Uuid,
+        video_player: Arc<RefCell<dyn VideoPlayerBackend>>,
+    ) {
+        self.stop(video_player.clone());
+        self.0 = Some(start_session_reporting(api_client, item_id, video_player));
+    }
+
+    pub fn stop(&mut self, video_player: Arc<RefCell<dyn VideoPlayerBackend>>) {
+        if let Some(id) = self.0.take() {
+            video_player.borrow_mut().disconnect_signal_handler(&id);
+        }
+    }
+}
+
+fn start_session_reporting(
     api_client: Arc<ApiClient>,
     item_id: &Uuid,
     video_player: Arc<RefCell<dyn VideoPlayerBackend>>,
-) {
+) -> Uuid {
     let config = CONFIG.read();
 
     let position_update_frequency = config.video_player.position_update_frequency;
@@ -63,5 +84,5 @@ pub fn start_session_reporting(
                     _ => {}
                 }
             }
-        }));
+        }))
 }

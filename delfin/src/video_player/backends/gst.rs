@@ -98,6 +98,10 @@ impl VideoPlayerBackend for VideoPlayerBackendGst {
             .unwrap_or(0)
     }
 
+    fn disconnect_signal_handler(&mut self, _id: &Uuid) {
+        // TODO
+    }
+
     fn current_subtitle_track(&self) -> Option<usize> {
         self.player
             .current_subtitle_track()
@@ -143,11 +147,16 @@ impl VideoPlayerBackend for VideoPlayerBackendGst {
             .push(self.player.connect_end_of_stream(callback));
     }
 
-    fn connect_position_updated(&mut self, callback: Box<dyn Fn(usize) + Send + Sync + 'static>) {
+    fn connect_position_updated(
+        &mut self,
+        callback: Box<dyn Fn(usize) + Send + Sync + 'static>,
+    ) -> Uuid {
         self.signal_handler_ids
             .push(self.player.connect_position_updated(move |position| {
                 callback(position.seconds() as usize);
             }));
+        // TODO
+        Uuid::new_v4()
     }
 
     fn connect_duration_updated(&mut self, callback: Box<dyn Fn(usize) + Send + Sync + 'static>) {

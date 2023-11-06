@@ -10,8 +10,8 @@ use std::sync::Arc;
 
 use adw::prelude::*;
 use jellyfin_api::types::{BaseItemDto, BaseItemKind};
+use relm4::prelude::*;
 use relm4::{gtk, ComponentParts};
-use relm4::{prelude::*, JoinHandle};
 
 use crate::app::{AppInput, APP_BROKER};
 use crate::globals::CONFIG;
@@ -31,7 +31,7 @@ use self::controls::play_pause::{PlayPauseInput, PLAY_PAUSE_BROKER};
 use self::controls::scrubber::{ScrubberInput, SCRUBBER_BROKER};
 use self::controls::{VideoPlayerControls, VideoPlayerControlsInput};
 use self::next_up::NextUpInput;
-use self::session::start_session_reporting;
+use self::session::SessionPlaybackReporter;
 
 pub struct VideoPlayer {
     backend: Arc<RefCell<dyn VideoPlayerBackend>>,
@@ -41,7 +41,7 @@ pub struct VideoPlayer {
 
     show_controls: bool,
     show_controls_locked: bool,
-    session_reporting_handle: Option<JoinHandle<()>>,
+    session_playback_reporter: SessionPlaybackReporter,
     player_state: PlayerState,
     next: Option<BaseItemDto>,
 
@@ -161,7 +161,7 @@ impl Component for VideoPlayer {
 
             show_controls,
             show_controls_locked: false,
-            session_reporting_handle: None,
+            session_playback_reporter: SessionPlaybackReporter::default(),
             player_state: PlayerState::Loading,
             next: None,
 
@@ -268,7 +268,7 @@ impl Component for VideoPlayer {
                 }
 
                 // Starts a background task that continuously reports playback progress
-                start_session_reporting(
+                self.session_playback_reporter.start(
                     api_client.clone(),
                     &item.id.unwrap(),
                     self.backend.clone(),
@@ -337,10 +337,7 @@ impl Component for VideoPlayer {
                 }
 
                 // Stop background playback progress reporter
-                if let Some(session_reporting_handle) = &self.session_reporting_handle {
-                    session_reporting_handle.abort();
-                    self.session_reporting_handle = None;
-                }
+                self.session_playback_reporter.stop(self.backend.clone());
             }
             VideoPlayerInput::PlayerStateChanged(play_state) => {
                 self.set_player_state(play_state);
