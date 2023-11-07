@@ -30,6 +30,7 @@ pub struct VideoPlayerConfig {
     pub skip_forwards_amount: VideoPlayerSkipAmount,
     pub backend: VideoPlayerBackendPreference,
     pub hls_playback: bool,
+    pub intro_skipper: bool,
 }
 
 impl Default for VideoPlayerConfig {
@@ -40,6 +41,7 @@ impl Default for VideoPlayerConfig {
             skip_forwards_amount: VideoPlayerSkipAmount::Thirty,
             backend: VideoPlayerBackendPreference::Mpv,
             hls_playback: false,
+            intro_skipper: true,
         }
     }
 }

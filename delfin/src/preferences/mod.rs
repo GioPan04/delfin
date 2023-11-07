@@ -13,6 +13,7 @@ pub struct Preferences;
 pub enum PreferencesInput {
     SkipBackwardsAmount(u32),
     SkipForwardsAmount(u32),
+    IntroSkipper(bool),
     Backend(u32),
     HlsPlayback(bool),
 }
@@ -58,6 +59,17 @@ impl SimpleComponent for Preferences {
                         set_selected: if let VideoPlayerSkipAmount::Ten = video_player_config.skip_forwards_amount { 0 } else { 1 },
                         connect_selected_notify[sender] => move |cb| {
                             sender.input(PreferencesInput::SkipForwardsAmount(cb.selected()));
+                        },
+                    },
+
+                    add = &adw::SwitchRow {
+                        set_title: tr!("preferences-video-player-intro-skipper.title"),
+                        set_subtitle: tr!("preferences-video-player-intro-skipper.subtitle", {
+                            "introSkipperUrl" => "https://github.com/ConfusedPolarBear/intro-skipper/",
+                        }),
+                        set_active: video_player_config.intro_skipper,
+                        connect_active_notify[sender] => move |sr| {
+                            sender.input(PreferencesInput::IntroSkipper(sr.is_active()));
                         },
                     },
 
@@ -114,6 +126,9 @@ impl SimpleComponent for Preferences {
                     0 => VideoPlayerSkipAmount::Ten,
                     _ => VideoPlayerSkipAmount::Thirty,
                 };
+            }
+            PreferencesInput::IntroSkipper(intro_skipper) => {
+                config.video_player.intro_skipper = intro_skipper;
             }
             PreferencesInput::Backend(index) => {
                 config.video_player.backend = match index {

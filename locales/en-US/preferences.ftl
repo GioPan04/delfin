@@ -18,6 +18,10 @@ preferences-video-player-skip-forwards =
     .title = Skip forwards amount
     .subtitle = How many seconds to skip forwards at a time
 
+preferences-video-player-intro-skipper =
+    .title = Intro Skipper plugin
+    .subtitle = This requires the <a href="{$introSkipperUrl}">Intro Skipper</a> plugin to be installed on your server.
+
 preferences-video-player-backend =
     .title = Video player backend
     .value-mpv = MPV

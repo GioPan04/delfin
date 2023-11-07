@@ -44,7 +44,6 @@ use self::{
 
 pub struct VideoPlayerControls {
     show_controls: bool,
-    revealer_reveal_child: bool,
     next_prev_episodes: (Option<BaseItemDto>, Option<BaseItemDto>),
     // We need to keep these controllers around, even if we don't read them
     _scrubber: Option<Controller<Scrubber>>,
@@ -74,26 +73,32 @@ pub enum VideoPlayerControlsInput {
     SetNextPreviousEpisodes(Box<Option<BaseItemDto>>, Box<Option<BaseItemDto>>),
     PlayPreviousEpisode,
     PlayNextEpisode,
-    SetRevealerRevealChild(bool),
+    RevealerClicked,
+}
+
+#[derive(Debug)]
+pub enum VideoPlayerControlsOutput {
+    ShowControls,
 }
 
 #[relm4::component(pub)]
 impl SimpleComponent for VideoPlayerControls {
     type Init = VideoPlayerControlsInit;
     type Input = VideoPlayerControlsInput;
-    type Output = ();
+    type Output = VideoPlayerControlsOutput;
 
     view! {
         gtk::Revealer {
             #[watch]
-            set_visible: model.show_controls || model.revealer_reveal_child,
-            #[watch]
             set_reveal_child: model.show_controls,
             set_transition_type: gtk::RevealerTransitionType::Crossfade,
             set_valign: gtk::Align::End,
-            set_margin_start: 24,
-            set_margin_end: 24,
-            set_margin_bottom: 24,
+
+            add_controller = gtk::GestureClick {
+                connect_pressed[sender] => move |_, _, _, _| {
+                    sender.input(VideoPlayerControlsInput::RevealerClicked);
+                },
+            },
 
             #[name = "controls"]
             #[wrap(Some)]
@@ -121,7 +126,6 @@ impl SimpleComponent for VideoPlayerControls {
 
         let mut model = VideoPlayerControls {
             show_controls: default_show_controls,
-            revealer_reveal_child: default_show_controls,
             _skip_forwards_backwards: OnceCell::new(),
             next_prev_episodes: (None, None),
             _scrubber: None,
@@ -136,15 +140,6 @@ impl SimpleComponent for VideoPlayerControls {
         let widgets = view_output!();
         let controls = &widgets.controls;
         let second_row = &widgets.second_row;
-
-        root.connect_child_revealed_notify({
-            let sender = sender.clone();
-            move |revealer| {
-                sender.input(VideoPlayerControlsInput::SetRevealerRevealChild(
-                    revealer.is_child_revealed(),
-                ));
-            }
-        });
 
         SCRUBBER_BROKER.reset();
         SKIP_FORWARDS_BROKER.reset();
@@ -231,7 +226,7 @@ impl SimpleComponent for VideoPlayerControls {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: relm4::ComponentSender<Self>) {
+    fn update(&mut self, message: Self::Input, sender: relm4::ComponentSender<Self>) {
         match message {
             VideoPlayerControlsInput::SetShowControls(show_controls) => {
                 self.show_controls = show_controls
@@ -271,8 +266,12 @@ impl SimpleComponent for VideoPlayerControls {
                 }
             }
             VideoPlayerControlsInput::Noop => {}
-            VideoPlayerControlsInput::SetRevealerRevealChild(reveal) => {
-                self.revealer_reveal_child = reveal;
+            VideoPlayerControlsInput::RevealerClicked => {
+                if !self.show_controls {
+                    sender
+                        .output(VideoPlayerControlsOutput::ShowControls)
+                        .unwrap();
+                }
             }
         }
     }

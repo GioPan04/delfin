@@ -3,6 +3,7 @@ mod controls;
 mod gst_play_widget;
 mod next_up;
 mod session;
+mod skip_intro;
 
 use std::cell::RefCell;
 use std::sync::atomic::{self, AtomicBool};
@@ -10,6 +11,7 @@ use std::sync::Arc;
 
 use adw::prelude::*;
 use jellyfin_api::types::{BaseItemDto, BaseItemKind};
+use relm4::component::{AsyncComponent, AsyncComponentController, AsyncController};
 use relm4::prelude::*;
 use relm4::{gtk, ComponentParts};
 
@@ -32,6 +34,7 @@ use self::controls::scrubber::{ScrubberInput, SCRUBBER_BROKER};
 use self::controls::{VideoPlayerControls, VideoPlayerControlsInput};
 use self::next_up::NextUpInput;
 use self::session::SessionPlaybackReporter;
+use self::skip_intro::{SkipIntro, SkipIntroInput};
 
 pub struct VideoPlayer {
     backend: Arc<RefCell<dyn VideoPlayerBackend>>,
@@ -48,6 +51,7 @@ pub struct VideoPlayer {
 
     controls: Controller<VideoPlayerControls>,
     next_up: Controller<NextUp>,
+    skip_intro: AsyncController<SkipIntro>,
 }
 
 #[derive(Debug)]
@@ -127,7 +131,17 @@ impl Component for VideoPlayer {
                         set_height_request: 48,
                     },
 
-                    add_overlay: model.controls.widget(),
+                    add_overlay = &gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
+                        set_halign: gtk::Align::Fill,
+                        set_valign: gtk::Align::End,
+                        set_margin_start: 24,
+                        set_margin_end: 24,
+                        set_margin_bottom: 24,
+
+                        append = model.skip_intro.widget(),
+                        append = model.controls.widget(),
+                    },
 
                     add_overlay: model.next_up.widget(),
                 },
@@ -154,9 +168,14 @@ impl Component for VideoPlayer {
                 player: backend.clone(),
                 default_show_controls: show_controls,
             })
-            .detach();
+            .forward(sender.input_sender(), |msg| match msg {
+                controls::VideoPlayerControlsOutput::ShowControls => {
+                    VideoPlayerInput::ToggleControls
+                }
+            });
 
         let next_up = NextUp::builder().launch(backend.clone()).detach();
+        let skip_intro = SkipIntro::builder().launch(backend.clone()).detach();
 
         let model = VideoPlayer {
             backend,
@@ -173,6 +192,7 @@ impl Component for VideoPlayer {
 
             controls,
             next_up,
+            skip_intro,
         };
 
         model.backend.borrow_mut().connect_player_state_changed({
@@ -270,8 +290,8 @@ impl Component for VideoPlayer {
                         *item.clone(),
                     )));
 
-                // Report start of playback
                 if let Some(item_id) = item.id {
+                    // Report start of playback
                     relm4::spawn({
                         let api_client = api_client.clone();
                         async move {
@@ -281,6 +301,10 @@ impl Component for VideoPlayer {
                                 .unwrap();
                         }
                     });
+
+                    // Load intro skipper
+                    self.skip_intro
+                        .emit(SkipIntroInput::Load(item_id, api_client.clone()));
                 }
 
                 // Starts a background task that continuously reports playback progress
