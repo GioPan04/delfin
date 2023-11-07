@@ -27,9 +27,38 @@ const SHOW_NEXT_UP_AT: usize = 30;
 pub(crate) static NEXT_UP_VISIBILE: SharedState<bool> = SharedState::new();
 
 #[derive(Debug)]
+struct NextUpItem {
+    item: BaseItemDto,
+    name: Option<String>,
+}
+
+impl NextUpItem {
+    fn new(item: BaseItemDto) -> Self {
+        Self {
+            name: item.episode_name_with_number().or(item.name.clone()),
+            item,
+        }
+    }
+}
+
+#[derive(Debug)]
+struct MaybeNextUpItem(Option<NextUpItem>);
+
+impl fmt::Display for MaybeNextUpItem {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let name = self
+            .0
+            .as_ref()
+            .and_then(|n| n.name.clone())
+            .unwrap_or(tr!("vp-unnamed-item").to_string());
+        write!(f, "{}", name)
+    }
+}
+
+#[derive(Debug)]
 pub(crate) struct NextUp {
     state: NextUpState,
-    next_up: Option<BaseItemDto>,
+    next_up: MaybeNextUpItem,
     duration: Option<usize>,
     thumbnail: Option<Texture>,
 }
@@ -109,9 +138,15 @@ impl Component for NextUp {
 
             gtk::Label {
                 #[watch]
-                set_label: &model.next_up.as_ref().and_then(|n| n.episode_name_with_number().or(n.name.clone())).unwrap_or("".to_string()),
+                set_label: &model.next_up.to_string(),
+                #[watch]
+                set_tooltip_text: Some(&model.next_up.to_string()),
+                #[watch]
+                set_visible: model.next_up.0.as_ref().map(|n| n.name.is_some()).unwrap_or(false),
 
                 set_halign: gtk::Align::Start,
+                set_ellipsize: gtk::pango::EllipsizeMode::End,
+                set_max_width_chars: 36,
             },
 
             gtk::Box {
@@ -149,7 +184,7 @@ impl Component for NextUp {
     ) -> ComponentParts<Self> {
         let model = NextUp {
             state: NextUpState::Ready,
-            next_up: None,
+            next_up: MaybeNextUpItem(None),
             duration: None,
             thumbnail: None,
         };
@@ -177,12 +212,12 @@ impl Component for NextUp {
         match message {
             NextUpInput::Reset => {
                 self.state = NextUpState::Ready;
-                self.next_up = None;
+                self.next_up.0 = None;
                 self.duration = None;
                 self.set_visible(false);
             }
             NextUpInput::SetNextUp((next, api_client)) => {
-                self.next_up = *next;
+                self.next_up.0 = next.map(NextUpItem::new);
                 self.fetch_next_up_thumbnail(&sender, &api_client);
             }
             NextUpInput::SetDuration(duration) => {
@@ -190,7 +225,7 @@ impl Component for NextUp {
             }
             NextUpInput::SetPosition(position) => match self.state {
                 NextUpState::Ready => {
-                    if let (Some(_), Some(duration)) = (&self.next_up, &self.duration) {
+                    if let (Some(_), Some(duration)) = (&self.next_up.0, &self.duration) {
                         if duration.saturating_sub(position) <= SHOW_NEXT_UP_AT {
                             self.set_visible(true);
                         }
@@ -204,8 +239,8 @@ impl Component for NextUp {
                 _ => {}
             },
             NextUpInput::PlayNext => {
-                if let Some(next_up) = &self.next_up {
-                    APP_BROKER.send(AppInput::PlayVideo(next_up.clone()));
+                if let Some(next_up) = &self.next_up.0 {
+                    APP_BROKER.send(AppInput::PlayVideo(next_up.item.clone()));
                 }
             }
             NextUpInput::Hide => {
@@ -238,8 +273,8 @@ impl NextUp {
     }
 
     fn fetch_next_up_thumbnail(&mut self, sender: &ComponentSender<Self>, api_client: &ApiClient) {
-        if let Some(next_up) = &self.next_up {
-            if let Ok(img_url) = api_client.get_episode_thumbnail_url(next_up) {
+        if let Some(next_up) = &self.next_up.0 {
+            if let Ok(img_url) = api_client.get_episode_thumbnail_url(&next_up.item) {
                 sender.oneshot_command(async {
                     let img_bytes: VecDeque<u8> = reqwest::get(img_url)
                         .await

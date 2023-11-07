@@ -1,3 +1,5 @@
+vp-unnamed-item = Unnamed Item
+
 vp-next-up-starting = Next episode starting in {$remaining} {
         $remaining ->
             [one] second
