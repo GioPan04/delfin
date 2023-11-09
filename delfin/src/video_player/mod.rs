@@ -360,22 +360,25 @@ impl Component for VideoPlayer {
                 let position = self.backend.borrow().position();
 
                 // Report end of playback
-                if let (Some(api_client), Some(media)) = (&self.api_client, &self.media) {
-                    // Report end of playback
-                    relm4::spawn({
-                        let api_client = api_client.clone();
-                        let item_id = media.id.unwrap();
-                        async move {
-                            api_client
-                                .report_playback_stopped(&item_id, position)
-                                .await
-                                .unwrap();
-                            *LIBRARY_REFRESH_QUEUED.write() = true;
-                        }
-                    });
+                // (don't report if we're still loading)
+                if !matches!(self.player_state, PlayerState::Loading) {
+                    if let (Some(api_client), Some(media)) = (&self.api_client, &self.media) {
+                        // Report end of playback
+                        relm4::spawn({
+                            let api_client = api_client.clone();
+                            let item_id = media.id.unwrap();
+                            async move {
+                                api_client
+                                    .report_playback_stopped(&item_id, position)
+                                    .await
+                                    .unwrap();
+                                *LIBRARY_REFRESH_QUEUED.write() = true;
+                            }
+                        });
 
-                    self.api_client = None;
-                    self.media = None;
+                        self.api_client = None;
+                        self.media = None;
+                    }
                 }
 
                 // Stop background playback progress reporter
