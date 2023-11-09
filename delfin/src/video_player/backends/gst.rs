@@ -1,8 +1,9 @@
 use gst::{glib::SignalHandlerId, prelude::Cast};
 use gstplay::{traits::PlayStreamInfoExt, PlayAudioInfo, PlaySubtitleInfo};
 use uuid::Uuid;
+use video_player_gst::{gst, gstplay, GstVideoPlayer};
 
-use crate::{tr, video_player::gst_play_widget::GstVideoPlayer};
+use crate::tr;
 
 use super::{AudioTrack, PlayerStateChangedCallback, SubtitleTrack, VideoPlayerBackend};
 

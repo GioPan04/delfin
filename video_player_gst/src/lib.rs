@@ -10,6 +10,14 @@ use gtk::glib;
 use gtk::subclass::prelude::*;
 use relm4::gtk;
 
+pub use gst;
+pub use gstplay;
+
+pub fn init_gst() {
+    gst::init().expect("Error initializing GStreamer");
+    gstgtk4::plugin_register_static().expect("Error registering GST GTK4 plugin");
+}
+
 glib::wrapper! {
     pub struct GstVideoPlayer(ObjectSubclass<imp::GstVideoPlayer>)
         @extends gtk::Widget,

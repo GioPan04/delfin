@@ -291,9 +291,6 @@ dependencies = [
  "env_logger",
  "fluent-templates",
  "grass",
- "gst-plugin-gtk4",
- "gstreamer",
- "gstreamer-play",
  "jellyfin_api",
  "libadwaita",
  "regex",
@@ -309,6 +306,7 @@ dependencies = [
  "tracing",
  "unic-langid",
  "uuid",
+ "video_player_gst",
  "video_player_mpv",
  "whoami",
 ]
@@ -2768,6 +2766,16 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
+
+[[package]]
+name = "video_player_gst"
+version = "0.1.0"
+dependencies = [
+ "gst-plugin-gtk4",
+ "gstreamer",
+ "gstreamer-play",
+ "relm4",
+]
 
 [[package]]
 name = "video_player_mpv"
