@@ -21,6 +21,7 @@ use crate::jellyfin_api::api::shows::GetEpisodesOptionsBuilder;
 use crate::jellyfin_api::api_client::ApiClient;
 use crate::library::LIBRARY_REFRESH_QUEUED;
 use crate::tr;
+use crate::utils::bif::Thumbnail;
 use crate::utils::ticks::ticks_to_seconds;
 use crate::video_player::controls::skip_forwards_backwards::{
     SkipForwardsBackwardsInput, SKIP_BACKWARDS_BROKER, SKIP_FORWARDS_BROKER,
@@ -74,6 +75,7 @@ pub enum VideoPlayerOutput {
 #[derive(Debug)]
 pub enum VideoPlayerCommandOutput {
     LoadedNextPrev((Option<BaseItemDto>, Option<BaseItemDto>)),
+    LoadedTrickplay(Option<Vec<Thumbnail>>),
 }
 
 #[relm4::component(pub)]
@@ -317,6 +319,7 @@ impl Component for VideoPlayer {
                 self.api_client = Some(api_client);
 
                 self.fetch_next_prev(&sender, &item);
+                self.fetch_trickplay(&sender, &item);
             }
             VideoPlayerInput::SetShowControls { show, locked } => {
                 self.show_controls = show;
@@ -411,6 +414,11 @@ impl Component for VideoPlayer {
                     self.next_up
                         .emit(NextUpInput::SetNextUp((next, api_client.clone())));
                 }
+            }
+            VideoPlayerCommandOutput::LoadedTrickplay(thumbnails) => {
+                SCRUBBER_BROKER
+                    .read()
+                    .send(ScrubberInput::LoadedThumbnails(thumbnails));
             }
         }
     }
@@ -508,5 +516,50 @@ impl VideoPlayer {
         }
 
         sender.oneshot_command(async { VideoPlayerCommandOutput::LoadedNextPrev((None, None)) });
+    }
+
+    fn fetch_trickplay(&self, sender: &ComponentSender<Self>, item: &BaseItemDto) {
+        let (api_client, id) = match (&self.api_client, item.id) {
+            (Some(api_client), Some(id)) => (api_client, id),
+            _ => return,
+        };
+
+        sender.oneshot_command({
+            let api_client = api_client.clone();
+            async move {
+                if !CONFIG.read().video_player.jellyscrub {
+                    return VideoPlayerCommandOutput::LoadedTrickplay(None);
+                }
+
+                let manifest = match api_client.get_trickplay_manifest(&id).await {
+                    Ok(Some(manifest)) if !manifest.width_resolutions.is_empty() => manifest,
+                    Ok(None) | Ok(Some(_)) => {
+                        return VideoPlayerCommandOutput::LoadedTrickplay(None);
+                    }
+                    Err(err) => {
+                        println!("Error fetching trickplay manifest: {err}");
+                        return VideoPlayerCommandOutput::LoadedTrickplay(None);
+                    }
+                };
+
+                let width = match manifest.width_resolutions.iter().max() {
+                    Some(width) => width,
+                    _ => return VideoPlayerCommandOutput::LoadedTrickplay(None),
+                };
+
+                let thumbnails = match api_client.get_trickplay_thumbnails(&id, *width).await {
+                    Ok(Some(thumbnails)) => thumbnails,
+                    Ok(None) => {
+                        return VideoPlayerCommandOutput::LoadedTrickplay(None);
+                    }
+                    Err(err) => {
+                        println!("Error fetching trickplay thumbnails: {err}");
+                        return VideoPlayerCommandOutput::LoadedTrickplay(None);
+                    }
+                };
+
+                VideoPlayerCommandOutput::LoadedTrickplay(Some(thumbnails))
+            }
+        });
     }
 }

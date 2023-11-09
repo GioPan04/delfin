@@ -22,6 +22,10 @@ preferences-video-player-intro-skipper =
     .title = Intro Skipper plugin
     .subtitle = This requires the <a href="{$introSkipperUrl}">Intro Skipper</a> plugin to be installed on your server.
 
+preferences-video-player-jellyscrub =
+    .title = Jellyscrub plugin
+    .subtitle = This requires the <a href="{$jellyscrubUrl}">Jellyscrub</a> plugin to be installed on your server.
+
 preferences-video-player-backend =
     .title = Video player backend
     .value-mpv = MPV

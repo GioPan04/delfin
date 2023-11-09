@@ -14,6 +14,7 @@ pub enum PreferencesInput {
     SkipBackwardsAmount(u32),
     SkipForwardsAmount(u32),
     IntroSkipper(bool),
+    Jellyscrub(bool),
     Backend(u32),
     HlsPlayback(bool),
 }
@@ -73,6 +74,17 @@ impl SimpleComponent for Preferences {
                         },
                     },
 
+                    add = &adw::SwitchRow {
+                        set_title: tr!("preferences-video-player-jellyscrub.title"),
+                        set_subtitle: tr!("preferences-video-player-jellyscrub.subtitle", {
+                            "jellyscrubUrl" => "https://github.com/nicknsy/jellyscrub/",
+                        }),
+                        set_active: video_player_config.jellyscrub,
+                        connect_active_notify[sender] => move |sr| {
+                            sender.input(PreferencesInput::Jellyscrub(sr.is_active()));
+                        },
+                    },
+
                     add = &adw::ComboRow {
                         set_title: tr!("preferences-video-player-backend.title"),
                         #[wrap(Some)]
@@ -129,6 +141,9 @@ impl SimpleComponent for Preferences {
             }
             PreferencesInput::IntroSkipper(intro_skipper) => {
                 config.video_player.intro_skipper = intro_skipper;
+            }
+            PreferencesInput::Jellyscrub(jellyscrub) => {
+                config.video_player.jellyscrub = jellyscrub;
             }
             PreferencesInput::Backend(index) => {
                 config.video_player.backend = match index {

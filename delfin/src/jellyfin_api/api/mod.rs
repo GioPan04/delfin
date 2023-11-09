@@ -5,5 +5,6 @@ pub mod item;
 pub mod latest;
 pub mod playstate;
 pub mod shows;
+pub mod trickplay;
 pub mod user;
 pub mod views;

@@ -1,14 +1,15 @@
+use bytes::Buf;
 use std::{
     cell::RefCell,
     sync::{Arc, RwLock, RwLockReadGuard},
 };
 
-use gdk::Rectangle;
+use gdk::{Rectangle, Texture};
 use graphene::Point;
-use gtk::{gdk, graphene, prelude::*};
+use gtk::{gdk, gdk_pixbuf, graphene, prelude::*};
 use relm4::{prelude::*, MessageBroker};
 
-use crate::{tr, video_player::backends::VideoPlayerBackend};
+use crate::{tr, utils::bif::Thumbnail, video_player::backends::VideoPlayerBackend};
 
 pub(crate) struct ScrubberBroker(RwLock<MessageBroker<ScrubberInput>>);
 
@@ -48,6 +49,7 @@ impl DurationDisplay {
 struct ScrubberPopover {
     position: f64,
     timestamp: usize,
+    thumbnail: Option<Texture>,
 }
 
 pub(crate) struct Scrubber {
@@ -61,6 +63,7 @@ pub(crate) struct Scrubber {
 
     scrubbing: bool,
     popover: Option<ScrubberPopover>,
+    thumbnails: Option<Vec<Thumbnail>>,
 }
 
 #[derive(Debug)]
@@ -73,6 +76,7 @@ pub enum ScrubberInput {
     SetScrubbing(bool),
     ScrubberMouseHover(f64),
     ScrubberMouseLeave,
+    LoadedThumbnails(Option<Vec<Thumbnail>>),
 }
 
 #[relm4::component(pub(crate))]
@@ -146,6 +150,15 @@ impl Component for Scrubber {
 
                 gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
+                    set_spacing: 4,
+
+                    gtk::Picture {
+                        add_css_class: "scrubber-popover-thumbnail",
+                        #[watch]
+                        set_paintable: model.popover
+                            .as_ref()
+                            .and_then(|p| p.thumbnail.as_ref())
+                    },
 
                     #[name = "popover_label"]
                     gtk::Label {
@@ -204,6 +217,7 @@ impl Component for Scrubber {
             duration_display: DurationDisplay::Total,
             scrubbing: false,
             popover: None,
+            thumbnails: None,
         };
 
         let widgets = view_output!();
@@ -262,14 +276,46 @@ impl Component for Scrubber {
                 self.popover = Some(ScrubberPopover {
                     position: popover_position.map(|p| p.x()).unwrap_or(0.0) as f64,
                     timestamp,
+                    thumbnail: self.get_thumbnail(timestamp),
                 });
             }
             ScrubberInput::ScrubberMouseLeave => {
                 self.popover = None;
             }
+            ScrubberInput::LoadedThumbnails(thumbnails) => {
+                self.thumbnails = thumbnails;
+            }
         }
 
         self.update_view(widgets, sender);
+    }
+}
+
+impl Scrubber {
+    fn get_thumbnail(&self, timestamp: usize) -> Option<Texture> {
+        let thumbnails = match &self.thumbnails {
+            Some(thumbnails) => thumbnails,
+            None => return None,
+        };
+
+        let mut nearest_thumbnail_idx = 0;
+        for (i, thumbnail) in thumbnails.iter().enumerate() {
+            if thumbnail.timestamp < timestamp {
+                nearest_thumbnail_idx = i
+            }
+        }
+
+        let image = &thumbnails[nearest_thumbnail_idx].image;
+        let pixbuf = match gdk_pixbuf::Pixbuf::from_read(image.clone().reader()) {
+            Ok(pixbuf) => pixbuf,
+            Err(err) => {
+                println!(
+                    "Error creating pixbuf for scrubber thumbnail at timestamp {timestamp}: {err}"
+                );
+                return None;
+            }
+        };
+        Some(Texture::for_pixbuf(&pixbuf))
     }
 }
 
