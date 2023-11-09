@@ -3,16 +3,16 @@ use std::{
     sync::{Arc, RwLock, RwLockReadGuard},
 };
 
-use glib::closure;
-use gtk::{glib, prelude::*};
-use relm4::{
-    gtk::{self, ExpressionWatch},
-    Component, ComponentParts, MessageBroker,
-};
+use gdk::Rectangle;
+use graphene::Point;
+use gtk::{gdk, graphene, prelude::*};
+use relm4::{prelude::*, MessageBroker};
 
 use crate::{tr, video_player::backends::VideoPlayerBackend};
 
 pub(crate) struct ScrubberBroker(RwLock<MessageBroker<ScrubberInput>>);
+
+const TIMESTAMP_WIDTH: i32 = 80;
 
 impl ScrubberBroker {
     const fn new() -> Self {
@@ -45,26 +45,34 @@ impl DurationDisplay {
     }
 }
 
+struct ScrubberPopover {
+    position: f64,
+    timestamp: usize,
+}
+
 pub(crate) struct Scrubber {
     video_player: Arc<RefCell<dyn VideoPlayerBackend>>,
+
     loading: bool,
+
     position: usize,
     duration: usize,
-    scrubber_being_moved: bool,
     duration_display: DurationDisplay,
-    // While the scrubber is being moved, we bind it's value to the position
-    // label and store the binding here, so that we can unbind it later.
-    scrubber_moving_position_binding: Option<ExpressionWatch>,
+
+    scrubbing: bool,
+    popover: Option<ScrubberPopover>,
 }
 
 #[derive(Debug)]
 pub enum ScrubberInput {
     Reset,
-    SetPlaying,
-    SetScrubberBeingMoved(bool),
-    ToggleDurationDisplay,
     SetPosition(usize),
     SetDuration(usize),
+    SetPlaying,
+    ToggleDurationDisplay,
+    SetScrubbing(bool),
+    ScrubberMouseHover(f64),
+    ScrubberMouseLeave,
 }
 
 #[relm4::component(pub(crate))]
@@ -83,6 +91,7 @@ impl Component for Scrubber {
                 #[watch]
                 set_label: &seconds_to_timestamp(model.position),
                 add_css_class: "scrubber-position-label",
+                set_width_request: TIMESTAMP_WIDTH,
             },
 
             #[name = "scrubber"]
@@ -97,20 +106,57 @@ impl Component for Scrubber {
                 set_sensitive: !model.loading,
 
                 add_controller = gtk::GestureClick {
-                    connect_pressed[sender] => move |_, _, _, _| {
-                        sender.input(ScrubberInput::SetScrubberBeingMoved(true));
+                    connect_pressed[sender] => move |_, _, x, _| {
+                        sender.input(ScrubberInput::SetScrubbing(true));
+                        // Update position so we seek correctly if user immediately releases click
+                        sender.input(ScrubberInput::ScrubberMouseHover(x));
                     },
                     connect_unpaired_release[sender] => move |_, _, _, _, _| {
-                        sender.input(ScrubberInput::SetScrubberBeingMoved(false));
+                        sender.input(ScrubberInput::SetScrubbing(false));
                     },
                     connect_stopped[sender] => move |gesture| {
                         if gesture.current_button() == 0 {
-                            sender.input(ScrubberInput::SetScrubberBeingMoved(false));
+                            sender.input(ScrubberInput::SetScrubbing(false));
                         }
+                    },
+                },
+
+                add_controller = gtk::EventControllerMotion {
+                    connect_motion[sender] => move |_, x, _| {
+                        sender.input(ScrubberInput::ScrubberMouseHover(x));
+                    },
+                    connect_leave[sender] => move |_| {
+                        sender.input(ScrubberInput::ScrubberMouseLeave);
                     },
                 },
             },
 
+            #[name = "popover"]
+            gtk::Popover {
+                set_autohide: false,
+                set_position: gtk::PositionType::Top,
+
+                #[watch]
+                set_visible: model.popover.is_some(),
+                #[watch]
+                set_pointing_to: model.popover
+                    .as_ref()
+                    .map(|p| Rectangle::new(p.position as i32 , -15, 0, 0))
+                    .as_ref(),
+
+                gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
+
+                    #[name = "popover_label"]
+                    gtk::Label {
+                        #[watch]
+                        set_label: &model.popover
+                            .as_ref()
+                            .map(|p| seconds_to_timestamp(p.timestamp))
+                            .unwrap_or("".to_string()),
+                    },
+                },
+            },
 
             #[name = "duration"]
             gtk::Button {
@@ -121,6 +167,7 @@ impl Component for Scrubber {
                     DurationDisplay::Total => tr!("vp-duration-tooltip.total").to_string(),
                     DurationDisplay::Remaining => tr!("vp-duration-tooltip.remaining").to_string(),
                 }),
+                set_width_request: TIMESTAMP_WIDTH,
                 add_css_class: "flat",
                 add_css_class: "scrubber-duration-label",
                 connect_clicked[sender] => move |_| {
@@ -135,24 +182,6 @@ impl Component for Scrubber {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let model = Scrubber {
-            video_player: video_player.clone(),
-            loading: true,
-            position: 0,
-            duration: 0,
-            scrubber_being_moved: false,
-            duration_display: DurationDisplay::Total,
-            scrubber_moving_position_binding: None,
-        };
-
-        let widgets = view_output!();
-        let scrubber = &widgets.scrubber;
-
-        // Allow clicking on any scrubber position to seek to that timestamp
-        // By default, this would move the scrubber by a set increment
-        let settings = scrubber.settings();
-        settings.set_gtk_primary_button_warps_slider(true);
-
         video_player.borrow_mut().connect_position_updated({
             let sender = sender.clone();
             Box::new(move |position| {
@@ -167,74 +196,76 @@ impl Component for Scrubber {
             })
         });
 
-        ComponentParts { model, widgets }
+        let model = Scrubber {
+            video_player,
+            loading: true,
+            position: 0,
+            duration: 0,
+            duration_display: DurationDisplay::Total,
+            scrubbing: false,
+            popover: None,
+        };
+
+        let widgets = view_output!();
+
+        relm4::ComponentParts { model, widgets }
     }
 
     fn update_with_view(
         &mut self,
         widgets: &mut Self::Widgets,
         message: Self::Input,
-        sender: relm4::ComponentSender<Self>,
+        sender: ComponentSender<Self>,
         _root: &Self::Root,
     ) {
+        let scrubber = &widgets.scrubber;
+        let popover = &widgets.popover;
+
         match message {
             ScrubberInput::Reset => {
                 self.loading = true;
                 self.position = 0;
                 self.duration = 0;
-                self.scrubber_being_moved = false;
-            }
-            ScrubberInput::SetPlaying => {
-                self.loading = false;
-            }
-            ScrubberInput::SetScrubberBeingMoved(scrubber_being_moved) => {
-                self.scrubber_being_moved = scrubber_being_moved;
-
-                let scrubber = &widgets.scrubber;
-                let position = &widgets.position;
-
-                if !scrubber_being_moved {
-                    self.position = scrubber.value() as usize;
-                }
-
-                if scrubber_being_moved {
-                    self.scrubber_moving_position_binding = Some(
-                        scrubber
-                            .adjustment()
-                            .property_expression("value")
-                            .chain_closure::<String>(closure!(
-                                |_: Option<glib::Object>, position: f64| {
-                                    seconds_to_timestamp(position as usize)
-                                }
-                            ))
-                            .bind(position, "label", gtk::Widget::NONE),
-                    );
-                } else if let Some(scrubber_moving_position_binding) =
-                    &self.scrubber_moving_position_binding
-                {
-                    scrubber_moving_position_binding.unwatch();
-                    self.scrubber_moving_position_binding = None;
-
-                    self.video_player
-                        .borrow()
-                        .seek_to(scrubber.value() as usize);
-                }
-            }
-
-            ScrubberInput::ToggleDurationDisplay => {
-                self.duration_display = self.duration_display.toggle();
             }
             ScrubberInput::SetPosition(position) => {
-                let scrubber = &widgets.scrubber;
-
-                if self.scrubber_being_moved {
-                    self.position = scrubber.value() as usize;
-                } else {
+                if !self.scrubbing {
                     self.position = position;
                 }
             }
             ScrubberInput::SetDuration(duration) => {
                 self.duration = duration;
+            }
+            ScrubberInput::SetPlaying => {
+                self.loading = false;
+            }
+            ScrubberInput::ToggleDurationDisplay => {
+                self.duration_display = self.duration_display.toggle();
+            }
+            ScrubberInput::SetScrubbing(scrubbing) => {
+                self.scrubbing = scrubbing;
+
+                if !scrubbing {
+                    self.video_player.borrow().seek_to(self.position);
+                }
+            }
+            ScrubberInput::ScrubberMouseHover(position) => {
+                let percent = (position / scrubber.width() as f64).clamp(0.0, 1.0);
+                let timestamp = (self.duration as f64 * percent) as usize;
+
+                if self.scrubbing {
+                    self.position = timestamp;
+                }
+
+                let popover_position =
+                    scrubber.compute_point(popover, &Point::new(position as f32, 0.0));
+
+                self.popover = Some(ScrubberPopover {
+                    position: popover_position.map(|p| p.x()).unwrap_or(0.0) as f64,
+                    timestamp,
+                });
+            }
+            ScrubberInput::ScrubberMouseLeave => {
+                self.popover = None;
             }
         }
 
