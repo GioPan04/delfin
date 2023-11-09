@@ -32,6 +32,7 @@ preferences-video-player-jellyscrub =
 
 preferences-video-player-backend =
     .title = Video player backend
+    .subtitle = Requires restarting {app-name}.
     .value-mpv = MPV
     .value-gstreamer = GStreamer
 

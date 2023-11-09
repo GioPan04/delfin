@@ -1,11 +1,13 @@
 use delfin::app::{App, APP_BROKER};
 use relm4::RelmApp;
-use video_player_gst::init_gst;
 
 fn main() {
     env_logger::init();
 
-    init_gst();
+    #[cfg(feature = "gst")]
+    {
+        video_player_gst::init_gst();
+    }
 
     let app = if cfg!(debug_assertions) {
         RelmApp::new("cafe.avery.Delfin.Devel")

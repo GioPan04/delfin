@@ -86,7 +86,9 @@ impl SimpleComponent for Preferences {
                     },
 
                     add = &adw::ComboRow {
+                        set_visible: cfg!(feature = "gst"),
                         set_title: tr!("preferences-video-player-backend.title"),
+                        set_subtitle: tr!("preferences-video-player-backend.subtitle"),
                         #[wrap(Some)]
                         set_model = &gtk::StringList::new(&[
                             tr!("preferences-video-player-backend.value-mpv"),

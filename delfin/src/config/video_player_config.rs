@@ -3,9 +3,7 @@ use std::{cell::RefCell, sync::Arc};
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-use crate::video_player::backends::{
-    gst::VideoPlayerBackendGst, mpv::VideoPlayerBackendMpv, VideoPlayerBackend,
-};
+use crate::video_player::backends::{mpv::VideoPlayerBackendMpv, VideoPlayerBackend};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum VideoPlayerBackendPreference {
@@ -17,7 +15,18 @@ impl From<VideoPlayerBackendPreference> for Arc<RefCell<dyn VideoPlayerBackend>>
     fn from(val: VideoPlayerBackendPreference) -> Self {
         match val {
             VideoPlayerBackendPreference::Mpv => Arc::<RefCell<VideoPlayerBackendMpv>>::default(),
-            VideoPlayerBackendPreference::Gst => Arc::<RefCell<VideoPlayerBackendGst>>::default(),
+            VideoPlayerBackendPreference::Gst => {
+                #[cfg(feature = "gst")]
+                {
+                    Arc::<RefCell<crate::video_player::backends::gst::VideoPlayerBackendGst>>::default()
+                }
+
+                #[cfg(not(feature = "gst"))]
+                {
+                    println!("GStreamer backend not available, falling back to MPV backend");
+                    Arc::<RefCell<VideoPlayerBackendMpv>>::default()
+                }
+            }
         }
     }
 }

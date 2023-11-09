@@ -3,7 +3,9 @@ use std::fmt;
 use relm4::gtk;
 use uuid::Uuid;
 
+#[cfg(feature = "gst")]
 pub mod gst;
+
 pub mod mpv;
 
 #[derive(Clone, Debug)]
