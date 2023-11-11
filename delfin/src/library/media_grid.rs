@@ -2,17 +2,14 @@ use std::sync::Arc;
 
 use gtk::prelude::*;
 use jellyfin_api::types::BaseItemDto;
-use relm4::{
-    component::{AsyncComponent, AsyncComponentController, AsyncController},
-    gtk, ComponentParts, ComponentSender, SimpleComponent,
-};
+use relm4::prelude::*;
 
 use crate::jellyfin_api::api_client::ApiClient;
 
 use super::media_tile::{MediaTile, MediaTileDisplay};
 
 pub(crate) struct MediaGrid {
-    media_tiles: Vec<AsyncController<MediaTile>>,
+    media_tiles: Vec<Controller<MediaTile>>,
 }
 
 pub(crate) struct MediaGridInit {

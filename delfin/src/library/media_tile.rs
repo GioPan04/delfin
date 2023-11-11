@@ -1,12 +1,10 @@
 use std::{collections::VecDeque, sync::Arc};
 
-use gtk::prelude::*;
+use gdk::Texture;
 use jellyfin_api::types::BaseItemDto;
 use relm4::{
-    component::{AsyncComponent, AsyncComponentParts},
-    gtk::{self, gdk, gdk_pixbuf},
-    loading_widgets::LoadingWidgets,
-    view, AsyncComponentSender,
+    gtk::{self, gdk, gdk_pixbuf, prelude::*},
+    Component, ComponentParts, ComponentSender,
 };
 
 use crate::{
@@ -51,14 +49,20 @@ fn get_item_label(item: &BaseItemDto) -> String {
 
 pub struct MediaTile {
     media: BaseItemDto,
+    thumbnail: Option<Texture>,
 }
 
-#[relm4::component(pub async)]
-impl AsyncComponent for MediaTile {
+#[derive(Debug)]
+pub enum MediaTileCommandOutput {
+    ThumbnailLoaded(Option<Texture>),
+}
+
+#[relm4::component(pub)]
+impl Component for MediaTile {
     type Init = (BaseItemDto, MediaTileDisplay, Arc<ApiClient>);
-    type CommandOutput = ();
     type Input = ();
     type Output = ();
+    type CommandOutput = MediaTileCommandOutput;
 
     view! {
         gtk::Box {
@@ -66,6 +70,7 @@ impl AsyncComponent for MediaTile {
             set_halign: gtk::Align::Center,
             set_spacing: 8,
             add_css_class: "media-tile",
+
 
             #[name = "overlay"]
             gtk::Overlay {
@@ -94,10 +99,22 @@ impl AsyncComponent for MediaTile {
 
                 #[name = "image"]
                 gtk::Picture {
-                    set_content_fit: gtk::ContentFit::Cover,
+                    #[watch]
+                    set_paintable: model.thumbnail.as_ref(),
 
+                    set_content_fit: gtk::ContentFit::Cover,
                     set_width_request: tile_display.width(),
                     set_height_request: tile_display.height(),
+                },
+
+                add_overlay = &gtk::Spinner {
+                    #[watch]
+                    set_visible: model.thumbnail.is_none(),
+                    start: (),
+                    set_halign: gtk::Align::Center,
+                    set_valign: gtk::Align::Center,
+                    set_width_request: 32,
+                    set_height_request: 32,
                 },
 
                 add_overlay = &gtk::CenterBox {
@@ -144,43 +161,42 @@ impl AsyncComponent for MediaTile {
         }
     }
 
-    fn init_loading_widgets(
-        root: &mut Self::Root,
-    ) -> Option<relm4::loading_widgets::LoadingWidgets> {
-        view! {
-            #[local_ref]
-            root {
-                #[name(spinner)]
-                gtk::Spinner {
-                    start: (),
-                    set_halign: gtk::Align::Center,
-                    set_valign: gtk::Align::Center,
-                    set_hexpand: true,
-                    set_vexpand: true,
-                }
-            }
-        }
-        Some(LoadingWidgets::new(root, spinner))
-    }
-
-    async fn init(
+    fn init(
         init: Self::Init,
-        root: Self::Root,
-        _sender: AsyncComponentSender<Self>,
-    ) -> AsyncComponentParts<Self> {
+        root: &Self::Root,
+        sender: ComponentSender<Self>,
+    ) -> ComponentParts<Self> {
         let (media, tile_display, api_client) = init;
 
         let model = MediaTile {
             media: media.clone(),
+            thumbnail: None,
         };
 
         let widgets = view_output!();
-        let image = &widgets.image;
 
-        let paintable = get_thumbnail(api_client, &model.media, &tile_display).await;
-        image.set_paintable(paintable.as_ref());
+        sender.oneshot_command({
+            let media = model.media.clone();
+            async move {
+                let thumbnail = get_thumbnail(api_client, &media, &tile_display).await;
+                MediaTileCommandOutput::ThumbnailLoaded(thumbnail)
+            }
+        });
 
-        AsyncComponentParts { model, widgets }
+        ComponentParts { model, widgets }
+    }
+
+    fn update_cmd(
+        &mut self,
+        message: Self::CommandOutput,
+        _sender: ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match message {
+            MediaTileCommandOutput::ThumbnailLoaded(thumbnail) => {
+                self.thumbnail = thumbnail;
+            }
+        }
     }
 }
 
@@ -208,6 +224,6 @@ async fn get_thumbnail(
         .collect();
 
     let pixbuf = gdk_pixbuf::Pixbuf::from_read(img_bytes)
-        .expect("Error creating media tile pixbuf: {img_url}");
+        .unwrap_or_else(|_| panic!("Error creating media tile pixbuf: {:#?}", media.id));
     Some(gdk::Texture::for_pixbuf(&pixbuf))
 }

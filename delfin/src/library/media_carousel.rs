@@ -3,11 +3,7 @@ use std::sync::Arc;
 use adw::prelude::*;
 use gtk::glib;
 use jellyfin_api::types::BaseItemDto;
-use relm4::{
-    component::{AsyncComponent, AsyncComponentController, AsyncController},
-    prelude::*,
-    ComponentParts,
-};
+use relm4::{prelude::*, ComponentParts};
 
 use crate::{globals::SHIFT_STATE, jellyfin_api::api_client::ApiClient};
 
@@ -16,7 +12,7 @@ use super::media_tile::{MediaTile, MediaTileDisplay};
 const MIN_PADDING: i32 = 16;
 
 pub(crate) struct MediaCarousel {
-    media_tiles: Vec<AsyncController<MediaTile>>,
+    media_tiles: Vec<Controller<MediaTile>>,
     pages: Vec<gtk::Box>,
 }
 
@@ -150,7 +146,7 @@ impl Component for MediaCarousel {
 
         carousel_indicator.set_carousel(Some(carousel));
 
-        let media_tiles: Vec<AsyncController<MediaTile>> = media
+        let media_tiles: Vec<Controller<MediaTile>> = media
             .iter()
             .map(|media| {
                 MediaTile::builder()
@@ -189,7 +185,7 @@ impl Component for MediaCarousel {
                 }
                 self.pages.clear();
 
-                let media_tile_chunks: Vec<&[AsyncController<MediaTile>]> =
+                let media_tile_chunks: Vec<&[Controller<MediaTile>]> =
                     self.media_tiles.chunks(tiles_per_page as usize).collect();
 
                 for chunk in media_tile_chunks {
