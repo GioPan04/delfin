@@ -103,8 +103,7 @@ impl Component for App {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        // TODO: debug wrong theme
-        // adw::StyleManager::default().set_color_scheme(adw::ColorScheme::ForceDark);
+        adw::StyleManager::default().set_color_scheme(CONFIG.read().general.theme().into());
 
         // Use development styles when running debug build
         #[cfg(debug_assertions)]

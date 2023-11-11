@@ -28,6 +28,7 @@ impl SimpleComponent for VideoPlayerPreferences {
     view! {
         &adw::PreferencesPage {
             set_title: tr!("prefs-vp-page"),
+            set_icon_name: Some("play-filled"),
 
             add = &adw::PreferencesGroup {
                 set_title: tr!("prefs-vp-interface"),

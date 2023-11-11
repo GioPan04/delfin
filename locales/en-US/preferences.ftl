@@ -1,6 +1,16 @@
 prefs-window-title = Preferences
 
+prefs-general-page = General
 prefs-vp-page = Video Player
+
+# General
+# =======
+
+prefs-general-theme =
+    .title = Theme
+    .option-default = System Default
+    .option-light = Light
+    .option-dark = Dark
 
 # Interface
 # =========

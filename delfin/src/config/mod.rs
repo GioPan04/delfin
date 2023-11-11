@@ -1,3 +1,4 @@
+pub mod general;
 pub mod video_player_config;
 
 use std::{fs, path::PathBuf};
@@ -8,7 +9,7 @@ use sys_locale::get_locale;
 use unic_langid::{langid, LanguageIdentifier};
 use uuid::Uuid;
 
-use self::video_player_config::VideoPlayerConfig;
+use self::{general::GeneralConfig, video_player_config::VideoPlayerConfig};
 
 fn get_default_language() -> LanguageIdentifier {
     get_locale()
@@ -26,6 +27,8 @@ pub struct Config {
     pub device_id: String,
     pub servers: Vec<Server>,
     #[serde(default)]
+    pub general: GeneralConfig,
+    #[serde(default)]
     pub video_player: VideoPlayerConfig,
 }
 
@@ -35,6 +38,7 @@ impl Default for Config {
             language: get_default_language(),
             device_id: Uuid::new_v4().to_string(),
             servers: Vec::default(),
+            general: GeneralConfig::default(),
             video_player: VideoPlayerConfig::default(),
         }
     }
