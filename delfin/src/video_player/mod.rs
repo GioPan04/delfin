@@ -87,6 +87,8 @@ impl Component for VideoPlayer {
 
     view! {
         adw::NavigationPage {
+            add_css_class: "video-player-page",
+
             #[watch]
             set_title: &model.media.as_ref()
                 .and_then(|media| media
