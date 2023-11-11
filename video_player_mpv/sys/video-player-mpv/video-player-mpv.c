@@ -60,6 +60,16 @@ struct _VpmVideoPlayerMpv {
 G_DEFINE_TYPE(VpmVideoPlayerMpv, vpm_video_player_mpv, GTK_TYPE_GL_AREA);
 
 static void vpm_video_player_mpv_class_init(VpmVideoPlayerMpvClass *klass) {
+  gtk_widget_class_set_css_name(GTK_WIDGET_CLASS(klass), "VideoPlayerMpv");
+
+  GtkCssProvider *provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_string(provider, "VideoPlayerMpv {"
+                                              "   background: black;"
+                                              "}");
+  gtk_style_context_add_provider_for_display(
+      gdk_display_get_default(), GTK_STYLE_PROVIDER(provider),
+      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
   signals[SIGNAL_DURATION_UPDATED] = g_signal_new(
       "duration-updated", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_LAST, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 1, G_TYPE_DOUBLE);
