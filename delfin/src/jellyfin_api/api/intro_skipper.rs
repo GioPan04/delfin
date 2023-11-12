@@ -23,6 +23,13 @@ impl IntroTimestamps {
             end: self.hide_skip_prompt_at,
         }
     }
+
+    pub fn range_auto_skip_show(&self) -> Range<f32> {
+        Range {
+            start: self.show_skip_prompt_at,
+            end: self.intro_start,
+        }
+    }
 }
 
 impl ApiClient {

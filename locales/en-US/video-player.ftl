@@ -42,7 +42,9 @@ vp-skip-forwards-backwards-tooltip = Skip {
                 *[other] seconds
         }
 
-vp-skip-intro = Skip Intro
+vp-skip-intro =
+    .manual = Skip Intro
+    .auto = Skipping intro in {$seconds}...
 
 vp-audio-track-tooltip = Audio Tracks
 vp-audio-track-menu = Audio Track

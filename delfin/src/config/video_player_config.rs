@@ -40,6 +40,7 @@ pub struct VideoPlayerConfig {
     pub backend: VideoPlayerBackendPreference,
     pub hls_playback: bool,
     pub intro_skipper: bool,
+    pub intro_skipper_auto_skip: bool,
     pub jellyscrub: bool,
 }
 
@@ -52,6 +53,7 @@ impl Default for VideoPlayerConfig {
             backend: VideoPlayerBackendPreference::Mpv,
             hls_playback: false,
             intro_skipper: true,
+            intro_skipper_auto_skip: true,
             jellyscrub: true,
         }
     }

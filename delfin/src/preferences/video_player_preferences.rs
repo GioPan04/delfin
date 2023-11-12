@@ -14,6 +14,7 @@ pub enum VideoPlayerPreferencesInput {
     SkipBackwardsAmount(u32),
     SkipForwardsAmount(u32),
     IntroSkipper(bool),
+    IntroSkipperAutoSkip(bool),
     Jellyscrub(bool),
     Backend(u32),
     HlsPlayback(bool),
@@ -74,6 +75,17 @@ impl SimpleComponent for VideoPlayerPreferences {
                     connect_active_notify[sender] => move |sr| {
                         sender.input(VideoPlayerPreferencesInput::IntroSkipper(sr.is_active()));
                     },
+                },
+
+                add = &adw::SwitchRow {
+                    set_title: tr!("prefs-vp-intro-skipper-auto-skip.title"),
+                    set_subtitle: tr!("prefs-vp-intro-skipper-auto-skip.subtitle"),
+                    set_active: video_player_config.intro_skipper_auto_skip,
+                    connect_active_notify[sender] => move |sr| {
+                        sender.input(VideoPlayerPreferencesInput::IntroSkipperAutoSkip(sr.is_active()));
+                    },
+                    #[watch]
+                    set_sensitive: CONFIG.read().video_player.intro_skipper,
                 },
 
                 add = &adw::SwitchRow {
@@ -153,6 +165,9 @@ impl SimpleComponent for VideoPlayerPreferences {
             }
             VideoPlayerPreferencesInput::IntroSkipper(intro_skipper) => {
                 config.video_player.intro_skipper = intro_skipper;
+            }
+            VideoPlayerPreferencesInput::IntroSkipperAutoSkip(intro_skipper_auto_skip) => {
+                config.video_player.intro_skipper_auto_skip = intro_skipper_auto_skip;
             }
             VideoPlayerPreferencesInput::Jellyscrub(jellyscrub) => {
                 config.video_player.jellyscrub = jellyscrub;

@@ -39,6 +39,9 @@ prefs-vp-intro-skipper =
     .subtitle =
         Shows a Skip Intro button during episode intros.
         This requires the <a href="{$introSkipperUrl}">Intro Skipper</a> plugin to be installed on your server.
+prefs-vp-intro-skipper-auto-skip =
+    .title = Automatically skip intros
+    .subtitle = Skip intros without having to press the Skip Intro button
 
 prefs-vp-jellyscrub =
     .title = Jellyscrub plugin
