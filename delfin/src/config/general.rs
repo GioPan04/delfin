@@ -1,4 +1,4 @@
-use libadwaita as adw;
+use relm4::adw;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, Default, Serialize, Deserialize)]

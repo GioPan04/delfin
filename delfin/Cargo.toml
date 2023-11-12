@@ -55,8 +55,3 @@ uuid = { version = "1.4.1", features = ["v4"] }
 video_player_gst = { version = "0.1.0", path = "../video_player_gst", optional = true }
 video_player_mpv = { version = "0.1.0", path = "../video_player_mpv" }
 whoami = { version = "1.4.1", default-features = false }
-
-# Use libadwaita 1.4 without Gnome 45
-# (this makes cargo throw a warning, don't worry about it 😎👉👉)
-[dependencies.libadwaita]
-features = ["v1_2", "v1_3", "v1_4"]

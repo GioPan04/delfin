@@ -103,8 +103,8 @@ impl Component for AccountList {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let accounts = FactoryVecDeque::builder(gtk::ListBox::default())
-            .launch()
+        let accounts = FactoryVecDeque::builder()
+            .launch(gtk::ListBox::default())
             .forward(sender.input_sender(), convert_account_list_item_output);
 
         let model = AccountList {

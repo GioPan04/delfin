@@ -93,8 +93,8 @@ impl Component for ServerList {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let servers = FactoryVecDeque::builder(gtk::ListBox::default())
-            .launch()
+        let servers = FactoryVecDeque::builder()
+            .launch(gtk::ListBox::default())
             .forward(sender.input_sender(), convert_server_list_item_output);
 
         let model = ServerList {

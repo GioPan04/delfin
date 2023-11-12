@@ -53,7 +53,7 @@ impl FactoryComponent for AccountListItem {
 
             set_activatable: true,
             connect_activated[sender, index] => move |_| {
-                sender.output(AccountListItemOutput::AccountSelected(index.clone()));
+                sender.output(AccountListItemOutput::AccountSelected(index.clone())).unwrap();
             },
         }
     }
