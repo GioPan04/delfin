@@ -29,43 +29,49 @@ impl SimpleComponent for Preferences {
         adw::PreferencesWindow {
             set_visible: true,
             set_modal: true,
-            set_title: Some(tr!("preferences-window-title")),
+            set_title: Some(tr!("prefs-window-title")),
 
             add = &adw::PreferencesPage {
-                set_title: tr!("preferences-page-general"),
+                set_title: tr!("prefs-vp-page"),
+
                 add = &adw::PreferencesGroup {
-                    set_title: tr!("preferences-group-video-player"),
+                    set_title: tr!("prefs-vp-interface"),
 
                     add = &adw::ComboRow {
-                        set_title: tr!("preferences-video-player-skip-backwards.title"),
-                        set_subtitle: tr!("preferences-video-player-skip-backwards.subtitle"),
+                        set_title: tr!("prefs-vp-skip-backwards.title"),
+                        set_subtitle: tr!("prefs-vp-skip-backwards.subtitle"),
                         #[wrap(Some)]
                         set_model = &gtk::StringList::new(&[
-                            tr!("preferences-skip-amount", {"seconds" => 10}),
-                            tr!("preferences-skip-amount", {"seconds" => 30}),
+                            tr!("prefs-skip-amount", {"seconds" => 10}),
+                            tr!("prefs-skip-amount", {"seconds" => 30}),
                         ]),
                         set_selected: if let VideoPlayerSkipAmount::Ten = video_player_config.skip_backwards_amount { 0 } else { 1 },
                         connect_selected_notify[sender] => move |cb| {
                             sender.input(PreferencesInput::SkipBackwardsAmount(cb.selected()));
                         },
                     },
+
                     add = &adw::ComboRow {
-                        set_title: tr!("preferences-video-player-skip-forwards.title"),
-                        set_subtitle: tr!("preferences-video-player-skip-forwards.subtitle"),
+                        set_title: tr!("prefs-vp-skip-forwards.title"),
+                        set_subtitle: tr!("prefs-vp-skip-forwards.subtitle"),
                         #[wrap(Some)]
                         set_model = &gtk::StringList::new(&[
-                            tr!("preferences-skip-amount", {"seconds" => 10}),
-                            tr!("preferences-skip-amount", {"seconds" => 30}),
+                            tr!("prefs-skip-amount", {"seconds" => 10}),
+                            tr!("prefs-skip-amount", {"seconds" => 30}),
                         ]),
                         set_selected: if let VideoPlayerSkipAmount::Ten = video_player_config.skip_forwards_amount { 0 } else { 1 },
                         connect_selected_notify[sender] => move |cb| {
                             sender.input(PreferencesInput::SkipForwardsAmount(cb.selected()));
                         },
                     },
+                },
+
+                add = &adw::PreferencesGroup {
+                    set_title: tr!("prefs-vp-plugins"),
 
                     add = &adw::SwitchRow {
-                        set_title: tr!("preferences-video-player-intro-skipper.title"),
-                        set_subtitle: tr!("preferences-video-player-intro-skipper.subtitle", {
+                        set_title: tr!("prefs-vp-intro-skipper.title"),
+                        set_subtitle: tr!("prefs-vp-intro-skipper.subtitle", {
                             "introSkipperUrl" => "https://github.com/ConfusedPolarBear/intro-skipper/",
                         }),
                         set_active: video_player_config.intro_skipper,
@@ -75,8 +81,8 @@ impl SimpleComponent for Preferences {
                     },
 
                     add = &adw::SwitchRow {
-                        set_title: tr!("preferences-video-player-jellyscrub.title"),
-                        set_subtitle: tr!("preferences-video-player-jellyscrub.subtitle", {
+                        set_title: tr!("prefs-vp-jellyscrub.title"),
+                        set_subtitle: tr!("prefs-vp-jellyscrub.subtitle", {
                             "jellyscrubUrl" => "https://github.com/nicknsy/jellyscrub/",
                         }),
                         set_active: video_player_config.jellyscrub,
@@ -84,29 +90,39 @@ impl SimpleComponent for Preferences {
                             sender.input(PreferencesInput::Jellyscrub(sr.is_active()));
                         },
                     },
+                },
 
-                    add = &adw::ComboRow {
-                        set_visible: cfg!(feature = "gst"),
-                        set_title: tr!("preferences-video-player-backend.title"),
-                        set_subtitle: tr!("preferences-video-player-backend.subtitle"),
-                        #[wrap(Some)]
-                        set_model = &gtk::StringList::new(&[
-                            tr!("preferences-video-player-backend.value-mpv"),
-                            tr!("preferences-video-player-backend.value-gstreamer"),
-                        ]),
-                        set_selected: if let VideoPlayerBackendPreference::Mpv = video_player_config.backend { 0 } else { 1 },
-                        connect_selected_notify[sender] => move |cb| {
-                            sender.input(PreferencesInput::Backend(cb.selected()));
+                add = &adw::PreferencesGroup {
+                    set_title: tr!("prefs-vp-other"),
+
+                    add = &adw::ExpanderRow {
+                        set_title: tr!("prefs-vp-experimental.title"),
+                        set_subtitle: tr!("prefs-vp-experimental.subtitle"),
+
+                        add_row = &adw::ComboRow {
+                            set_visible: cfg!(feature = "gst"),
+                            set_title: tr!("prefs-vp-backend.title"),
+                            set_subtitle: tr!("prefs-vp-backend.subtitle"),
+                            #[wrap(Some)]
+                            set_model = &gtk::StringList::new(&[
+                                tr!("prefs-vp-backend.value-mpv"),
+                                tr!("prefs-vp-backend.value-gstreamer"),
+                            ]),
+                            set_selected: if let VideoPlayerBackendPreference::Mpv = video_player_config.backend { 0 } else { 1 },
+                            connect_selected_notify[sender] => move |cb| {
+                                sender.input(PreferencesInput::Backend(cb.selected()));
+                            },
+                        },
+
+                        add_row = &adw::SwitchRow {
+                            set_title: tr!("prefs-vp-hls-playback"),
+                            set_active: video_player_config.hls_playback,
+                            connect_active_notify[sender] => move |sr| {
+                                sender.input(PreferencesInput::HlsPlayback(sr.is_active()));
+                            },
                         },
                     },
 
-                    add = &adw::SwitchRow {
-                        set_title: tr!("preferences-video-player-hls-playback"),
-                        set_active: video_player_config.hls_playback,
-                        connect_active_notify[sender] => move |sr| {
-                            sender.input(PreferencesInput::HlsPlayback(sr.is_active()));
-                        },
-                    },
                 },
             },
         }
