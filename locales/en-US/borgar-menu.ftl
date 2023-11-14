@@ -1,3 +1,5 @@
+borgar-menu-tooltip = Main Menu
+
 borgar-sign-out = Sign Out
 borgar-preferences = Preferences
 borgar-about = About {app-name}

@@ -50,6 +50,7 @@ impl Component for BorgarMenu {
             add_css_class: "flat",
             set_menu_model: Some(&menu),
             set_icon_name: "open-menu",
+            set_tooltip_text: Some(tr!("borgar-menu-tooltip")),
         }
     }
 
