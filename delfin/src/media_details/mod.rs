@@ -5,6 +5,7 @@ use jellyfin_api::types::BaseItemDto;
 use relm4::{
     component::{AsyncComponent, AsyncComponentController, AsyncController},
     prelude::*,
+    SharedState,
 };
 
 use crate::{
@@ -14,6 +15,8 @@ use crate::{
     media_details::media_details_contents::MediaDetailsContents,
 };
 
+use self::media_details_contents::MediaDetailsContentsInput;
+
 mod display_years;
 pub mod episode;
 mod episodes;
@@ -22,9 +25,16 @@ mod media_details_header;
 mod season_buttons;
 mod seasons;
 
+pub static MEDIA_DETAILS_REFRESH_QUEUED: SharedState<bool> = SharedState::new();
+
 pub struct MediaDetails {
     borgar_menu: Controller<BorgarMenu>,
     media_details_contents: AsyncController<MediaDetailsContents>,
+}
+
+#[derive(Debug)]
+pub enum MediaDetailsInput {
+    Shown,
 }
 
 #[relm4::component(pub)]
@@ -36,7 +46,7 @@ impl SimpleComponent for MediaDetails {
         Server,
         Account,
     );
-    type Input = ();
+    type Input = MediaDetailsInput;
     type Output = ();
 
     view! {
@@ -56,13 +66,17 @@ impl SimpleComponent for MediaDetails {
                     set_vexpand: true,
                 },
             },
+
+            connect_shown[sender] => move |_| {
+                sender.input(MediaDetailsInput::Shown);
+            },
         }
     }
 
     fn init(
         init: Self::Init,
         root: &Self::Root,
-        _sender: ComponentSender<Self>,
+        sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let (api_client, media, config, server, account) = init;
 
@@ -91,5 +105,17 @@ impl SimpleComponent for MediaDetails {
         container.set_child(Some(model.media_details_contents.widget()));
 
         ComponentParts { model, widgets }
+    }
+
+    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+        match message {
+            MediaDetailsInput::Shown => {
+                if *MEDIA_DETAILS_REFRESH_QUEUED.read() {
+                    self.media_details_contents
+                        .emit(MediaDetailsContentsInput::RefreshSeasons);
+                }
+                *MEDIA_DETAILS_REFRESH_QUEUED.write() = false;
+            }
+        }
     }
 }

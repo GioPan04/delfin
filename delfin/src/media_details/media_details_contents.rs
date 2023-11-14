@@ -8,6 +8,7 @@ use relm4::{
     prelude::*,
     view, AsyncComponentSender,
 };
+use uuid::Uuid;
 
 use crate::{
     jellyfin_api::api_client::ApiClient,
@@ -19,15 +20,22 @@ use super::{
 };
 
 pub struct MediaDetailsContents {
+    api_client: Arc<ApiClient>,
     item: BaseItemDto,
+    series_id: Option<Uuid>,
     header: OnceCell<Controller<MediaDetailsHeader>>,
     seasons: Option<AsyncController<Seasons>>,
+}
+
+#[derive(Debug)]
+pub enum MediaDetailsContentsInput {
+    RefreshSeasons,
 }
 
 #[relm4::component(pub async)]
 impl AsyncComponent for MediaDetailsContents {
     type Init = (Arc<ApiClient>, BaseItemDto);
-    type Input = ();
+    type Input = MediaDetailsContentsInput;
     type Output = ();
     type CommandOutput = ();
 
@@ -84,11 +92,9 @@ impl AsyncComponent for MediaDetailsContents {
     async fn init(
         init: Self::Init,
         root: Self::Root,
-        sender: AsyncComponentSender<Self>,
+        _sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
         let (api_client, media) = init;
-
-        let mut seasons = None;
 
         let series_id = media
             .series_id
@@ -98,26 +104,17 @@ impl AsyncComponent for MediaDetailsContents {
                 None
             });
 
-        if let Some(series_id) = series_id {
-            seasons = Some(
-                Seasons::builder()
-                    .launch(SeasonsInit {
-                        api_client: api_client.clone(),
-                        series_id,
-                    })
-                    .forward(sender.input_sender(), |e| e),
-            );
-        }
-
         let item = api_client
             .get_item(&media.series_id.or(media.id).unwrap())
             .await
             .unwrap();
 
-        let model = MediaDetailsContents {
+        let mut model = MediaDetailsContents {
+            api_client: api_client.clone(),
             item: item.clone(),
+            series_id,
             header: OnceCell::new(),
-            seasons,
+            seasons: None,
         };
 
         let widgets = view_output!();
@@ -134,70 +131,104 @@ impl AsyncComponent for MediaDetailsContents {
         root.prepend(header.widget());
         model.header.set(header).unwrap();
 
-        add_info(info_box, &model.item);
+        model.add_info(info_box);
 
-        if let Some(seasons) = &model.seasons {
-            container.append(seasons.widget());
-        }
+        model.load_seasons(container);
 
         AsyncComponentParts { model, widgets }
     }
+
+    async fn update_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        message: Self::Input,
+        sender: AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match message {
+            MediaDetailsContentsInput::RefreshSeasons => {
+                self.load_seasons(&widgets.container);
+            }
+        }
+        self.update_view(widgets, sender);
+    }
 }
 
-fn add_info(info_box: &gtk::Box, item: &BaseItemDto) {
-    let mut first = true;
-
-    let mut add_separator = move |skip_separator: bool| {
-        if !first && !skip_separator {
-            info_box.append(&gtk::Separator::new(gtk::Orientation::Vertical));
-        }
-        first = false;
-    };
-
-    if let Some(display_years) = item.display_years() {
-        add_separator(true);
-        info_box.append(&gtk::Label::new(Some(display_years.as_ref())));
-    }
-
-    if let Some(community_rating) = item.community_rating {
-        add_separator(false);
-
-        let rating_box = gtk::Box::new(gtk::Orientation::Horizontal, 4);
-        rating_box.append(&gtk::Image::from_icon_name("star-large"));
-        rating_box.append(&gtk::Label::new(Some(
-            format!("{community_rating:.1}").as_ref(),
-        )));
-
-        info_box.append(&rating_box);
-    }
-
-    if let Some(official_rating) = &item.official_rating {
-        add_separator(false);
-        info_box.append(
-            &gtk::Label::builder()
-                .label(official_rating)
-                .css_classes(["official-rating"])
-                .build(),
-        );
-    }
-
-    if let Some(genres) = &item.genres.clone() {
-        add_separator(false);
-
-        // Only show first 2 genres to avoid overflow
-        let mut genres_str: String = genres
-            .iter()
-            .take(2)
-            .cloned()
-            .collect::<Vec<String>>()
-            .join(", ");
-        if genres.len() > 2 {
-            genres_str += ", ...";
+impl MediaDetailsContents {
+    fn load_seasons(&mut self, container: &gtk::Box) {
+        if let Some(seasons) = self.seasons.take() {
+            container.remove(seasons.widget());
         }
 
-        let genres_label = &gtk::Label::new(Some(genres_str.as_ref()));
-        // Show full list in tooltip in case any were truncated
-        genres_label.set_tooltip_text(Some(genres.to_vec().join(", ").as_str()));
-        info_box.append(genres_label);
+        if let Some(series_id) = self.series_id {
+            let seasons = Seasons::builder()
+                .launch(SeasonsInit {
+                    api_client: self.api_client.clone(),
+                    series_id,
+                })
+                .detach();
+            container.append(seasons.widget());
+            self.seasons = Some(seasons);
+        }
+    }
+
+    fn add_info(&self, info_box: &gtk::Box) {
+        let item = &self.item;
+
+        let mut first = true;
+
+        let mut add_separator = move |skip_separator: bool| {
+            if !first && !skip_separator {
+                info_box.append(&gtk::Separator::new(gtk::Orientation::Vertical));
+            }
+            first = false;
+        };
+
+        if let Some(display_years) = item.display_years() {
+            add_separator(true);
+            info_box.append(&gtk::Label::new(Some(display_years.as_ref())));
+        }
+
+        if let Some(community_rating) = item.community_rating {
+            add_separator(false);
+
+            let rating_box = gtk::Box::new(gtk::Orientation::Horizontal, 4);
+            rating_box.append(&gtk::Image::from_icon_name("star-large"));
+            rating_box.append(&gtk::Label::new(Some(
+                format!("{community_rating:.1}").as_ref(),
+            )));
+
+            info_box.append(&rating_box);
+        }
+
+        if let Some(official_rating) = &item.official_rating {
+            add_separator(false);
+            info_box.append(
+                &gtk::Label::builder()
+                    .label(official_rating)
+                    .css_classes(["official-rating"])
+                    .build(),
+            );
+        }
+
+        if let Some(genres) = &item.genres.clone() {
+            add_separator(false);
+
+            // Only show first 2 genres to avoid overflow
+            let mut genres_str: String = genres
+                .iter()
+                .take(2)
+                .cloned()
+                .collect::<Vec<String>>()
+                .join(", ");
+            if genres.len() > 2 {
+                genres_str += ", ...";
+            }
+
+            let genres_label = &gtk::Label::new(Some(genres_str.as_ref()));
+            // Show full list in tooltip in case any were truncated
+            genres_label.set_tooltip_text(Some(genres.to_vec().join(", ").as_str()));
+            info_box.append(genres_label);
+        }
     }
 }

@@ -20,6 +20,7 @@ use crate::globals::CONFIG;
 use crate::jellyfin_api::api::shows::GetEpisodesOptionsBuilder;
 use crate::jellyfin_api::api_client::ApiClient;
 use crate::library::LIBRARY_REFRESH_QUEUED;
+use crate::media_details::MEDIA_DETAILS_REFRESH_QUEUED;
 use crate::tr;
 use crate::utils::bif::Thumbnail;
 use crate::utils::item_name::ItemName;
@@ -382,6 +383,7 @@ impl Component for VideoPlayer {
                                     .await
                                     .unwrap();
                                 *LIBRARY_REFRESH_QUEUED.write() = true;
+                                *MEDIA_DETAILS_REFRESH_QUEUED.write() = true;
                             }
                         });
 

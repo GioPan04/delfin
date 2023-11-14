@@ -20,6 +20,7 @@ use crate::{
         api::views::UserView, api_client::ApiClient,
         models::display_preferences::DisplayPreferences,
     },
+    media_details::MEDIA_DETAILS_REFRESH_QUEUED,
     tr,
     utils::constants::{PAGE_MARGIN, WIDGET_NONE},
 };
@@ -216,6 +217,7 @@ impl Component for Library {
             LibraryInput::Shown => {
                 if *LIBRARY_REFRESH_QUEUED.read() {
                     sender.input(LibraryInput::Refresh);
+                    *MEDIA_DETAILS_REFRESH_QUEUED.write() = false;
                 }
                 *LIBRARY_REFRESH_QUEUED.write() = false;
             }
