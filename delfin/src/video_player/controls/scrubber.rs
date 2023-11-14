@@ -101,6 +101,7 @@ impl Component for Scrubber {
             #[name = "scrubber"]
             gtk::Scale {
                 set_hexpand: true,
+                set_focus_on_click: false,
 
                 #[watch]
                 set_value: model.position as f64,
@@ -173,6 +174,7 @@ impl Component for Scrubber {
 
             #[name = "duration"]
             gtk::Button {
+                set_focus_on_click: false,
                 #[watch]
                 set_label: &duration_to_timestamp(model.position, model.duration, model.duration_display),
                 #[watch]

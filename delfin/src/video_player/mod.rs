@@ -1,5 +1,6 @@
 pub mod backends;
 mod controls;
+mod keybindings;
 mod next_up;
 mod session;
 mod skip_intro;
@@ -11,8 +12,8 @@ use std::sync::Arc;
 use adw::prelude::*;
 use jellyfin_api::types::{BaseItemDto, BaseItemKind};
 use relm4::component::{AsyncComponent, AsyncComponentController, AsyncController};
-use relm4::prelude::*;
 use relm4::{gtk, ComponentParts};
+use relm4::{prelude::*, MessageBroker};
 
 use crate::app::{AppInput, APP_BROKER};
 use crate::globals::CONFIG;
@@ -27,6 +28,7 @@ use crate::video_player::controls::skip_forwards_backwards::{
     SkipForwardsBackwardsInput, SKIP_BACKWARDS_BROKER, SKIP_FORWARDS_BROKER,
 };
 use crate::video_player::controls::VideoPlayerControlsInit;
+use crate::video_player::keybindings::keybindings_controller;
 use crate::video_player::next_up::{NextUp, NEXT_UP_VISIBILE};
 
 use self::backends::{PlayerState, VideoPlayerBackend};
@@ -88,6 +90,8 @@ impl Component for VideoPlayer {
     view! {
         adw::NavigationPage {
             add_css_class: "video-player-page",
+            set_focusable: true,
+            add_controller = keybindings_controller(),
 
             #[watch]
             set_title: &model.media.as_ref()
@@ -570,3 +574,5 @@ impl VideoPlayer {
         });
     }
 }
+
+pub static VIDEO_PLAYER_BROKER: MessageBroker<VideoPlayerInput> = MessageBroker::new();

@@ -1,11 +1,11 @@
 mod audio_tracks;
-mod fullscreen;
+pub(super) mod fullscreen;
 mod next_prev_episode;
 pub(super) mod play_pause;
 pub(super) mod scrubber;
 pub(super) mod skip_forwards_backwards;
-mod subtitles;
-mod volume;
+pub(super) mod subtitles;
+pub(super) mod volume;
 
 use std::{
     cell::{OnceCell, RefCell},
@@ -17,12 +17,15 @@ use crate::{
     video_player::{
         backends::VideoPlayerBackend,
         controls::{
+            fullscreen::FULLSCREEN_BROKER,
             next_prev_episode::{NextPrevEpisodeDirection, NextPrevEpisodeOutput},
             play_pause::PLAY_PAUSE_BROKER,
             scrubber::SCRUBBER_BROKER,
             skip_forwards_backwards::{
                 SkipForwardsBackwardsDirection, SKIP_BACKWARDS_BROKER, SKIP_FORWARDS_BROKER,
             },
+            subtitles::SUBTITLES_BROKER,
+            volume::VOLUME_BROKER,
         },
         next_up::NEXT_UP_VISIBILE,
     },
@@ -141,10 +144,13 @@ impl SimpleComponent for VideoPlayerControls {
         let controls = &widgets.controls;
         let second_row = &widgets.second_row;
 
-        SCRUBBER_BROKER.reset();
-        SKIP_FORWARDS_BROKER.reset();
-        SKIP_BACKWARDS_BROKER.reset();
+        FULLSCREEN_BROKER.reset();
         PLAY_PAUSE_BROKER.reset();
+        SCRUBBER_BROKER.reset();
+        SKIP_BACKWARDS_BROKER.reset();
+        SKIP_FORWARDS_BROKER.reset();
+        SUBTITLES_BROKER.reset();
+        VOLUME_BROKER.reset();
 
         let scrubber = Scrubber::builder()
             .launch_with_broker(player.clone(), &SCRUBBER_BROKER.read())
@@ -199,7 +205,9 @@ impl SimpleComponent for VideoPlayerControls {
         // Push remaining controls to end
         second_row.append(&gtk::Box::builder().hexpand(true).build());
 
-        let subtitles = Subtitles::builder().launch(player.clone()).detach();
+        let subtitles = Subtitles::builder()
+            .launch_with_broker(player.clone(), &SUBTITLES_BROKER.read())
+            .detach();
         second_row.append(subtitles.widget());
         model.subtitles.set(subtitles).unwrap();
 
@@ -207,11 +215,15 @@ impl SimpleComponent for VideoPlayerControls {
         second_row.append(audio_tracks.widget());
         model.audio_tracks.set(audio_tracks).unwrap();
 
-        let volume = Volume::builder().launch(player).detach();
+        let volume = Volume::builder()
+            .launch_with_broker(player, &VOLUME_BROKER.read())
+            .detach();
         second_row.append(volume.widget());
         model._volume = Some(volume);
 
-        let fullscreen = Fullscreen::builder().launch(()).detach();
+        let fullscreen = Fullscreen::builder()
+            .launch_with_broker((), &FULLSCREEN_BROKER.read())
+            .detach();
         second_row.append(fullscreen.widget());
         model._fullscreen = Some(fullscreen);
 

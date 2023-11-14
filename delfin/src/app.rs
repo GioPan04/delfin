@@ -16,7 +16,7 @@ use crate::{
     servers::server_list::{ServerList, ServerListOutput},
     tr,
     utils::{main_window::MAIN_APP_WINDOW_NAME, shift_state::shift_state_controller},
-    video_player::{VideoPlayer, VideoPlayerInput, VideoPlayerOutput},
+    video_player::{VideoPlayer, VideoPlayerInput, VideoPlayerOutput, VIDEO_PLAYER_BROKER},
 };
 
 #[derive(Debug)]
@@ -199,7 +199,7 @@ impl Component for App {
             AppInput::PlayVideo(item) => {
                 if self.video_player.get().is_none() {
                     let video_player = VideoPlayer::builder()
-                        .launch(())
+                        .launch_with_broker((), &VIDEO_PLAYER_BROKER)
                         .forward(sender.input_sender(), convert_video_player_output);
                     let video_player_widget = video_player.widget();
                     video_player_widget.set_tag(Some(AppPage::VideoPlayer.into()));

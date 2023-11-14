@@ -45,6 +45,8 @@ impl SimpleComponent for NextPrevEpisode {
 
     view! {
         gtk::Button {
+            set_focus_on_click: false,
+
             #[watch]
             set_sensitive: model.show,
             #[watch]

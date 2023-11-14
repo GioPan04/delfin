@@ -56,6 +56,7 @@ vp-subtitle-track-tooltip = {
     }
 vp-subtitle-track-menu = Subtitle Track
 vp-subtitle-track-off = Off
+vp-no-subtitles-available = No subtitles available.
 
 vp-volume-mute-tooltip = {
         $muted ->

@@ -24,6 +24,7 @@ impl SkipForwardsBackwardsBroker {
     pub fn read(&self) -> RwLockReadGuard<MessageBroker<SkipForwardsBackwardsInput>> {
         self.0.read().unwrap()
     }
+
     pub fn reset(&self) {
         *self.0.write().unwrap() = MessageBroker::new();
     }
@@ -75,6 +76,8 @@ impl SimpleComponent for SkipForwardsBackwards {
 
     view! {
         gtk::Button {
+            set_focus_on_click: false,
+
             #[watch]
             set_icon_name: &model.get_icon_name(),
             #[watch]

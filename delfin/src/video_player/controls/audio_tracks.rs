@@ -46,6 +46,7 @@ impl Component for AudioTracks {
             set_icon_name: "music-note-single",
             set_menu_model: Some(&model.menu),
             set_tooltip_text: Some(tr!("vp-audio-track-tooltip")),
+            set_focus_on_click: false,
             #[watch]
             set_visible: model.audio_tracks_available,
         }

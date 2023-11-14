@@ -1,8 +1,11 @@
-use std::mem::take;
+use std::{
+    mem::take,
+    sync::{RwLock, RwLockReadGuard},
+};
 
 use glib::SignalHandlerId;
 use gtk::{glib, prelude::*};
-use relm4::{gtk, ComponentParts, SimpleComponent};
+use relm4::{gtk, ComponentParts, MessageBroker, SimpleComponent};
 
 use crate::{tr, utils::main_window::get_main_window};
 
@@ -25,6 +28,8 @@ impl SimpleComponent for Fullscreen {
 
     view! {
         gtk::Button {
+            set_focus_on_click: false,
+
             #[watch]
             // TODO: probably find better icons
             set_icon_name: if model.fullscreen {
@@ -90,3 +95,21 @@ impl SimpleComponent for Fullscreen {
         }
     }
 }
+
+pub struct FullscreenBroker(RwLock<MessageBroker<FullscreenInput>>);
+
+impl FullscreenBroker {
+    const fn new() -> Self {
+        Self(RwLock::new(MessageBroker::new()))
+    }
+
+    pub fn read(&self) -> RwLockReadGuard<MessageBroker<FullscreenInput>> {
+        self.0.read().unwrap()
+    }
+
+    pub fn reset(&self) {
+        *self.0.write().unwrap() = MessageBroker::new();
+    }
+}
+
+pub static FULLSCREEN_BROKER: FullscreenBroker = FullscreenBroker::new();
