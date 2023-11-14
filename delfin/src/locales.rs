@@ -1,3 +1,8 @@
+use fluent_templates::FluentLoader;
+use tera::Tera;
+
+use crate::globals::CONFIG;
+
 fluent_templates::static_loader! {
     pub static LOCALES = {
         locales: "../locales/",
@@ -31,10 +36,28 @@ macro_rules! tr {
     }};
 }
 
+pub fn tera_tr(input: &str) -> Result<String, tera::Error> {
+    let mut tera = Tera::default();
+    let ctx = tera::Context::default();
+    tera.register_function(
+        "tr",
+        FluentLoader::new(&*LOCALES).with_default_lang(CONFIG.read().language.clone()),
+    );
+    tera.render_str(input, &ctx)
+}
+
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     #[test]
     fn test_translate() {
         assert_eq!(tr!("app-name"), "Delfin");
+    }
+
+    #[test]
+    fn test_tera_translate() -> Result<(), tera::Error> {
+        assert_eq!(tera_tr(r#"{{ tr(key="app-name") }}"#)?, "Delfin");
+        Ok(())
     }
 }

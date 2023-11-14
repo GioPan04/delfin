@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<!DOCTYPE cambalache-project SYSTEM "cambalache-project.dtd">
+<cambalache-project version="0.13.1" target_tk="gtk-4.0">
+  <ui>
+	(2,None,None,"data/ui/shortcuts.ui",None,None,None,None,None,None,None)
+  </ui>
+  <object>
+	(2,1,"GtkShortcutsWindow","shortcuts",None,None,None,None,-1,None),
+	(2,2,"GtkShortcutsSection",None,1,None,None,None,-1,None),
+	(2,3,"GtkShortcutsGroup",None,2,None,None,None,-1,None),
+	(2,4,"GtkShortcutsShortcut",None,3,None,None,None,-1,None),
+	(2,5,"GtkShortcutsGroup",None,2,None,None,None,-1,None),
+	(2,6,"GtkShortcutsShortcut",None,5,None,None,None,-1,None),
+	(2,7,"GtkShortcutsShortcut",None,5,None,None,None,-1,None),
+	(2,8,"GtkShortcutsShortcut",None,5,None,None,None,-1,None),
+	(2,9,"GtkShortcutsShortcut",None,5,None,None,None,-1,None),
+	(2,10,"GtkShortcutsShortcut",None,5,None,None,None,-1,None),
+	(2,11,"GtkShortcutsShortcut",None,5,None,None,None,-1,None)
+  </object>
+  <object_property>
+	(2,2,"GtkShortcutsSection","section-name","Video Player",None,None,None,None,None,None,None,None,None),
+	(2,3,"GtkShortcutsGroup","title","General",None,None,None,None,None,None,None,None,None),
+	(2,4,"GtkShortcutsShortcut","accelerator","&lt;Ctrl&gt;question",None,None,None,None,None,None,None,None,None),
+	(2,4,"GtkShortcutsShortcut","title","{{ tr(key=\"sc-gen-shortcuts\") }}",None,None,None,None,None,None,None,None,None),
+	(2,5,"GtkShortcutsGroup","title","Video Player",None,None,None,None,None,None,None,None,None),
+	(2,6,"GtkShortcutsShortcut","accelerator","space",None,None,None,None,None,None,None,None,None),
+	(2,6,"GtkShortcutsShortcut","title","{{ tr(key=\"sc-vp-play-pause\") }}",None,None,None,None,None,None,None,None,None),
+	(2,7,"GtkShortcutsShortcut","accelerator","Left Right",None,None,None,None,None,None,None,None,None),
+	(2,7,"GtkShortcutsShortcut","title","{{ tr(key=\"sc-vp-seek\") }}",None,None,None,None,None,None,None,None,None),
+	(2,8,"GtkShortcutsShortcut","accelerator","Up Down",None,None,None,None,None,None,None,None,None),
+	(2,8,"GtkShortcutsShortcut","title","{{ tr(key=\"sc-vp-volume\") }}",None,None,None,None,None,None,None,None,None),
+	(2,9,"GtkShortcutsShortcut","accelerator","m",None,None,None,None,None,None,None,None,None),
+	(2,9,"GtkShortcutsShortcut","title","{{ tr(key=\"sc-vp-mute\") }}",None,None,None,None,None,None,None,None,None),
+	(2,10,"GtkShortcutsShortcut","accelerator","c",None,None,None,None,None,None,None,None,None),
+	(2,10,"GtkShortcutsShortcut","title","{{ tr(key=\"sc-vp-subtitles\") }}",None,None,None,None,None,None,None,None,None),
+	(2,11,"GtkShortcutsShortcut","accelerator","f",None,None,None,None,None,None,None,None,None),
+	(2,11,"GtkShortcutsShortcut","title","{{ tr(key=\"sc-vp-fullscreen\") }}",None,None,None,None,None,None,None,None,None)
+  </object_property>
+</cambalache-project>

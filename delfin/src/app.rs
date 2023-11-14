@@ -12,6 +12,7 @@ use crate::{
     globals::CONFIG,
     jellyfin_api::api_client::ApiClient,
     library::{Library, LibraryOutput},
+    locales::tera_tr,
     media_details::MediaDetails,
     servers::server_list::{ServerList, ServerListOutput},
     tr,
@@ -85,6 +86,9 @@ impl Component for App {
 
             add_controller: shift_state_controller(),
 
+            #[wrap(Some)]
+            set_help_overlay = &keyboard_shortcuts(),
+
             #[name = "navigation"]
             #[wrap(Some)]
             set_content = &adw::NavigationView {
@@ -129,6 +133,9 @@ impl Component for App {
         };
 
         let widgets = view_output!();
+
+        relm4::main_application()
+            .set_accels_for_action("win.show-help-overlay", &["<Ctrl>question"]);
 
         ComponentParts { model, widgets }
     }
@@ -226,6 +233,12 @@ impl Component for App {
 
         self.update_view(widgets, sender);
     }
+}
+
+fn keyboard_shortcuts() -> gtk::ShortcutsWindow {
+    gtk::Builder::from_string(&tera_tr(include_str!("../../data/ui/shortcuts.ui")).unwrap())
+        .object::<gtk::ShortcutsWindow>("shortcuts")
+        .unwrap()
 }
 
 fn convert_server_list_output(output: ServerListOutput) -> AppInput {

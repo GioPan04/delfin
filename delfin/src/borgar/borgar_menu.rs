@@ -2,7 +2,7 @@ use std::sync::{Arc, RwLock};
 
 use gtk::prelude::*;
 use relm4::{
-    actions::{RelmAction, RelmActionGroup},
+    actions::{AccelsPlus, RelmAction, RelmActionGroup},
     prelude::*,
 };
 
@@ -12,6 +12,7 @@ use crate::{
     jellyfin_api::api_client::ApiClient,
     preferences::Preferences,
     tr,
+    utils::main_window::get_main_window,
 };
 
 use super::about::About;
@@ -36,6 +37,11 @@ pub enum BorgarMenuInput {
 relm4::new_action_group!(BorgarMenuActionGroup, "menu");
 relm4::new_stateless_action!(SignOutAction, BorgarMenuActionGroup, "sign_out");
 relm4::new_stateless_action!(PreferencesAction, BorgarMenuActionGroup, "preferences");
+relm4::new_stateless_action!(
+    KeyboardShortcutsAction,
+    BorgarMenuActionGroup,
+    "keyboard-shortcuts"
+);
 relm4::new_stateless_action!(AboutAction, BorgarMenuActionGroup, "about");
 
 #[relm4::component(pub)]
@@ -61,6 +67,7 @@ impl Component for BorgarMenu {
             },
             section! {
                 &*tr!("borgar-preferences") => PreferencesAction,
+                &*tr!("borgar-keyboard-shortcuts") => KeyboardShortcutsAction,
                 &*tr!("borgar-about") => AboutAction,
             },
         }
@@ -82,6 +89,9 @@ impl Component for BorgarMenu {
             sign_out_dialog: None,
             about: None,
         };
+
+        let app = relm4::main_application();
+
         let widgets = view_output!();
 
         let sign_out_action: RelmAction<SignOutAction> = RelmAction::new_stateless({
@@ -98,6 +108,18 @@ impl Component for BorgarMenu {
             }
         });
 
+        let help_overlay_action = get_main_window()
+            .unwrap()
+            .lookup_action("show-help-overlay")
+            .unwrap();
+
+        let keyboard_shortcuts_action: RelmAction<KeyboardShortcutsAction> =
+            RelmAction::new_stateless(move |_| {
+                help_overlay_action.activate(None);
+            });
+
+        app.set_accelerators_for_action::<KeyboardShortcutsAction>(&["<Ctrl>question"]);
+
         let about_action: RelmAction<AboutAction> = RelmAction::new_stateless({
             let sender = sender.clone();
             move |_| {
@@ -108,6 +130,7 @@ impl Component for BorgarMenu {
         let mut group = RelmActionGroup::<BorgarMenuActionGroup>::new();
         group.add_action(sign_out_action);
         group.add_action(preferences_action);
+        group.add_action(keyboard_shortcuts_action);
         group.add_action(about_action);
         group.register_for_widget(root);
 
