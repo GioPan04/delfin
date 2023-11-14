@@ -1,3 +1,5 @@
+media-details-refresh-button = Refresh
+
 media-details-unnamed-item = Unnamed Item
 media-details-unnamed-episode = Unnamed Episode
 media-details-unnamed-season = Unnamed Season

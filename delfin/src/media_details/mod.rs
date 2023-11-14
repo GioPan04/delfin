@@ -13,6 +13,7 @@ use crate::{
     config::{Account, Config, Server},
     jellyfin_api::api_client::ApiClient,
     media_details::media_details_contents::MediaDetailsContents,
+    tr,
 };
 
 use self::media_details_contents::MediaDetailsContentsInput;
@@ -35,6 +36,7 @@ pub struct MediaDetails {
 #[derive(Debug)]
 pub enum MediaDetailsInput {
     Shown,
+    Refresh,
 }
 
 #[relm4::component(pub)]
@@ -57,6 +59,12 @@ impl SimpleComponent for MediaDetails {
 
                 add_top_bar = &adw::HeaderBar {
                     pack_end = model.borgar_menu.widget(),
+                    pack_end = &gtk::Button::from_icon_name("refresh") {
+                        set_tooltip: tr!("media-details-refresh-button"),
+                        connect_clicked[sender] => move |_| {
+                            sender.input(MediaDetailsInput::Refresh);
+                        },
+                    },
                 },
 
                 #[name = "container"]
@@ -107,12 +115,15 @@ impl SimpleComponent for MediaDetails {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
+            MediaDetailsInput::Refresh => {
+                self.media_details_contents
+                    .emit(MediaDetailsContentsInput::RefreshSeasons);
+            }
             MediaDetailsInput::Shown => {
                 if *MEDIA_DETAILS_REFRESH_QUEUED.read() {
-                    self.media_details_contents
-                        .emit(MediaDetailsContentsInput::RefreshSeasons);
+                    sender.input(MediaDetailsInput::Refresh);
                 }
                 *MEDIA_DETAILS_REFRESH_QUEUED.write() = false;
             }
