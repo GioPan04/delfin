@@ -17,6 +17,13 @@ pub struct IntroTimestamps {
 }
 
 impl IntroTimestamps {
+    pub fn range_intro(&self) -> Range<f32> {
+        Range {
+            start: self.intro_start,
+            end: self.intro_end,
+        }
+    }
+
     pub fn range_show(&self) -> Range<f32> {
         Range {
             start: self.show_skip_prompt_at,

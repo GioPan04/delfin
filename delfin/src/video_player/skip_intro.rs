@@ -138,7 +138,9 @@ impl AsyncComponent for SkipIntro {
 
                 self.state = match (self.auto_skip, self.already_skipped) {
                     // Auto skip and hide button
-                    (true, false) if (position as f32) >= intro_timestamps.intro_start => {
+                    (true, false)
+                        if intro_timestamps.range_intro().contains(&(position as f32)) =>
+                    {
                         self.already_skipped = true;
                         self.video_player
                             .borrow()
