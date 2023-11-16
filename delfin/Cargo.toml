@@ -2,7 +2,7 @@
 name = "delfin"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.72.1"
+rust-version = "1.74.0"
 
 [features]
 # Enables GStreamer video player backend
