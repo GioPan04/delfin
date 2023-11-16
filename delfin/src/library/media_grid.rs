@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use gtk::prelude::*;
 use jellyfin_api::types::BaseItemDto;
 use relm4::prelude::*;
 
@@ -25,10 +24,9 @@ impl SimpleComponent for MediaGrid {
     type Output = ();
 
     view! {
-        gtk::Grid {
-            set_column_spacing: 32,
-            set_column_homogeneous: true,
-            set_halign: gtk::Align::Start,
+        gtk::FlowBox {
+            set_row_spacing: 32,
+            set_homogeneous: true,
         }
     }
 
@@ -47,11 +45,11 @@ impl SimpleComponent for MediaGrid {
             media_tiles: vec![],
         };
 
-        for (column, media) in media.into_iter().enumerate() {
+        for media in media {
             let media_tile = MediaTile::builder()
                 .launch((media, media_tile_display, api_client.clone()))
                 .detach();
-            root.attach(media_tile.widget(), column as i32, 0, 1, 1);
+            root.append(media_tile.widget());
             model.media_tiles.push(media_tile);
         }
 

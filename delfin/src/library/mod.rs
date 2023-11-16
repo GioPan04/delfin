@@ -1,3 +1,4 @@
+mod collection;
 mod home;
 mod home_sections;
 mod media_carousel;
@@ -7,7 +8,11 @@ mod media_tile;
 
 use jellyfin_api::types::BaseItemDto;
 use relm4::{ComponentController, SharedState};
-use std::sync::{Arc, RwLock};
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
+use uuid::Uuid;
 
 use adw::prelude::*;
 use relm4::{adw, gtk, prelude::*, Component, Controller};
@@ -25,7 +30,10 @@ use crate::{
     utils::constants::{PAGE_MARGIN, WIDGET_NONE},
 };
 
-use self::home::{Home, HomeInit};
+use self::{
+    collection::{Collection, CollectionInput},
+    home::{Home, HomeInit},
+};
 
 pub static LIBRARY_REFRESH_QUEUED: SharedState<bool> = SharedState::new();
 
@@ -39,6 +47,7 @@ pub struct Library {
     api_client: Arc<ApiClient>,
     state: LibraryState,
     home: Option<Controller<Home>>,
+    collections: HashMap<Uuid, AsyncController<Collection>>,
 }
 
 #[derive(Debug)]
@@ -46,6 +55,7 @@ pub enum LibraryInput {
     MediaSelected(BaseItemDto),
     Refresh,
     Shown,
+    ViewStackChildVisible(String),
 }
 
 #[derive(Debug)]
@@ -131,6 +141,11 @@ impl Component for Library {
                                 gtk::ScrolledWindow {
                                     #[local_ref]
                                     view_stack -> adw::ViewStack {
+                                        connect_visible_child_notify[sender] => move |stack| {
+                                            if let Some(name) = stack.visible_child_name() {
+                                                sender.input(LibraryInput::ViewStackChildVisible(name.into()));
+                                            }
+                                        },
                                         set_margin_all: PAGE_MARGIN,
                                         set_valign: gtk::Align::Fill,
                                     },
@@ -175,6 +190,7 @@ impl Component for Library {
             api_client: Arc::clone(&api_client),
             state: LibraryState::Loading,
             home: None,
+            collections: HashMap::default(),
         };
 
         let view_stack = adw::ViewStack::new();
@@ -208,8 +224,8 @@ impl Component for Library {
                 if let Some(home) = self.home.take() {
                     view_stack.remove(home.widget());
                 }
-                while let Some(child) = view_stack.first_child() {
-                    view_stack.remove(&child);
+                for (_id, collection) in self.collections.drain() {
+                    view_stack.remove(collection.widget());
                 }
 
                 self.initial_fetch(&sender);
@@ -220,6 +236,13 @@ impl Component for Library {
                     *MEDIA_DETAILS_REFRESH_QUEUED.write() = false;
                 }
                 *LIBRARY_REFRESH_QUEUED.write() = false;
+            }
+            LibraryInput::ViewStackChildVisible(name) => {
+                if let Ok(id) = Uuid::parse_str(&name) {
+                    if let Some(collection) = self.collections.get(&id) {
+                        collection.emit(CollectionInput::Visible);
+                    }
+                }
             }
         }
 
@@ -308,12 +331,18 @@ impl Library {
                 _ => "video-clip-multiple-filled",
             };
 
+            let collection = Collection::builder()
+                .launch((self.api_client.clone(), view.clone()))
+                .detach();
+
             view_stack.add_titled_with_icon(
-                &gtk::Box::default(),
+                collection.widget(),
                 Some(&view.id.to_string()),
                 &view.name.clone(),
                 icon,
             );
+
+            self.collections.insert(view.id, collection);
         }
     }
 }

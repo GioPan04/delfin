@@ -1,4 +1,4 @@
-use anyhow::{bail, Ok, Result};
+use anyhow::{bail, Context, Ok, Result};
 use jellyfin_api::types::{BaseItemDto, BaseItemDtoQueryResult};
 use uuid::Uuid;
 
@@ -42,5 +42,32 @@ impl ApiClient {
             .iter()
             .map(|item| UserView::try_from(item.clone()))
             .collect()
+    }
+
+    pub async fn get_view_items(
+        &self,
+        view: &UserView,
+        start_index: usize,
+        limit: usize,
+    ) -> Result<(Vec<BaseItemDto>, usize)> {
+        let mut url = self
+            .root
+            .join(&format!("Users/{}/Items", self.account.id))
+            .unwrap();
+        url.query_pairs_mut()
+            .append_pair("ParentId", &view.id.to_string())
+            .append_pair("SortBy", "SortName,ProductionYear")
+            .append_pair("SortOrder", "Ascending")
+            .append_pair("StartIndex", &start_index.to_string())
+            .append_pair("Limit", &limit.to_string());
+
+        let res: BaseItemDtoQueryResult = self.client.get(url).send().await?.json().await?;
+
+        let items = res.items.context("No items returned")?;
+        let total_record_count = res
+            .total_record_count
+            .context("Total record count not returned")?;
+
+        Ok((items, total_record_count as usize))
     }
 }

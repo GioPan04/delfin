@@ -16,3 +16,5 @@ library-section-title =
 library-episode-name-with-season-and-episode = S{$seasonNumber}:E{$episodeNumber} - {$episodeName}
 
 library-media-tile-unnamed-item = Unnamed Item
+
+library-item-count = {$start} - {$end} of {$total}
