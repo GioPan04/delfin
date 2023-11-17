@@ -8,4 +8,5 @@ fn main() {
             .unwrap()
     );
     println!("cargo:rustc-link-search=/app/lib");
+    println!("cargo:rustc-link-search=video_player_mpv/sys");
 }
