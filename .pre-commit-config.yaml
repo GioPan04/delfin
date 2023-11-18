@@ -4,9 +4,12 @@ repos:
     hooks:
       - id: check-merge-conflict
       - id: check-toml
+      - id: check-xml
       - id: check-yaml
       - id: end-of-file-fixer
       - id: trailing-whitespace
+      - id: detect-private-key
+      - id: mixed-line-ending
 
   - repo: https://codeberg.org/avery42/pre-commit-rust.git
     rev: v1.0.0
