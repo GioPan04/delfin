@@ -6,15 +6,11 @@ project(
   subproject_dir: 'video_player_mpv',
 )
 
-gnome = import('gnome')
-
-base_id = 'cafe.avery.Delfin'
-
-cargo = find_program('cargo', required: true)
-
 dependency('gtk4', version: '>= 4.0.0')
 dependency('libadwaita-1', version: '>= 1.4')
 dependency('mpv', version: '>= 2.1.0')
+
+base_id = 'cafe.avery.Delfin'
 
 if get_option('profile') == 'dev'
   app_id = '@0@.@1@'.format(base_id, 'Devel')
@@ -31,13 +27,17 @@ if get_option('flatpak')
 endif
 
 prefix = get_option('prefix')
+bindir = prefix / get_option('bindir')
 datadir = prefix / get_option('datadir')
+appsdir = datadir / 'applications'
 iconsdir = datadir / 'icons'
 
 subproject('sys')
 subdir('delfin')
 subdir('data')
 
+gnome = import('gnome')
 gnome.post_install(
   gtk_update_icon_cache: true,
+  update_desktop_database: true,
 )

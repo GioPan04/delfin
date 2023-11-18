@@ -2,7 +2,13 @@ subdir('icons')
 
 ascli_exe = find_program('appstreamcli')
 
-metainfo_file = 'cafe.avery.Delfin.metainfo.xml'
+metainfo_file = configure_file(
+  input: 'cafe.avery.Delfin.metainfo.xml.in',
+  output: '@0@.metainfo.xml'.format(app_id),
+  configuration: {
+    'APP_ID': app_id,
+  },
+)
 
 # Validate MetaInfo file
 if ascli_exe.found()
@@ -15,11 +21,18 @@ if ascli_exe.found()
   )
 endif
 
+install_data(
+  metainfo_file,
+  install_dir: datadir / meson.project_name(),
+)
+
+desktop_file = '@0@.desktop'.format(app_id)
+
 # Create desktop-entry file from metainfo
 custom_target('gen-desktop-entry',
     input : [metainfo_file],
-    output : ['cafe.avery.Delfin.desktop'],
+    output : [desktop_file],
     command : [ascli_exe, 'make-desktop-file', '@INPUT@', '@OUTPUT@'],
     install: true,
-    install_dir: join_paths (get_option ('datadir'), 'applications')
+    install_dir: appsdir,
 )

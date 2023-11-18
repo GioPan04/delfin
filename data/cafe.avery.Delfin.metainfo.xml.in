@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>cafe.avery.Delfin</id>
+  <id>@APP_ID@</id>
 
   <name>Delfin</name>
   <summary>Stream movies and TV shows from Jellyfin</summary>
 
   <metadata_license>CC-BY-SA-4.0</metadata_license>
-  <project_license>GPL-3.0-or-later</project_license>
+  <project_license>GPL-3.0-only</project_license>
 
   <content_rating type="oars-1.1" />
 
@@ -21,9 +21,9 @@
     </p>
   </description>
 
-  <launchable type="desktop-id">cafe.avery.Delfin.desktop</launchable>
+  <launchable type="desktop-id">@APP_ID@.desktop</launchable>
 
-  <icon type="stock">cafe.avery.Delfin</icon>
+  <icon type="stock">@APP_ID@</icon>
 
   <categories>
     <category>AudioVideo</category>
