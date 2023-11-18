@@ -6,6 +6,8 @@ project(
   subproject_dir: 'video_player_mpv',
 )
 
+gnome = import('gnome')
+
 base_id = 'cafe.avery.Delfin'
 
 cargo = find_program('cargo', required: true)
@@ -28,5 +30,14 @@ if get_option('flatpak')
   )
 endif
 
+prefix = get_option('prefix')
+datadir = prefix / get_option('datadir')
+iconsdir = datadir / 'icons'
+
 subproject('sys')
 subdir('delfin')
+subdir('data')
+
+gnome.post_install(
+  gtk_update_icon_cache: true,
+)

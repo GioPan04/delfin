@@ -1,7 +1,7 @@
 use gtk::prelude::*;
 use relm4::{prelude::*, ComponentParts, SimpleComponent};
 
-use crate::tr;
+use crate::{meson_config::APP_ID, tr};
 
 pub(crate) struct About;
 
@@ -18,6 +18,7 @@ impl SimpleComponent for About {
             set_visible: true,
 
             set_application_name: tr!("app-name"),
+            set_application_icon: APP_ID,
             set_developer_name: "Avery ❤️",
             set_version: "0.0",
             set_license_type: gtk::License::Agpl30,

@@ -14,6 +14,7 @@ use crate::{
     library::{Library, LibraryOutput},
     locales::tera_tr,
     media_details::MediaDetails,
+    meson_config::APP_ID,
     servers::server_list::{ServerList, ServerListOutput},
     tr,
     utils::{main_window::MAIN_APP_WINDOW_NAME, shift_state::shift_state_controller},
@@ -107,6 +108,7 @@ impl Component for App {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+        gtk::Window::set_default_icon_name(APP_ID);
         adw::StyleManager::default().set_color_scheme(CONFIG.read().general.theme().into());
 
         // Use development styles when running debug build

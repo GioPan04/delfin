@@ -1,3 +1,18 @@
+config = configure_file(
+  input: 'src/meson_config.rs.in',
+  output: 'meson_config.rs',
+  configuration: {
+    'APP_ID': app_id,
+  },
+)
+
+run_command(
+  'cp',
+  meson.project_build_root() / 'delfin' / 'meson_config.rs',
+  meson.project_source_root() / 'delfin' / 'src' / 'meson_config.rs',
+  check: true
+)
+
 cargo_options = []
 
 rust_target = 'debug'

@@ -1,4 +1,7 @@
-use delfin::app::{App, APP_BROKER};
+use delfin::{
+    app::{App, APP_BROKER},
+    meson_config::APP_ID,
+};
 use relm4::RelmApp;
 
 fn main() {
@@ -9,11 +12,7 @@ fn main() {
         video_player_gst::init_gst();
     }
 
-    let app = if cfg!(debug_assertions) {
-        RelmApp::new("cafe.avery.Delfin.Devel")
-    } else {
-        RelmApp::new("cafe.avery.Delfin")
-    };
+    let app = RelmApp::new(APP_ID);
 
     relm4_icons::initialize_icons();
     load_css();
