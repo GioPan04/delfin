@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>cafe.avery.Delfin</id>
+
+  <name>Delfin</name>
+  <summary>Stream movies and TV shows from Jellyfin</summary>
+
+  <metadata_license>CC-BY-SA-4.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <content_rating type="oars-1.1" />
+
+  <recommends>
+    <display_length compare="ge">600</display_length>
+  </recommends>
+
+  <description>
+    <p>
+      TODO - Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+      incididunt ut labore et dolore magna aliqua.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">cafe.avery.Delfin.desktop</launchable>
+
+  <icon type="stock">cafe.avery.Delfin</icon>
+
+  <categories>
+    <category>AudioVideo</category>
+    <category>Video</category>
+    <category>Player</category>
+    <category>TV</category>
+    <category>GTK</category>
+    <category>GNOME</category>
+  </categories>
+
+  <provides>
+    <binary>delfin</binary>
+  </provides>
+</component>
