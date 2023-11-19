@@ -29,6 +29,7 @@ endif
 prefix = get_option('prefix')
 bindir = prefix / get_option('bindir')
 datadir = prefix / get_option('datadir')
+pkgdatadir = datadir / meson.project_name()
 appsdir = datadir / 'applications'
 iconsdir = datadir / 'icons'
 

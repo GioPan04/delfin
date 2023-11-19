@@ -5,21 +5,31 @@
   <name>Delfin</name>
   <summary>Stream movies and TV shows from Jellyfin</summary>
 
-  <metadata_license>CC-BY-SA-4.0</metadata_license>
-  <project_license>GPL-3.0-only</project_license>
-
-  <content_rating type="oars-1.1" />
-
-  <recommends>
-    <display_length compare="ge">600</display_length>
-  </recommends>
-
   <description>
     <p>
       TODO - Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
       incididunt ut labore et dolore magna aliqua.
     </p>
   </description>
+
+  <metadata_license>CC-BY-SA-4.0</metadata_license>
+  <project_license>GPL-3.0</project_license>
+
+  <url type="homepage">https://delfin.avery.cafe/</url>
+
+  <!-- Deprecated field - keep until libadwaita and flatpak updated -->
+  <developer_name>Avery</developer_name>
+
+  <content_rating type="oars-1.1" />
+
+  <recommends>
+    <display_length compare="ge">600</display_length>
+    <control>pointing</control>
+  </recommends>
+
+  <supports>
+    <internet>always</internet>
+  </supports>
 
   <launchable type="desktop-id">@APP_ID@.desktop</launchable>
 

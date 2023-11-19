@@ -1,7 +1,7 @@
 use gtk::prelude::*;
 use relm4::{prelude::*, ComponentParts, SimpleComponent};
 
-use crate::{meson_config::APP_ID, tr};
+use crate::meson_config::APP_ID;
 
 pub(crate) struct About;
 
@@ -12,17 +12,13 @@ impl SimpleComponent for About {
     type Output = ();
 
     view! {
-        // TODO: Load from appstream
-        adw::AboutWindow {
+        adw::AboutWindow::from_appdata(
+            &format!("/cafe/avery/Delfin/{}.metainfo.xml", APP_ID),
+            None,
+        ) {
             set_modal: true,
             set_visible: true,
-
-            set_application_name: tr!("app-name"),
-            set_application_icon: APP_ID,
-            set_developer_name: "Avery ❤️",
             set_version: "0.0",
-            set_license_type: gtk::License::Agpl30,
-            set_website: "https://codeberg.org/avery42/delfin",
         }
     }
 

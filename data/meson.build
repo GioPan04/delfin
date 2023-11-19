@@ -1,3 +1,5 @@
+gnome = import('gnome')
+
 subdir('icons')
 
 ascli_exe = find_program('appstreamcli')
@@ -35,4 +37,22 @@ custom_target('gen-desktop-entry',
     command : [ascli_exe, 'make-desktop-file', '@INPUT@', '@OUTPUT@'],
     install: true,
     install_dir: appsdir,
+)
+
+resources_file = configure_file(
+  input: 'cafe.avery.Delfin.gresource.xml.in',
+  output: '@0@.gresource.xml'.format(app_id),
+  configuration: {
+    'APP_ID': app_id,
+  },
+)
+
+# Compile and install resources
+resources = gnome.compile_resources(
+  'resources',
+  resources_file,
+  gresource_bundle: true,
+  source_dir: meson.current_build_dir(),
+  install: true,
+  install_dir: pkgdatadir,
 )

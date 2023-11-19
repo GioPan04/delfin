@@ -3,6 +3,8 @@ config = configure_file(
   output: 'meson_config.rs',
   configuration: {
     'APP_ID': app_id,
+    'BUILDDIR': meson.project_build_root(),
+    'PKGDATADIR': pkgdatadir,
   },
 )
 
