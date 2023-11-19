@@ -5,6 +5,7 @@ config = configure_file(
     'APP_ID': app_id,
     'BUILDDIR': meson.project_build_root(),
     'PKGDATADIR': pkgdatadir,
+    'VERSION': version,
   },
 )
 

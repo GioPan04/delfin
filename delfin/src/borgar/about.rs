@@ -1,7 +1,7 @@
 use gtk::prelude::*;
 use relm4::{prelude::*, ComponentParts, SimpleComponent};
 
-use crate::meson_config::APP_ID;
+use crate::meson_config::{APP_ID, VERSION};
 
 pub(crate) struct About;
 
@@ -18,7 +18,7 @@ impl SimpleComponent for About {
         ) {
             set_modal: true,
             set_visible: true,
-            set_version: "0.0",
+            set_version: VERSION,
         }
     }
 

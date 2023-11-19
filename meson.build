@@ -4,6 +4,7 @@ project(
   version: '0.1.0',
   # bad hack to compile libvideo-player-mpv
   subproject_dir: 'video_player_mpv',
+  meson_version: '>= 0.59',
 )
 
 dependency('gtk4', version: '>= 4.0.0')
@@ -16,6 +17,19 @@ if get_option('profile') == 'dev'
   app_id = '@0@.@1@'.format(base_id, 'Devel')
 else
   app_id = base_id
+endif
+
+version = meson.project_version()
+if get_option('profile') == 'dev'
+  vcs_tag = run_command(
+      'git', 'rev-parse', '--short', 'HEAD',
+      check: false,
+    ).stdout().strip()
+  if vcs_tag == ''
+    version += '-devel'
+  else
+    version += f'-@vcs_tag@'
+  endif
 endif
 
 if get_option('flatpak')

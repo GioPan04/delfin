@@ -3,3 +3,4 @@
 pub const APP_ID: &str = "@APP_ID@";
 pub const BUILDDIR: &str = "@BUILDDIR@";
 pub const RESOURCES_FILE: &str = concat!("@PKGDATADIR@", "/resources.gresource");
+pub const VERSION: &str = "@VERSION@";
