@@ -8,7 +8,7 @@
         <property name="section-name">Video Player</property>
         <child>
           <object class="GtkShortcutsGroup">
-            <property name="title">General</property>
+            <property name="title">{{ tr(key="sc-gen") }}</property>
             <child>
               <object class="GtkShortcutsShortcut">
                 <property name="accelerator">&lt;Ctrl&gt;question</property>
@@ -19,7 +19,7 @@
         </child>
         <child>
           <object class="GtkShortcutsGroup">
-            <property name="title">Video Player</property>
+            <property name="title">{{ tr(key="sc-vp") }}</property>
             <child>
               <object class="GtkShortcutsShortcut">
                 <property name="accelerator">space</property>

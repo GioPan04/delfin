@@ -19,10 +19,10 @@
   </object>
   <object_property>
 	(2,2,"GtkShortcutsSection","section-name","Video Player",None,None,None,None,None,None,None,None,None),
-	(2,3,"GtkShortcutsGroup","title","General",None,None,None,None,None,None,None,None,None),
+	(2,3,"GtkShortcutsGroup","title","{{ tr(key=\"sc-gen\") }}",None,None,None,None,None,None,None,None,None),
 	(2,4,"GtkShortcutsShortcut","accelerator","&lt;Ctrl&gt;question",None,None,None,None,None,None,None,None,None),
 	(2,4,"GtkShortcutsShortcut","title","{{ tr(key=\"sc-gen-shortcuts\") }}",None,None,None,None,None,None,None,None,None),
-	(2,5,"GtkShortcutsGroup","title","Video Player",None,None,None,None,None,None,None,None,None),
+	(2,5,"GtkShortcutsGroup","title","{{ tr(key=\"sc-vp\") }}",None,None,None,None,None,None,None,None,None),
 	(2,6,"GtkShortcutsShortcut","accelerator","space",None,None,None,None,None,None,None,None,None),
 	(2,6,"GtkShortcutsShortcut","title","{{ tr(key=\"sc-vp-play-pause\") }}",None,None,None,None,None,None,None,None,None),
 	(2,7,"GtkShortcutsShortcut","accelerator","Left Right",None,None,None,None,None,None,None,None,None),
