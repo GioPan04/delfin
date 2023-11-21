@@ -1,22 +1,18 @@
 use std::{collections::VecDeque, sync::Arc};
 
 use gdk::Texture;
-use jellyfin_api::types::{BaseItemDto, BaseItemKind};
+use jellyfin_api::types::BaseItemDto;
 use relm4::{
     gtk::{self, gdk, gdk_pixbuf, prelude::*},
     prelude::{AsyncComponent, AsyncComponentParts},
     AsyncComponentSender,
 };
-use uuid::Uuid;
 
 use crate::{
     app::{AppInput, APP_BROKER},
-    jellyfin_api::{
-        api::{latest::GetNextUpOptionsBuilder, shows::GetEpisodesOptionsBuilder},
-        api_client::ApiClient,
-    },
+    jellyfin_api::api_client::ApiClient,
     tr,
-    utils::item_name::ItemName,
+    utils::{item_name::ItemName, playable::get_next_playable_media},
 };
 
 use super::LIBRARY_BROKER;
@@ -262,72 +258,4 @@ async fn get_thumbnail(
     let pixbuf = gdk_pixbuf::Pixbuf::from_read(img_bytes)
         .unwrap_or_else(|_| panic!("Error creating media tile pixbuf: {:#?}", media.id));
     Some(gdk::Texture::for_pixbuf(&pixbuf))
-}
-
-// Gets the next playable media for the given media item.
-// For episodes and movies, this just returns the passed in media.
-// For TV shows, this looks for the next episode for the user to start/continue watching the
-// series.
-async fn get_next_playable_media(
-    api_client: Arc<ApiClient>,
-    media: BaseItemDto,
-) -> Option<BaseItemDto> {
-    let media_id = media.id.expect("Media missing id: {media:#?}");
-    let media_type = media.type_.expect("Media missing type: {media:#?}");
-
-    match media_type {
-        BaseItemKind::Series => get_next_episode(api_client, media_id).await,
-        _ => Some(media),
-    }
-}
-
-async fn get_next_episode(api_client: Arc<ApiClient>, media_id: Uuid) -> Option<BaseItemDto> {
-    if let Some(resume) = api_client
-        .get_continue_watching(
-            GetNextUpOptionsBuilder::default()
-                .series_id(media_id)
-                .limit(1)
-                .build()
-                .unwrap(),
-        )
-        .await
-        .as_ref()
-        .ok()
-        .and_then(|resume| resume.first())
-    {
-        return Some(resume.to_owned());
-    };
-
-    if let Some(next_up) = api_client
-        .get_next_up(
-            GetNextUpOptionsBuilder::default()
-                .series_id(media_id)
-                .limit(1)
-                .build()
-                .unwrap(),
-        )
-        .await
-        .ok()
-        .as_ref()
-        .and_then(|next_up| next_up.first())
-    {
-        return Some(next_up.to_owned());
-    }
-
-    if let Some(items) = api_client
-        .get_episodes(
-            &GetEpisodesOptionsBuilder::default()
-                .series_id(media_id)
-                .build()
-                .unwrap(),
-        )
-        .await
-        .ok()
-        .as_ref()
-        .and_then(|episodes| episodes.first())
-    {
-        return Some(items.to_owned());
-    }
-
-    None
 }

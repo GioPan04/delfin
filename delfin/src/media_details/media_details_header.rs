@@ -9,9 +9,9 @@ use relm4::{
 
 use crate::{
     app::APP_BROKER,
-    jellyfin_api::{api::latest::GetNextUpOptionsBuilder, api_client::ApiClient},
+    jellyfin_api::api_client::ApiClient,
     tr,
-    utils::constants::MAX_LIBRARY_WIDTH,
+    utils::{constants::MAX_LIBRARY_WIDTH, playable::get_next_playable_media},
 };
 
 pub const MEDIA_DETAILS_BACKDROP_HEIGHT: i32 = 400;
@@ -221,9 +221,8 @@ impl Component for MediaDetailsHeader {
         }
 
         sender.oneshot_command({
-            let media = media.clone();
             async move {
-                let play_next = get_play_next(&api_client, &item, &media).await;
+                let play_next = get_play_next(&api_client, &item).await;
                 MediaDetailsHeaderCommandOutput::PlayNextLoaded(Box::new(play_next))
             }
         });
@@ -278,13 +277,21 @@ impl Component for MediaDetailsHeader {
     }
 }
 
-// Keep away from this accursed function
 async fn get_play_next(
     api_client: &Arc<ApiClient>,
     item: &BaseItemDto,
-    media: &BaseItemDto,
 ) -> (String, Option<BaseItemDto>) {
-    let resume = media
+    let next_playable = match get_next_playable_media(api_client.clone(), item.clone()).await {
+        Some(next_playable) => next_playable,
+        None => {
+            return (
+                tr!("media-details-play-button.next-episode").to_string(),
+                None,
+            )
+        }
+    };
+
+    let resume = next_playable
         .user_data
         .clone()
         .and_then(|user_data| user_data.playback_position_ticks)
@@ -292,18 +299,19 @@ async fn get_play_next(
         != 0;
 
     if !(matches!(
-        media.type_,
+        next_playable.type_,
         Some(BaseItemKind::Episode) | Some(BaseItemKind::Series)
     )) {
         return (
             tr!("media-details-play-button", {"resume" => resume.to_string()}).to_string(),
-            Some(media.clone()),
+            Some(next_playable),
         );
     }
 
-    if let (Some(parent_index_number), Some(index_number)) =
-        (&media.parent_index_number, &media.index_number)
-    {
+    if let (Some(parent_index_number), Some(index_number)) = (
+        &next_playable.parent_index_number,
+        &next_playable.index_number,
+    ) {
         return (
             tr!(
                 "media-details-play-button.with-episode-and-season",
@@ -314,51 +322,12 @@ async fn get_play_next(
                 },
             )
             .to_string(),
-            Some(media.clone()),
+            Some(next_playable),
         );
-    }
-
-    if let Some(series_id) = item.id {
-        let next_up = match api_client
-            .get_next_up(
-                GetNextUpOptionsBuilder::default()
-                    .series_id(series_id)
-                    .build()
-                    .unwrap(),
-            )
-            .await
-            .map(|next_up| {
-                if !next_up.is_empty() {
-                    return Some(next_up[0].clone());
-                }
-                None
-            }) {
-            Ok(Some(next_up)) => Some(next_up),
-            _ => None,
-        };
-
-        if let Some(next_up) = next_up {
-            if let (Some(parent_index_number), Some(index_number)) =
-                (&next_up.parent_index_number, &next_up.index_number)
-            {
-                return (
-                    tr!(
-                        "media-details-play-button.with-episode-and-season",
-                        {
-                            "resume" => resume.to_string(),
-                            "seasonNumber" => parent_index_number,
-                            "episodeNumber" => index_number,
-                        },
-                    )
-                    .to_string(),
-                    Some(next_up),
-                );
-            }
-        }
     }
 
     (
         tr!("media-details-play-button.next-episode").to_string(),
-        None,
+        Some(next_playable),
     )
 }
