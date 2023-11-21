@@ -27,6 +27,7 @@ impl SimpleComponent for MediaGrid {
         gtk::FlowBox {
             set_row_spacing: 32,
             set_homogeneous: true,
+            set_selection_mode: gtk::SelectionMode::None,
         }
     }
 
