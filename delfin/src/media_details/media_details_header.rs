@@ -154,7 +154,7 @@ impl Component for MediaDetailsHeader {
                                         set_hexpand: true,
                                         set_vexpand: false,
                                         #[watch]
-                                        set_sensitive: model.play_next_label.is_some() && model.play_next_media.is_some(),
+                                        set_visible: model.play_next_label.is_some() && model.play_next_media.is_some(),
 
                                         connect_clicked[sender] => move |_| {
                                             sender.input(MediaDetailsHeaderInput::PlayNext);
