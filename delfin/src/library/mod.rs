@@ -1,6 +1,7 @@
 mod collection;
 mod home;
 mod home_sections;
+mod library_container;
 mod media_carousel;
 mod media_grid;
 mod media_list;
@@ -10,6 +11,7 @@ use jellyfin_api::types::BaseItemDto;
 use relm4::{ComponentController, SharedState};
 use std::{
     collections::HashMap,
+    ops::Deref,
     sync::{Arc, RwLock},
 };
 use uuid::Uuid;
@@ -27,10 +29,7 @@ use crate::{
     },
     media_details::MEDIA_DETAILS_REFRESH_QUEUED,
     tr,
-    utils::{
-        constants::{PAGE_MARGIN, WIDGET_NONE},
-        message_broker::ResettableMessageBroker,
-    },
+    utils::{constants::WIDGET_NONE, message_broker::ResettableMessageBroker},
 };
 
 use self::{
@@ -146,17 +145,14 @@ impl Component for Library {
                                 gtk::Box {
                                     set_orientation: gtk::Orientation::Vertical,
 
-                                    gtk::ScrolledWindow {
-                                        #[local_ref]
-                                        view_stack -> adw::ViewStack {
-                                            connect_visible_child_notify[sender] => move |stack| {
-                                                if let Some(name) = stack.visible_child_name() {
-                                                    sender.input(LibraryInput::ViewStackChildVisible(name.into()));
-                                                }
-                                            },
-                                            set_margin_all: PAGE_MARGIN,
-                                            set_valign: gtk::Align::Fill,
+                                    #[local_ref]
+                                    view_stack -> adw::ViewStack {
+                                        connect_visible_child_notify[sender] => move |stack| {
+                                            if let Some(name) = stack.visible_child_name() {
+                                                sender.input(LibraryInput::ViewStackChildVisible(name.into()));
+                                            }
                                         },
+                                        set_valign: gtk::Align::Fill,
                                     },
 
                                     #[name = "view_switcher_bar"]
@@ -231,10 +227,10 @@ impl Component for Library {
 
                 // Clear the current set of pages before loading a new one
                 if let Some(home) = self.home.take() {
-                    view_stack.remove(home.widget());
+                    view_stack.remove(home.widget().deref());
                 }
                 for (_id, collection) in self.collections.drain() {
-                    view_stack.remove(collection.widget());
+                    view_stack.remove(collection.widget().deref());
                 }
 
                 self.initial_fetch(&sender);
@@ -323,7 +319,7 @@ impl Library {
             })
             .detach();
         view_stack.add_titled_with_icon(
-            home.widget(),
+            home.widget().deref(),
             Some("home"),
             tr!("library-page-home-title"),
             "home-filled",
@@ -349,7 +345,7 @@ impl Library {
                 .detach();
 
             view_stack.add_titled_with_icon(
-                collection.widget(),
+                collection.widget().deref(),
                 Some(&view.id.to_string()),
                 &view.name.clone(),
                 icon,

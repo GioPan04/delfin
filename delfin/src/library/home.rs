@@ -11,11 +11,12 @@ use relm4::{
 use crate::jellyfin_api::api::views::UserView;
 use crate::jellyfin_api::api_client::ApiClient;
 use crate::jellyfin_api::models::display_preferences::{DisplayPreferences, HomeSection};
-use crate::utils::constants::MAX_LIBRARY_WIDTH;
+use crate::utils::constants::{MAX_LIBRARY_WIDTH, PAGE_MARGIN};
 
 use super::home_sections::continue_watching::HomeSectionContinueWatching;
 use super::home_sections::latest::HomeSectionLatest;
 use super::home_sections::next_up::HomeSectionNextUp;
+use super::library_container::LibraryContainer;
 
 enum HomeSectionController {
     ContinueWatching(Controller<HomeSectionContinueWatching>),
@@ -46,17 +47,19 @@ impl SimpleComponent for Home {
     type Init = HomeInit;
 
     view! {
-        adw::Clamp {
-            set_maximum_size: MAX_LIBRARY_WIDTH,
-            set_tightening_threshold: MAX_LIBRARY_WIDTH,
-
-            #[name = "sections_container"]
-            gtk::Box {
-                set_valign: gtk::Align::Start,
-                set_vexpand: true,
-                set_orientation: gtk::Orientation::Vertical,
-                set_spacing: 20,
-            }
+        #[template]
+        LibraryContainer {
+            #[template_child]
+            contents {
+                #[name = "sections_container"]
+                #[wrap(Some)]
+                set_child = &gtk::Box {
+                    set_valign: gtk::Align::Start,
+                    set_vexpand: true,
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_spacing: 20,
+                },
+            },
         }
     }
 
