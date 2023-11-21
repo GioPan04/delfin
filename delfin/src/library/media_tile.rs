@@ -1,15 +1,20 @@
 use std::{collections::VecDeque, sync::Arc};
 
 use gdk::Texture;
-use jellyfin_api::types::BaseItemDto;
+use jellyfin_api::types::{BaseItemDto, BaseItemKind};
 use relm4::{
     gtk::{self, gdk, gdk_pixbuf, prelude::*},
-    Component, ComponentParts, ComponentSender,
+    prelude::{AsyncComponent, AsyncComponentParts},
+    AsyncComponentSender,
 };
+use uuid::Uuid;
 
 use crate::{
     app::{AppInput, APP_BROKER},
-    jellyfin_api::api_client::ApiClient,
+    jellyfin_api::{
+        api::{latest::GetNextUpOptionsBuilder, shows::GetEpisodesOptionsBuilder},
+        api_client::ApiClient,
+    },
     tr,
     utils::item_name::ItemName,
 };
@@ -49,7 +54,13 @@ fn get_item_label(item: &BaseItemDto) -> String {
 
 pub struct MediaTile {
     media: BaseItemDto,
+    api_client: Arc<ApiClient>,
     thumbnail: Option<Texture>,
+}
+
+#[derive(Debug)]
+pub enum MediaTileInput {
+    Play,
 }
 
 #[derive(Debug)]
@@ -57,10 +68,10 @@ pub enum MediaTileCommandOutput {
     ThumbnailLoaded(Option<Texture>),
 }
 
-#[relm4::component(pub)]
-impl Component for MediaTile {
+#[relm4::component(pub async)]
+impl AsyncComponent for MediaTile {
     type Init = (BaseItemDto, MediaTileDisplay, Arc<ApiClient>);
-    type Input = ();
+    type Input = MediaTileInput;
     type Output = ();
     type CommandOutput = MediaTileCommandOutput;
 
@@ -83,8 +94,8 @@ impl Component for MediaTile {
 
 
                 add_controller = gtk::GestureClick {
-                    connect_pressed[media] => move |_, _, _, _| {
-                        APP_BROKER.send(AppInput::PlayVideo(media.clone()));
+                    connect_pressed[sender] => move |_, _, _, _| {
+                        sender.input(MediaTileInput::Play);
                     },
                 },
 
@@ -161,15 +172,16 @@ impl Component for MediaTile {
         }
     }
 
-    fn init(
+    async fn init(
         init: Self::Init,
-        root: &Self::Root,
-        sender: ComponentSender<Self>,
-    ) -> ComponentParts<Self> {
+        root: Self::Root,
+        sender: AsyncComponentSender<Self>,
+    ) -> AsyncComponentParts<Self> {
         let (media, tile_display, api_client) = init;
 
         let model = MediaTile {
             media: media.clone(),
+            api_client: api_client.clone(),
             thumbnail: None,
         };
 
@@ -183,13 +195,28 @@ impl Component for MediaTile {
             }
         });
 
-        ComponentParts { model, widgets }
+        AsyncComponentParts { model, widgets }
     }
 
-    fn update_cmd(
+    async fn update(
+        &mut self,
+        message: Self::Input,
+        _sender: AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match message {
+            MediaTileInput::Play => {
+                let playable_media =
+                    get_next_playable_media(self.api_client.clone(), self.media.clone()).await;
+                APP_BROKER.send(AppInput::PlayVideo(playable_media));
+            }
+        }
+    }
+
+    async fn update_cmd(
         &mut self,
         message: Self::CommandOutput,
-        _sender: ComponentSender<Self>,
+        _sender: AsyncComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match message {
@@ -226,4 +253,71 @@ async fn get_thumbnail(
     let pixbuf = gdk_pixbuf::Pixbuf::from_read(img_bytes)
         .unwrap_or_else(|_| panic!("Error creating media tile pixbuf: {:#?}", media.id));
     Some(gdk::Texture::for_pixbuf(&pixbuf))
+}
+
+// Gets the next playable media for the given media item.
+// For episodes and movies, this just returns the passed in media.
+// For TV shows, this looks for the next episode for the user to start/continue watching the
+// series.
+async fn get_next_playable_media(api_client: Arc<ApiClient>, media: BaseItemDto) -> BaseItemDto {
+    let media_id = media.id.expect("Media missing id: {media:#?}");
+    let media_type = media.type_.expect("Media missing type: {media:#?}");
+
+    match media_type {
+        BaseItemKind::Series => get_next_episode(api_client, media_id)
+            .await
+            .unwrap_or_else(|| panic!("Error getting next episode for series {media_id}")),
+        _ => media,
+    }
+}
+
+async fn get_next_episode(api_client: Arc<ApiClient>, media_id: Uuid) -> Option<BaseItemDto> {
+    if let Some(resume) = api_client
+        .get_continue_watching(
+            GetNextUpOptionsBuilder::default()
+                .series_id(media_id)
+                .limit(1)
+                .build()
+                .unwrap(),
+        )
+        .await
+        .as_ref()
+        .ok()
+        .and_then(|resume| resume.first())
+    {
+        return Some(resume.to_owned());
+    };
+
+    if let Some(next_up) = api_client
+        .get_next_up(
+            GetNextUpOptionsBuilder::default()
+                .series_id(media_id)
+                .limit(1)
+                .build()
+                .unwrap(),
+        )
+        .await
+        .ok()
+        .as_ref()
+        .and_then(|next_up| next_up.first())
+    {
+        return Some(next_up.to_owned());
+    }
+
+    if let Some(items) = api_client
+        .get_episodes(
+            &GetEpisodesOptionsBuilder::default()
+                .series_id(media_id)
+                .build()
+                .unwrap(),
+        )
+        .await
+        .ok()
+        .as_ref()
+        .and_then(|episodes| episodes.first())
+    {
+        return Some(items.to_owned());
+    }
+
+    None
 }

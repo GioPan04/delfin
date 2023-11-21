@@ -83,7 +83,7 @@ impl MediaList {
 
         let media = match list_type {
             MediaListType::ContinueWatching => api_client
-                .get_continue_watching(None)
+                .get_continue_watching(GetNextUpOptions::default())
                 .await
                 .expect("Error getting continue watching."),
             MediaListType::Latest(params) => api_client

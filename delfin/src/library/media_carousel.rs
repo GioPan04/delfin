@@ -12,7 +12,7 @@ use super::media_tile::{MediaTile, MediaTileDisplay};
 const MIN_PADDING: i32 = 16;
 
 pub(crate) struct MediaCarousel {
-    media_tiles: Vec<Controller<MediaTile>>,
+    media_tiles: Vec<AsyncController<MediaTile>>,
     pages: Vec<gtk::Box>,
 }
 
@@ -146,7 +146,7 @@ impl Component for MediaCarousel {
 
         carousel_indicator.set_carousel(Some(carousel));
 
-        let media_tiles: Vec<Controller<MediaTile>> = media
+        let media_tiles: Vec<AsyncController<MediaTile>> = media
             .iter()
             .map(|media| {
                 MediaTile::builder()
@@ -185,7 +185,7 @@ impl Component for MediaCarousel {
                 }
                 self.pages.clear();
 
-                let media_tile_chunks: Vec<&[Controller<MediaTile>]> =
+                let media_tile_chunks: Vec<&[AsyncController<MediaTile>]> =
                     self.media_tiles.chunks(tiles_per_page as usize).collect();
 
                 for chunk in media_tile_chunks {

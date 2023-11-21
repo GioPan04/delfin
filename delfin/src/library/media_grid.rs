@@ -8,7 +8,7 @@ use crate::jellyfin_api::api_client::ApiClient;
 use super::media_tile::{MediaTile, MediaTileDisplay};
 
 pub(crate) struct MediaGrid {
-    media_tiles: Vec<Controller<MediaTile>>,
+    media_tiles: Vec<AsyncController<MediaTile>>,
 }
 
 pub(crate) struct MediaGridInit {
