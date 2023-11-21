@@ -19,6 +19,8 @@ use crate::{
     utils::item_name::ItemName,
 };
 
+use super::LIBRARY_BROKER;
+
 #[derive(Clone, Copy)]
 pub enum MediaTileDisplay {
     Cover,
@@ -206,9 +208,16 @@ impl AsyncComponent for MediaTile {
     ) {
         match message {
             MediaTileInput::Play => {
-                let playable_media =
-                    get_next_playable_media(self.api_client.clone(), self.media.clone()).await;
-                APP_BROKER.send(AppInput::PlayVideo(playable_media));
+                match get_next_playable_media(self.api_client.clone(), self.media.clone()).await {
+                    Some(media) => APP_BROKER.send(AppInput::PlayVideo(media)),
+                    _ => {
+                        let mut message = "No playable media found".to_string();
+                        if let Some(name) = self.media.name.as_ref() {
+                            message += &format!(" for {name}");
+                        }
+                        LIBRARY_BROKER.send(super::LibraryInput::Toast(message))
+                    }
+                };
             }
         }
     }
@@ -259,15 +268,16 @@ async fn get_thumbnail(
 // For episodes and movies, this just returns the passed in media.
 // For TV shows, this looks for the next episode for the user to start/continue watching the
 // series.
-async fn get_next_playable_media(api_client: Arc<ApiClient>, media: BaseItemDto) -> BaseItemDto {
+async fn get_next_playable_media(
+    api_client: Arc<ApiClient>,
+    media: BaseItemDto,
+) -> Option<BaseItemDto> {
     let media_id = media.id.expect("Media missing id: {media:#?}");
     let media_type = media.type_.expect("Media missing type: {media:#?}");
 
     match media_type {
-        BaseItemKind::Series => get_next_episode(api_client, media_id)
-            .await
-            .unwrap_or_else(|| panic!("Error getting next episode for series {media_id}")),
-        _ => media,
+        BaseItemKind::Series => get_next_episode(api_client, media_id).await,
+        _ => Some(media),
     }
 }
 

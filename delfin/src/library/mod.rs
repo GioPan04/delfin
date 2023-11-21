@@ -7,7 +7,7 @@ mod media_list;
 mod media_tile;
 
 use jellyfin_api::types::BaseItemDto;
-use relm4::{ComponentController, SharedState};
+use relm4::{ComponentController, MessageBroker, SharedState};
 use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
@@ -35,6 +35,7 @@ use self::{
     home::{Home, HomeInit},
 };
 
+pub static LIBRARY_BROKER: MessageBroker<LibraryInput> = MessageBroker::new();
 pub static LIBRARY_REFRESH_QUEUED: SharedState<bool> = SharedState::new();
 
 enum LibraryState {
@@ -56,6 +57,7 @@ pub enum LibraryInput {
     Refresh,
     Shown,
     ViewStackChildVisible(String),
+    Toast(String),
 }
 
 #[derive(Debug)]
@@ -104,58 +106,62 @@ impl Component for Library {
                         },
                     },
 
+                    #[name = "toaster"]
                     #[wrap(Some)]
-                    set_content = &gtk::Box {
-                        set_orientation: gtk::Orientation::Vertical,
+                    set_content = &adw::ToastOverlay {
+                        #[wrap(Some)]
+                        set_child = &gtk::Box {
+                            set_orientation: gtk::Orientation::Vertical,
 
-                        #[transition = "Crossfade"]
-                        append = if matches!(model.state, LibraryState::Loading) {
-                            gtk::Box {
-                                set_orientation: gtk::Orientation::Vertical,
+                            #[transition = "Crossfade"]
+                            append = if matches!(model.state, LibraryState::Loading) {
+                                gtk::Box {
+                                    set_orientation: gtk::Orientation::Vertical,
 
-                                adw::Clamp {
-                                    gtk::Box {
-                                        set_orientation: gtk::Orientation::Vertical,
-                                        set_hexpand: true,
-                                        set_vexpand: true,
-                                        set_halign: gtk::Align::Center,
-                                        set_valign: gtk::Align::Center,
-                                        set_spacing: 20,
+                                    adw::Clamp {
+                                        gtk::Box {
+                                            set_orientation: gtk::Orientation::Vertical,
+                                            set_hexpand: true,
+                                            set_vexpand: true,
+                                            set_halign: gtk::Align::Center,
+                                            set_valign: gtk::Align::Center,
+                                            set_spacing: 20,
 
-                                        gtk::Spinner {
-                                            set_spinning: true,
-                                            set_size_request: (64, 64),
-                                        },
+                                            gtk::Spinner {
+                                                set_spinning: true,
+                                                set_size_request: (64, 64),
+                                            },
 
-                                        gtk::Label {
-                                            set_label: tr!("library-loading"),
-                                            add_css_class: "title-2",
-                                        },
+                                            gtk::Label {
+                                                set_label: tr!("library-loading"),
+                                                add_css_class: "title-2",
+                                            },
+                                        }
                                     }
                                 }
-                            }
-                        } else {
-                            gtk::Box {
-                                set_orientation: gtk::Orientation::Vertical,
+                            } else {
+                                gtk::Box {
+                                    set_orientation: gtk::Orientation::Vertical,
 
-                                gtk::ScrolledWindow {
-                                    #[local_ref]
-                                    view_stack -> adw::ViewStack {
-                                        connect_visible_child_notify[sender] => move |stack| {
-                                            if let Some(name) = stack.visible_child_name() {
-                                                sender.input(LibraryInput::ViewStackChildVisible(name.into()));
-                                            }
+                                    gtk::ScrolledWindow {
+                                        #[local_ref]
+                                        view_stack -> adw::ViewStack {
+                                            connect_visible_child_notify[sender] => move |stack| {
+                                                if let Some(name) = stack.visible_child_name() {
+                                                    sender.input(LibraryInput::ViewStackChildVisible(name.into()));
+                                                }
+                                            },
+                                            set_margin_all: PAGE_MARGIN,
+                                            set_valign: gtk::Align::Fill,
                                         },
-                                        set_margin_all: PAGE_MARGIN,
-                                        set_valign: gtk::Align::Fill,
                                     },
-                                },
 
-                                #[name = "view_switcher_bar"]
-                                adw::ViewSwitcherBar {
-                                    set_stack: Some(&view_stack),
-                                },
-                            }
+                                    #[name = "view_switcher_bar"]
+                                    adw::ViewSwitcherBar {
+                                        set_stack: Some(&view_stack),
+                                    },
+                                }
+                            },
                         },
                     },
                 },
@@ -243,6 +249,10 @@ impl Component for Library {
                         collection.emit(CollectionInput::Visible);
                     }
                 }
+            }
+            LibraryInput::Toast(message) => {
+                let toast = adw::Toast::new(&message);
+                widgets.toaster.add_toast(toast);
             }
         }
 

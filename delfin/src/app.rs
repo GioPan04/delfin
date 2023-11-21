@@ -11,7 +11,7 @@ use crate::{
     config,
     globals::CONFIG,
     jellyfin_api::api_client::ApiClient,
-    library::{Library, LibraryOutput},
+    library::{Library, LibraryOutput, LIBRARY_BROKER},
     locales::tera_tr,
     media_details::MediaDetails,
     meson_config::APP_ID,
@@ -176,13 +176,16 @@ impl Component for App {
                 self.api_client = Some(api_client.clone());
 
                 let library = Library::builder()
-                    .launch((
-                        // TODO
-                        Arc::new(RwLock::new(CONFIG.read().clone())),
-                        server,
-                        account,
-                        api_client,
-                    ))
+                    .launch_with_broker(
+                        (
+                            // TODO
+                            Arc::new(RwLock::new(CONFIG.read().clone())),
+                            server,
+                            account,
+                            api_client,
+                        ),
+                        &LIBRARY_BROKER,
+                    )
                     .forward(sender.input_sender(), convert_library_output);
                 navigation.push(library.widget());
                 self.library = Some(library);
