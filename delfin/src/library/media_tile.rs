@@ -77,13 +77,14 @@ impl AsyncComponent for MediaTile {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
             set_halign: gtk::Align::Center,
+            set_valign: gtk::Align::Start,
             set_spacing: 8,
             add_css_class: "media-tile",
 
 
             #[name = "overlay"]
             gtk::Overlay {
-                set_halign: gtk::Align::Start,
+                set_halign: gtk::Align::Center,
                 set_cursor_from_name: Some("pointer"),
 
                 // TODO: progress bar overflows media tile. Hiding the overflow is a workaround, but it makes the

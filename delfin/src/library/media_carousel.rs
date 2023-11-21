@@ -9,9 +9,10 @@ use crate::{globals::SHIFT_STATE, jellyfin_api::api_client::ApiClient};
 
 use super::media_tile::{MediaTile, MediaTileDisplay};
 
-const MIN_PADDING: i32 = 16;
+const MIN_PADDING: i32 = 24;
 
 pub(crate) struct MediaCarousel {
+    media_tile_display: MediaTileDisplay,
     media_tiles: Vec<AsyncController<MediaTile>>,
     pages: Vec<gtk::Box>,
 }
@@ -31,8 +32,11 @@ pub(crate) enum MediaCarouselInput {
 }
 
 impl MediaTileDisplay {
-    fn min_height(&self) -> i32 {
-        self.height() + 80
+    fn min_height(&self, pages: &Vec<gtk::Box>) -> i32 {
+        match pages.len() {
+            1 => self.height() + 50,
+            _ => self.height() + 80,
+        }
     }
 }
 
@@ -86,15 +90,17 @@ impl Component for MediaCarousel {
 
             #[name = "breakpoints"]
             adw::BreakpointBin {
+                #[watch]
                 set_size_request: (
-                    media_tile_display.width() * 2 + MIN_PADDING,
-                    media_tile_display.min_height(),
+                    model.media_tile_display.width() * 2 + MIN_PADDING,
+                    model.media_tile_display.min_height(&model.pages),
                 ),
                 set_hexpand: true,
 
                 #[wrap(Some)]
                 set_child = &gtk::Box {
                     set_orientation: gtk::Orientation::Vertical,
+                    set_spacing: 8,
 
                     #[name = "carousel"]
                     adw::Carousel {
@@ -139,13 +145,6 @@ impl Component for MediaCarousel {
             label,
         } = init;
 
-        let widgets = view_output!();
-        let breakpoints = &widgets.breakpoints;
-        let carousel = &widgets.carousel;
-        let carousel_indicator = &widgets.carousel_indicator;
-
-        carousel_indicator.set_carousel(Some(carousel));
-
         let media_tiles: Vec<AsyncController<MediaTile>> = media
             .iter()
             .map(|media| {
@@ -156,9 +155,17 @@ impl Component for MediaCarousel {
             .collect();
 
         let model = MediaCarousel {
+            media_tile_display,
             media_tiles,
             pages: vec![],
         };
+
+        let widgets = view_output!();
+        let breakpoints = &widgets.breakpoints;
+        let carousel = &widgets.carousel;
+        let carousel_indicator = &widgets.carousel_indicator;
+
+        carousel_indicator.set_carousel(Some(carousel));
 
         add_breakpoints(breakpoints, &sender, media_tile_display);
 
@@ -193,12 +200,12 @@ impl Component for MediaCarousel {
                         .orientation(gtk::Orientation::Horizontal)
                         .homogeneous(true)
                         .hexpand(true)
+                        .spacing(MIN_PADDING)
                         .build();
 
                     // Not a full page, we don't want the tiles to be spaced out across the screen
                     if chunk.len() < tiles_per_page as usize {
                         page.set_halign(gtk::Align::Start);
-                        page.set_spacing(MIN_PADDING);
                     }
 
                     for tile in chunk {
