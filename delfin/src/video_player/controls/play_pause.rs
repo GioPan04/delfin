@@ -1,30 +1,13 @@
-use std::{
-    cell::RefCell,
-    sync::{Arc, RwLock, RwLockReadGuard},
-};
+use std::{cell::RefCell, sync::Arc};
 
 use gtk::prelude::*;
-use relm4::{gtk, ComponentParts, ComponentSender, MessageBroker, SimpleComponent};
+use relm4::{gtk, ComponentParts, ComponentSender, SimpleComponent};
 
 use crate::{tr, video_player::backends::VideoPlayerBackend};
 
-pub struct PlayPauseBroker(RwLock<MessageBroker<PlayPauseInput>>);
+use super::control_broker::ControlBroker;
 
-impl PlayPauseBroker {
-    const fn new() -> Self {
-        Self(RwLock::new(MessageBroker::new()))
-    }
-
-    pub(crate) fn read(&self) -> RwLockReadGuard<MessageBroker<PlayPauseInput>> {
-        self.0.read().unwrap()
-    }
-
-    pub(crate) fn reset(&self) {
-        *self.0.write().unwrap() = MessageBroker::new();
-    }
-}
-
-pub static PLAY_PAUSE_BROKER: PlayPauseBroker = PlayPauseBroker::new();
+pub static PLAY_PAUSE_BROKER: ControlBroker<PlayPauseInput> = ControlBroker::new();
 
 pub(crate) struct PlayPause {
     video_player: Arc<RefCell<dyn VideoPlayerBackend>>,

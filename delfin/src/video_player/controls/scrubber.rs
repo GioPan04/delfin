@@ -1,35 +1,18 @@
 use bytes::Buf;
-use std::{
-    cell::RefCell,
-    sync::{Arc, RwLock, RwLockReadGuard},
-};
+use std::{cell::RefCell, sync::Arc};
 
 use gdk::{Rectangle, Texture};
 use graphene::Point;
 use gtk::{gdk, gdk_pixbuf, graphene, prelude::*};
-use relm4::{prelude::*, MessageBroker};
+use relm4::prelude::*;
 
 use crate::{tr, utils::bif::Thumbnail, video_player::backends::VideoPlayerBackend};
 
-pub(crate) struct ScrubberBroker(RwLock<MessageBroker<ScrubberInput>>);
+use super::control_broker::ControlBroker;
 
 const TIMESTAMP_WIDTH: i32 = 80;
 
-impl ScrubberBroker {
-    const fn new() -> Self {
-        Self(RwLock::new(MessageBroker::new()))
-    }
-
-    pub(crate) fn read(&self) -> RwLockReadGuard<MessageBroker<ScrubberInput>> {
-        self.0.read().unwrap()
-    }
-
-    pub(crate) fn reset(&self) {
-        *self.0.write().unwrap() = MessageBroker::new();
-    }
-}
-
-pub(crate) static SCRUBBER_BROKER: ScrubberBroker = ScrubberBroker::new();
+pub(crate) static SCRUBBER_BROKER: ControlBroker<ScrubberInput> = ControlBroker::new();
 
 #[derive(Clone, Copy, Debug)]
 enum DurationDisplay {

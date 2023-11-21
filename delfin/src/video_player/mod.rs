@@ -457,8 +457,8 @@ impl VideoPlayer {
 
         match new_state {
             PlayerState::Loading => {
-                SCRUBBER_BROKER.read().send(ScrubberInput::Reset);
-                PLAY_PAUSE_BROKER.read().send(PlayPauseInput::SetLoading);
+                SCRUBBER_BROKER.send(ScrubberInput::Reset);
+                PLAY_PAUSE_BROKER.send(PlayPauseInput::SetLoading);
                 SKIP_FORWARDS_BROKER
                     .read()
                     .send(SkipForwardsBackwardsInput::SetLoading(true));
@@ -468,7 +468,7 @@ impl VideoPlayer {
                 self.next_up.emit(NextUpInput::Reset);
             }
             PlayerState::Playing { paused } => {
-                SCRUBBER_BROKER.read().send(ScrubberInput::SetPlaying);
+                SCRUBBER_BROKER.send(ScrubberInput::SetPlaying);
                 PLAY_PAUSE_BROKER
                     .read()
                     .send(PlayPauseInput::SetPlaying(!paused));

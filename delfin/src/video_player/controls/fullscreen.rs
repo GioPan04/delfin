@@ -1,13 +1,14 @@
-use std::{
-    mem::take,
-    sync::{RwLock, RwLockReadGuard},
-};
+use std::mem::take;
 
 use glib::SignalHandlerId;
 use gtk::{glib, prelude::*};
-use relm4::{gtk, ComponentParts, MessageBroker, SimpleComponent};
+use relm4::{gtk, ComponentParts, SimpleComponent};
 
 use crate::{tr, utils::main_window::get_main_window};
+
+use super::control_broker::ControlBroker;
+
+pub static FULLSCREEN_BROKER: ControlBroker<FullscreenInput> = ControlBroker::new();
 
 pub struct Fullscreen {
     fullscreen: bool,
@@ -95,21 +96,3 @@ impl SimpleComponent for Fullscreen {
         }
     }
 }
-
-pub struct FullscreenBroker(RwLock<MessageBroker<FullscreenInput>>);
-
-impl FullscreenBroker {
-    const fn new() -> Self {
-        Self(RwLock::new(MessageBroker::new()))
-    }
-
-    pub fn read(&self) -> RwLockReadGuard<MessageBroker<FullscreenInput>> {
-        self.0.read().unwrap()
-    }
-
-    pub fn reset(&self) {
-        *self.0.write().unwrap() = MessageBroker::new();
-    }
-}
-
-pub static FULLSCREEN_BROKER: FullscreenBroker = FullscreenBroker::new();

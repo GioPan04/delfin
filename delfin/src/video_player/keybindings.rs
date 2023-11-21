@@ -18,31 +18,25 @@ pub fn keybindings_controller() -> EventControllerKey {
     controller.connect_key_pressed(move |_, key, _, _| {
         match key {
             gdk::Key::space => {
-                PLAY_PAUSE_BROKER.read().send(PlayPauseInput::TogglePlaying);
+                PLAY_PAUSE_BROKER.send(PlayPauseInput::TogglePlaying);
             }
             gdk::Key::Left => {
-                SKIP_BACKWARDS_BROKER
-                    .read()
-                    .send(SkipForwardsBackwardsInput::Skip);
+                SKIP_BACKWARDS_BROKER.send(SkipForwardsBackwardsInput::Skip);
             }
             gdk::Key::Right => {
-                SKIP_FORWARDS_BROKER
-                    .read()
-                    .send(SkipForwardsBackwardsInput::Skip);
+                SKIP_FORWARDS_BROKER.send(SkipForwardsBackwardsInput::Skip);
             }
             gdk::Key::Up => {
-                VOLUME_BROKER.read().send(VolumeInput::ChangeVolume(0.1));
+                VOLUME_BROKER.send(VolumeInput::ChangeVolume(0.1));
             }
             gdk::Key::Down => {
-                VOLUME_BROKER.read().send(VolumeInput::ChangeVolume(-0.1));
+                VOLUME_BROKER.send(VolumeInput::ChangeVolume(-0.1));
             }
             gdk::Key::m => {
-                VOLUME_BROKER.read().send(VolumeInput::ToggleMute);
+                VOLUME_BROKER.send(VolumeInput::ToggleMute);
             }
             gdk::Key::f => {
-                FULLSCREEN_BROKER
-                    .read()
-                    .send(FullscreenInput::ToggleFullscreen);
+                FULLSCREEN_BROKER.send(FullscreenInput::ToggleFullscreen);
             }
             gdk::Key::c => {
                 SUBTITLES_BROKER

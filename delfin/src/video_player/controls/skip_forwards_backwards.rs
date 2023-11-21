@@ -1,39 +1,19 @@
-use std::{
-    cell::RefCell,
-    fmt::Display,
-    sync::{Arc, RwLock, RwLockReadGuard},
-};
+use std::{cell::RefCell, fmt::Display, sync::Arc};
 
 use gtk::prelude::*;
-use relm4::{prelude::*, ComponentParts, ComponentSender, MessageBroker, SimpleComponent};
+use relm4::{prelude::*, ComponentParts, ComponentSender, SimpleComponent};
 
 use crate::{
     config::video_player_config::VideoPlayerSkipAmount, globals::CONFIG, tr,
     video_player::backends::VideoPlayerBackend,
 };
 
-use super::scrubber::SCRUBBER_BROKER;
+use super::{control_broker::ControlBroker, scrubber::SCRUBBER_BROKER};
 
-pub struct SkipForwardsBackwardsBroker(RwLock<MessageBroker<SkipForwardsBackwardsInput>>);
-
-impl SkipForwardsBackwardsBroker {
-    const fn new() -> Self {
-        Self(RwLock::new(MessageBroker::new()))
-    }
-
-    pub fn read(&self) -> RwLockReadGuard<MessageBroker<SkipForwardsBackwardsInput>> {
-        self.0.read().unwrap()
-    }
-
-    pub fn reset(&self) {
-        *self.0.write().unwrap() = MessageBroker::new();
-    }
-}
-
-pub(crate) static SKIP_FORWARDS_BROKER: SkipForwardsBackwardsBroker =
-    SkipForwardsBackwardsBroker::new();
-pub(crate) static SKIP_BACKWARDS_BROKER: SkipForwardsBackwardsBroker =
-    SkipForwardsBackwardsBroker::new();
+pub(crate) static SKIP_FORWARDS_BROKER: ControlBroker<SkipForwardsBackwardsInput> =
+    ControlBroker::new();
+pub(crate) static SKIP_BACKWARDS_BROKER: ControlBroker<SkipForwardsBackwardsInput> =
+    ControlBroker::new();
 
 #[derive(Debug, Clone)]
 pub(super) enum SkipForwardsBackwardsDirection {
@@ -125,9 +105,7 @@ impl SimpleComponent for SkipForwardsBackwards {
                     position.saturating_sub(skip_amount as usize)
                 };
 
-                SCRUBBER_BROKER
-                    .read()
-                    .send(super::scrubber::ScrubberInput::SetPosition(seek_to));
+                SCRUBBER_BROKER.send(super::scrubber::ScrubberInput::SetPosition(seek_to));
             }
             SkipForwardsBackwardsInput::SetLoading(loading) => {
                 self.loading = loading;

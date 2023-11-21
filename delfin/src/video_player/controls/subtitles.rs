@@ -1,13 +1,10 @@
-use std::{
-    cell::RefCell,
-    sync::{Arc, RwLock, RwLockReadGuard},
-};
+use std::{cell::RefCell, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::{
     actions::{ActionGroupName, ActionName, RelmAction, RelmActionGroup},
     gtk::{self, gio},
-    Component, ComponentParts, MessageBroker,
+    Component, ComponentParts,
 };
 
 use crate::{
@@ -17,6 +14,10 @@ use crate::{
         VideoPlayerInput, VIDEO_PLAYER_BROKER,
     },
 };
+
+use super::control_broker::ControlBroker;
+
+pub static SUBTITLES_BROKER: ControlBroker<SubtitlesInput> = ControlBroker::new();
 
 relm4::new_action_group!(SubtitleActionGroup, "subtitle_actions");
 relm4::new_stateful_action!(
@@ -187,21 +188,3 @@ impl Component for Subtitles {
         self.update_view(widgets, sender);
     }
 }
-
-pub struct SubtitlesBroker(RwLock<MessageBroker<SubtitlesInput>>);
-
-impl SubtitlesBroker {
-    const fn new() -> Self {
-        Self(RwLock::new(MessageBroker::new()))
-    }
-
-    pub fn read(&self) -> RwLockReadGuard<MessageBroker<SubtitlesInput>> {
-        self.0.read().unwrap()
-    }
-
-    pub fn reset(&self) {
-        *self.0.write().unwrap() = MessageBroker::new();
-    }
-}
-
-pub static SUBTITLES_BROKER: SubtitlesBroker = SubtitlesBroker::new();

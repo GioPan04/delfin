@@ -1,12 +1,13 @@
-use std::{
-    cell::RefCell,
-    sync::{Arc, RwLock, RwLockReadGuard},
-};
+use std::{cell::RefCell, sync::Arc};
 
 use gtk::prelude::*;
-use relm4::{gtk, ComponentParts, MessageBroker, SimpleComponent};
+use relm4::{gtk, ComponentParts, SimpleComponent};
 
 use crate::{tr, video_player::backends::VideoPlayerBackend};
+
+use super::control_broker::ControlBroker;
+
+pub static VOLUME_BROKER: ControlBroker<VolumeInput> = ControlBroker::new();
 
 pub struct Volume {
     video_player: Arc<RefCell<dyn VideoPlayerBackend>>,
@@ -126,21 +127,3 @@ impl SimpleComponent for Volume {
         }
     }
 }
-
-pub struct VolumeBroker(RwLock<MessageBroker<VolumeInput>>);
-
-impl VolumeBroker {
-    const fn new() -> Self {
-        Self(RwLock::new(MessageBroker::new()))
-    }
-
-    pub fn read(&self) -> RwLockReadGuard<MessageBroker<VolumeInput>> {
-        self.0.read().unwrap()
-    }
-
-    pub fn reset(&self) {
-        *self.0.write().unwrap() = MessageBroker::new();
-    }
-}
-
-pub static VOLUME_BROKER: VolumeBroker = VolumeBroker::new();
