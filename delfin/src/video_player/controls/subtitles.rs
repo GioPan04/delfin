@@ -9,15 +9,15 @@ use relm4::{
 
 use crate::{
     tr,
+    utils::message_broker::ResettableMessageBroker,
     video_player::{
         backends::{SubtitleTrack, VideoPlayerBackend},
         VideoPlayerInput, VIDEO_PLAYER_BROKER,
     },
 };
 
-use super::control_broker::ControlBroker;
-
-pub static SUBTITLES_BROKER: ControlBroker<SubtitlesInput> = ControlBroker::new();
+pub static SUBTITLES_BROKER: ResettableMessageBroker<SubtitlesInput> =
+    ResettableMessageBroker::new();
 
 relm4::new_action_group!(SubtitleActionGroup, "subtitle_actions");
 relm4::new_stateful_action!(

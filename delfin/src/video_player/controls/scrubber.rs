@@ -6,13 +6,16 @@ use graphene::Point;
 use gtk::{gdk, gdk_pixbuf, graphene, prelude::*};
 use relm4::prelude::*;
 
-use crate::{tr, utils::bif::Thumbnail, video_player::backends::VideoPlayerBackend};
-
-use super::control_broker::ControlBroker;
+use crate::{
+    tr,
+    utils::{bif::Thumbnail, message_broker::ResettableMessageBroker},
+    video_player::backends::VideoPlayerBackend,
+};
 
 const TIMESTAMP_WIDTH: i32 = 80;
 
-pub(crate) static SCRUBBER_BROKER: ControlBroker<ScrubberInput> = ControlBroker::new();
+pub(crate) static SCRUBBER_BROKER: ResettableMessageBroker<ScrubberInput> =
+    ResettableMessageBroker::new();
 
 #[derive(Clone, Copy, Debug)]
 enum DurationDisplay {

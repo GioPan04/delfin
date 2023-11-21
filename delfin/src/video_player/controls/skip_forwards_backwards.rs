@@ -5,15 +5,15 @@ use relm4::{prelude::*, ComponentParts, ComponentSender, SimpleComponent};
 
 use crate::{
     config::video_player_config::VideoPlayerSkipAmount, globals::CONFIG, tr,
-    video_player::backends::VideoPlayerBackend,
+    utils::message_broker::ResettableMessageBroker, video_player::backends::VideoPlayerBackend,
 };
 
-use super::{control_broker::ControlBroker, scrubber::SCRUBBER_BROKER};
+use super::scrubber::SCRUBBER_BROKER;
 
-pub(crate) static SKIP_FORWARDS_BROKER: ControlBroker<SkipForwardsBackwardsInput> =
-    ControlBroker::new();
-pub(crate) static SKIP_BACKWARDS_BROKER: ControlBroker<SkipForwardsBackwardsInput> =
-    ControlBroker::new();
+pub(crate) static SKIP_FORWARDS_BROKER: ResettableMessageBroker<SkipForwardsBackwardsInput> =
+    ResettableMessageBroker::new();
+pub(crate) static SKIP_BACKWARDS_BROKER: ResettableMessageBroker<SkipForwardsBackwardsInput> =
+    ResettableMessageBroker::new();
 
 #[derive(Debug, Clone)]
 pub(super) enum SkipForwardsBackwardsDirection {

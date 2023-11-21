@@ -7,7 +7,7 @@ mod media_list;
 mod media_tile;
 
 use jellyfin_api::types::BaseItemDto;
-use relm4::{ComponentController, MessageBroker, SharedState};
+use relm4::{ComponentController, SharedState};
 use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
@@ -27,7 +27,10 @@ use crate::{
     },
     media_details::MEDIA_DETAILS_REFRESH_QUEUED,
     tr,
-    utils::constants::{PAGE_MARGIN, WIDGET_NONE},
+    utils::{
+        constants::{PAGE_MARGIN, WIDGET_NONE},
+        message_broker::ResettableMessageBroker,
+    },
 };
 
 use self::{
@@ -35,7 +38,7 @@ use self::{
     home::{Home, HomeInit},
 };
 
-pub static LIBRARY_BROKER: MessageBroker<LibraryInput> = MessageBroker::new();
+pub static LIBRARY_BROKER: ResettableMessageBroker<LibraryInput> = ResettableMessageBroker::new();
 pub static LIBRARY_REFRESH_QUEUED: SharedState<bool> = SharedState::new();
 
 enum LibraryState {

@@ -4,11 +4,13 @@ use glib::SignalHandlerId;
 use gtk::{glib, prelude::*};
 use relm4::{gtk, ComponentParts, SimpleComponent};
 
-use crate::{tr, utils::main_window::get_main_window};
+use crate::{
+    tr,
+    utils::{main_window::get_main_window, message_broker::ResettableMessageBroker},
+};
 
-use super::control_broker::ControlBroker;
-
-pub static FULLSCREEN_BROKER: ControlBroker<FullscreenInput> = ControlBroker::new();
+pub static FULLSCREEN_BROKER: ResettableMessageBroker<FullscreenInput> =
+    ResettableMessageBroker::new();
 
 pub struct Fullscreen {
     fullscreen: bool,

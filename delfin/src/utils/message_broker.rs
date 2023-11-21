@@ -5,9 +5,9 @@ use std::{
 
 use relm4::MessageBroker;
 
-pub struct ControlBroker<T: Debug>(RwLock<MessageBroker<T>>);
+pub struct ResettableMessageBroker<T: Debug>(RwLock<MessageBroker<T>>);
 
-impl<T: Debug> ControlBroker<T> {
+impl<T: Debug> ResettableMessageBroker<T> {
     pub const fn new() -> Self {
         Self(RwLock::new(MessageBroker::new()))
     }

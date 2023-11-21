@@ -3,11 +3,12 @@ use std::{cell::RefCell, sync::Arc};
 use gtk::prelude::*;
 use relm4::{gtk, ComponentParts, ComponentSender, SimpleComponent};
 
-use crate::{tr, video_player::backends::VideoPlayerBackend};
+use crate::{
+    tr, utils::message_broker::ResettableMessageBroker, video_player::backends::VideoPlayerBackend,
+};
 
-use super::control_broker::ControlBroker;
-
-pub static PLAY_PAUSE_BROKER: ControlBroker<PlayPauseInput> = ControlBroker::new();
+pub static PLAY_PAUSE_BROKER: ResettableMessageBroker<PlayPauseInput> =
+    ResettableMessageBroker::new();
 
 pub(crate) struct PlayPause {
     video_player: Arc<RefCell<dyn VideoPlayerBackend>>,

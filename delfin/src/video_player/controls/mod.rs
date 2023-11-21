@@ -1,5 +1,4 @@
 mod audio_tracks;
-mod control_broker;
 pub(super) mod fullscreen;
 mod next_prev_episode;
 pub(super) mod play_pause;

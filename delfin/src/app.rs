@@ -175,6 +175,7 @@ impl Component for App {
                 let api_client = Arc::new(api_client);
                 self.api_client = Some(api_client.clone());
 
+                LIBRARY_BROKER.reset();
                 let library = Library::builder()
                     .launch_with_broker(
                         (
@@ -184,7 +185,7 @@ impl Component for App {
                             account,
                             api_client,
                         ),
-                        &LIBRARY_BROKER,
+                        &LIBRARY_BROKER.read(),
                     )
                     .forward(sender.input_sender(), convert_library_output);
                 navigation.push(library.widget());
