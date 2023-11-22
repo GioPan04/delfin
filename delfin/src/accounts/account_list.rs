@@ -1,10 +1,8 @@
 use adw::prelude::*;
-use relm4::{
-    adw, factory::FactoryVecDeque, gtk, prelude::DynamicIndex, Component, ComponentParts,
-    Controller,
-};
+use relm4::{factory::FactoryVecDeque, prelude::*};
 
 use crate::{
+    borgar::borgar_menu::BorgarMenu,
     config::{Account, Server},
     globals::CONFIG,
     jellyfin_api::api::user::AuthenticateByNameRes,
@@ -21,6 +19,7 @@ pub struct AccountList {
     server: Server,
     accounts: FactoryVecDeque<AccountListItem>,
     add_account_dialog: Option<Controller<AddAccountDialog>>,
+    borgar: Controller<BorgarMenu>,
 }
 
 #[derive(Debug)]
@@ -54,7 +53,9 @@ impl Component for AccountList {
 
             #[wrap(Some)]
             set_child = &adw::ToolbarView {
-                add_top_bar = &adw::HeaderBar {},
+                add_top_bar = &adw::HeaderBar {
+                    pack_end = model.borgar.widget(),
+                },
 
                 #[wrap(Some)]
                 set_content = &adw::Clamp {
@@ -111,6 +112,7 @@ impl Component for AccountList {
             server: Server::default(),
             accounts,
             add_account_dialog: None,
+            borgar: BorgarMenu::builder().launch(None).detach(),
         };
 
         let accounts_box = model.accounts.widget();

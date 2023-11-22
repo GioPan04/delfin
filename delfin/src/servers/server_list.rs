@@ -1,10 +1,9 @@
 use adw::prelude::*;
-use relm4::{
-    adw, factory::FactoryVecDeque, gtk, prelude::DynamicIndex, Component, ComponentParts,
-    Controller,
-};
+use relm4::{factory::FactoryVecDeque, prelude::*};
 
-use crate::{config, globals::CONFIG, tr, utils::constants::PAGE_MARGIN};
+use crate::{
+    borgar::borgar_menu::BorgarMenu, config, globals::CONFIG, tr, utils::constants::PAGE_MARGIN,
+};
 
 use super::{
     add_server::{AddServerDialog, AddServerOutput},
@@ -14,6 +13,7 @@ use super::{
 pub struct ServerList {
     servers: FactoryVecDeque<ServerListItem>,
     add_server_dialog: Option<Controller<AddServerDialog>>,
+    borgar: Controller<BorgarMenu>,
 }
 
 #[derive(Debug)]
@@ -46,7 +46,9 @@ impl Component for ServerList {
 
             #[wrap(Some)]
             set_child = &adw::ToolbarView {
-                add_top_bar = &adw::HeaderBar {},
+                add_top_bar = &adw::HeaderBar {
+                    pack_end = model.borgar.widget(),
+                },
 
                 #[wrap(Some)]
                 set_content = &adw::Clamp {
@@ -100,6 +102,7 @@ impl Component for ServerList {
         let model = ServerList {
             servers,
             add_server_dialog: None,
+            borgar: BorgarMenu::builder().launch(None).detach(),
         };
 
         let servers_box = model.servers.widget();

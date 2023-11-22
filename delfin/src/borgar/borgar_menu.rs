@@ -99,14 +99,12 @@ impl Component for BorgarMenu {
             }
         });
 
-        let help_overlay_action = get_main_window()
-            .unwrap()
-            .lookup_action("show-help-overlay")
-            .unwrap();
-
         let keyboard_shortcuts_action: RelmAction<KeyboardShortcutsAction> =
             RelmAction::new_stateless(move |_| {
-                help_overlay_action.activate(None);
+                get_main_window()
+                    .and_then(|win| win.lookup_action("show-help-overlay"))
+                    .expect("Error getting show-help-overlay action")
+                    .activate(None);
             });
 
         app.set_accelerators_for_action::<KeyboardShortcutsAction>(&["<Ctrl>question"]);
