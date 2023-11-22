@@ -62,10 +62,10 @@ pub fn decode_bif(bif: Bytes) -> Result<Vec<Thumbnail>> {
     let mut thumbnails = Vec::default();
 
     for (i, thumbnail) in thumbnail_indices.iter().enumerate() {
-        let next_offset = if (i + i) >= thumbnail_indices.len() {
+        let next_offset = if (i + 1) >= thumbnail_indices.len() {
             bif.len()
         } else {
-            thumbnail_indices[i + i].offset as usize
+            thumbnail_indices[i + 1].offset as usize
         };
 
         let image = bif.slice((thumbnail.offset as usize)..next_offset);
