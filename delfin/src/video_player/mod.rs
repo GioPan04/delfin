@@ -5,11 +5,14 @@ mod next_up;
 mod session;
 mod skip_intro;
 
+use crate::video_player::keybindings::keybindings_controller;
 use std::cell::RefCell;
 use std::sync::atomic::{self, AtomicBool};
 use std::sync::Arc;
+use std::time::Duration;
 
 use adw::prelude::*;
+use gtk::gdk;
 use jellyfin_api::types::{BaseItemDto, BaseItemKind};
 use relm4::component::{AsyncComponent, AsyncComponentController, AsyncController};
 use relm4::{gtk, ComponentParts};
@@ -23,13 +26,13 @@ use crate::library::LIBRARY_REFRESH_QUEUED;
 use crate::media_details::MEDIA_DETAILS_REFRESH_QUEUED;
 use crate::tr;
 use crate::utils::bif::Thumbnail;
+use crate::utils::debounce::Debounce;
 use crate::utils::item_name::ItemName;
 use crate::utils::ticks::ticks_to_seconds;
 use crate::video_player::controls::skip_forwards_backwards::{
     SkipForwardsBackwardsInput, SKIP_BACKWARDS_BROKER, SKIP_FORWARDS_BROKER,
 };
 use crate::video_player::controls::VideoPlayerControlsInit;
-use crate::video_player::keybindings::keybindings_controller;
 use crate::video_player::next_up::{NextUp, NEXT_UP_VISIBILE};
 
 use self::backends::{PlayerState, VideoPlayerBackend};
@@ -39,6 +42,9 @@ use self::controls::{VideoPlayerControls, VideoPlayerControlsInput};
 use self::next_up::NextUpInput;
 use self::session::SessionPlaybackReporter;
 use self::skip_intro::{SkipIntro, SkipIntroInput};
+
+// How long the cursor has to be still before it's hidden
+const CURSOR_HIDE_TIMEOUT: Duration = Duration::from_secs(3);
 
 pub struct VideoPlayer {
     backend: Arc<RefCell<dyn VideoPlayerBackend>>,
@@ -52,6 +58,8 @@ pub struct VideoPlayer {
     session_playback_reporter: SessionPlaybackReporter,
     player_state: PlayerState,
     next: Option<BaseItemDto>,
+    cursor: Option<gdk::Cursor>,
+    cursor_debounce: Debounce,
 
     controls: Controller<VideoPlayerControls>,
     next_up: Controller<NextUp>,
@@ -68,6 +76,8 @@ pub enum VideoPlayerInput {
     StopPlayer,
     PlayerStateChanged(PlayerState),
     SetRevealerRevealChild(bool),
+    MouseMove,
+    MouseHide,
 }
 
 #[derive(Debug)]
@@ -93,6 +103,14 @@ impl Component for VideoPlayer {
             add_css_class: "video-player-page",
             set_focusable: true,
             add_controller = keybindings_controller(),
+
+            #[watch]
+            set_cursor: model.cursor.as_ref(),
+            add_controller = gtk::EventControllerMotion {
+                connect_motion[sender] => move |_, _, _| {
+                    sender.input(VideoPlayerInput::MouseMove);
+                },
+            },
 
             #[watch]
             set_title: &model.media.as_ref()
@@ -188,6 +206,16 @@ impl Component for VideoPlayer {
         let next_up = NextUp::builder().launch(backend.clone()).detach();
         let skip_intro = SkipIntro::builder().launch(backend.clone()).detach();
 
+        let cursor_debounce = Debounce::new(
+            CURSOR_HIDE_TIMEOUT,
+            Box::new({
+                let sender = sender.clone();
+                move || {
+                    sender.input(VideoPlayerInput::MouseHide);
+                }
+            }),
+        );
+
         let model = VideoPlayer {
             backend,
             media: None,
@@ -200,6 +228,8 @@ impl Component for VideoPlayer {
             session_playback_reporter: SessionPlaybackReporter::default(),
             player_state: PlayerState::Loading,
             next: None,
+            cursor: None,
+            cursor_debounce,
 
             controls,
             next_up,
@@ -400,6 +430,13 @@ impl Component for VideoPlayer {
             }
             VideoPlayerInput::SetRevealerRevealChild(reveal) => {
                 self.revealer_reveal_child = reveal;
+            }
+            VideoPlayerInput::MouseMove => {
+                self.cursor = None;
+                self.cursor_debounce.debounce();
+            }
+            VideoPlayerInput::MouseHide => {
+                self.cursor = gdk::Cursor::from_name("none", None);
             }
         }
 
