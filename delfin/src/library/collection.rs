@@ -21,6 +21,7 @@ pub struct Collection {
     grid: Option<Controller<MediaGrid>>,
     cur_page: usize,
     total_item_count: usize,
+    loading: bool,
 }
 
 #[derive(Debug)]
@@ -103,16 +104,19 @@ impl AsyncComponent for Collection {
 
             gtk::Spinner {
                 #[watch]
-                set_visible: model.total_item_count == 0,
+                set_visible: model.loading,
                 set_spinning: true,
                 set_width_request: 32,
                 set_height_request: 32,
             },
 
 
+            #[name = "scroll"]
             gtk::ScrolledWindow {
                 set_hexpand: true,
                 set_vexpand: true,
+                #[watch]
+                set_visible: !model.loading,
 
                 #[template]
                 LibraryContainer {
@@ -142,6 +146,7 @@ impl AsyncComponent for Collection {
             grid: None,
             cur_page: 0,
             total_item_count: 0,
+            loading: true,
         };
 
         let widgets = view_output!();
@@ -157,6 +162,7 @@ impl AsyncComponent for Collection {
         _root: &Self::Root,
     ) {
         let container = &widgets.container;
+        let scroll = &widgets.scroll;
 
         match message {
             CollectionInput::Visible => {
@@ -167,7 +173,7 @@ impl AsyncComponent for Collection {
                         .await
                         .expect("Error getting view items");
                     self.total_item_count = total_item_count;
-                    self.display_items(container, items);
+                    self.display_items(container, scroll, items);
                 }
             }
             CollectionInput::NextPage => {
@@ -191,6 +197,7 @@ impl AsyncComponent for Collection {
         _root: &Self::Root,
     ) {
         let container = &widgets.container;
+        let scroll = &widgets.scroll;
 
         match message {
             CollectionCommandOutput::PageLoaded(page, items) => 'msg_block: {
@@ -198,7 +205,7 @@ impl AsyncComponent for Collection {
                     break 'msg_block;
                 }
 
-                self.display_items(container, items);
+                self.display_items(container, scroll, items);
             }
         }
 
@@ -207,7 +214,12 @@ impl AsyncComponent for Collection {
 }
 
 impl Collection {
-    fn display_items(&mut self, container: &gtk::Box, items: Vec<BaseItemDto>) {
+    fn display_items(
+        &mut self,
+        container: &gtk::Box,
+        scroll: &gtk::ScrolledWindow,
+        items: Vec<BaseItemDto>,
+    ) {
         if let Some(grid) = self.grid.take() {
             container.remove(grid.widget());
         }
@@ -222,9 +234,12 @@ impl Collection {
         container.append(grid.widget());
 
         self.grid = Some(grid);
+        self.loading = false;
+        scroll.set_vadjustment(gtk::Adjustment::NONE);
     }
 
     fn load_cur_page(&mut self, sender: &AsyncComponentSender<Self>) {
+        self.loading = true;
         sender.oneshot_command({
             let api_client = self.api_client.clone();
             let view = self.view.clone();
