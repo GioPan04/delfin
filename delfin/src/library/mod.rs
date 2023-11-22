@@ -9,10 +9,7 @@ mod media_tile;
 
 use jellyfin_api::types::BaseItemDto;
 use relm4::{ComponentController, SharedState};
-use std::{
-    collections::HashMap,
-    sync::{Arc, RwLock},
-};
+use std::{collections::HashMap, sync::Arc};
 use uuid::Uuid;
 
 use adw::prelude::*;
@@ -20,8 +17,8 @@ use relm4::{adw, gtk, prelude::*, Component, Controller};
 
 use crate::{
     app::AppPage,
-    borgar::borgar_menu::BorgarMenu,
-    config::{Account, Config, Server},
+    borgar::borgar_menu::{BorgarMenu, BorgarMenuAuth},
+    config::{Account, Server},
     jellyfin_api::{
         api::views::UserView, api_client::ApiClient,
         models::display_preferences::DisplayPreferences,
@@ -73,7 +70,7 @@ pub enum LibraryCommandOutput {
 
 #[relm4::component(pub)]
 impl Component for Library {
-    type Init = (Arc<RwLock<Config>>, Server, Account, Arc<ApiClient>);
+    type Init = (Server, Account, Arc<ApiClient>);
     type Input = LibraryInput;
     type Output = LibraryOutput;
     type CommandOutput = LibraryCommandOutput;
@@ -185,11 +182,15 @@ impl Component for Library {
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
-        let (config, server, account, api_client) = init;
+        let (server, account, api_client) = init;
 
         let model = Library {
             borgar_menu: BorgarMenu::builder()
-                .launch((api_client.clone(), config, server, account))
+                .launch(Some(BorgarMenuAuth {
+                    api_client: api_client.clone(),
+                    server,
+                    account,
+                }))
                 .detach(),
             api_client: Arc::clone(&api_client),
             state: LibraryState::Loading,

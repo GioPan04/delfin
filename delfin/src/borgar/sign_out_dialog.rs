@@ -1,10 +1,11 @@
 use adw::{prelude::*, ResponseAppearance};
 use relm4::prelude::*;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use crate::{
     app::{AppInput, AppPage, APP_BROKER},
-    config::{Account, Config, Server},
+    config::{Account, Server},
+    globals::CONFIG,
     jellyfin_api::api_client::ApiClient,
     tr,
 };
@@ -25,7 +26,6 @@ impl From<Responses> for &str {
 
 pub(crate) struct SignOutDialog {
     api_client: Arc<ApiClient>,
-    config: Arc<RwLock<Config>>,
     server: Server,
     account: Account,
 }
@@ -37,7 +37,7 @@ pub(crate) enum SignOutDialogInput {
 
 #[relm4::component(pub(crate))]
 impl Component for SignOutDialog {
-    type Init = (Arc<ApiClient>, Arc<RwLock<Config>>, Server, Account);
+    type Init = (Arc<ApiClient>, Server, Account);
     type Input = SignOutDialogInput;
     type Output = ();
     type CommandOutput = ();
@@ -73,11 +73,10 @@ impl Component for SignOutDialog {
         root: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let (api_client, config, server, account) = init;
+        let (api_client, server, account) = init;
 
         let model = SignOutDialog {
             api_client,
-            config: config.clone(),
             server: server.clone(),
             account,
         };
@@ -85,7 +84,7 @@ impl Component for SignOutDialog {
         let widgets = view_output!();
         let remove_server = &widgets.remove_server;
 
-        let config = config.read().unwrap();
+        let config = CONFIG.read();
         if let Some(current_server) = config.servers.iter().find(|s| s.id == server.id) {
             if current_server.accounts.len() < 2 {
                 remove_server.set_visible(true);
@@ -111,7 +110,7 @@ impl Component for SignOutDialog {
 
         let remove_server = widgets.remove_server.is_active();
 
-        let mut config = self.config.write().unwrap();
+        let mut config = CONFIG.write();
         let mut servers = config.servers.clone();
         if remove_server {
             servers.retain(|s| s.id != self.server.id);

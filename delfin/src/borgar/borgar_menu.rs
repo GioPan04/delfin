@@ -1,5 +1,6 @@
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
+use gtk::gio;
 use gtk::prelude::*;
 use relm4::{
     actions::{AccelsPlus, RelmAction, RelmActionGroup},
@@ -8,7 +9,7 @@ use relm4::{
 
 use crate::{
     borgar::sign_out_dialog::SignOutDialog,
-    config::{Account, Config, Server},
+    config::{Account, Server},
     jellyfin_api::api_client::ApiClient,
     preferences::Preferences,
     tr,
@@ -17,11 +18,14 @@ use crate::{
 
 use super::about::About;
 
+pub struct BorgarMenuAuth {
+    pub api_client: Arc<ApiClient>,
+    pub server: Server,
+    pub account: Account,
+}
+
 pub struct BorgarMenu {
-    api_client: Arc<ApiClient>,
-    config: Arc<RwLock<Config>>,
-    server: Server,
-    account: Account,
+    auth: Option<BorgarMenuAuth>,
     preferences: Option<Controller<Preferences>>,
     sign_out_dialog: Option<Controller<SignOutDialog>>,
     about: Option<Controller<About>>,
@@ -46,7 +50,7 @@ relm4::new_stateless_action!(AboutAction, BorgarMenuActionGroup, "about");
 
 #[relm4::component(pub)]
 impl Component for BorgarMenu {
-    type Init = (Arc<ApiClient>, Arc<RwLock<Config>>, Server, Account);
+    type Init = Option<BorgarMenuAuth>;
     type Input = BorgarMenuInput;
     type Output = ();
     type CommandOutput = ();
@@ -63,9 +67,6 @@ impl Component for BorgarMenu {
     menu! {
         menu: {
             section! {
-                &*tr!("borgar-sign-out") => SignOutAction,
-            },
-            section! {
                 &*tr!("borgar-preferences") => PreferencesAction,
                 &*tr!("borgar-keyboard-shortcuts") => KeyboardShortcutsAction,
                 &*tr!("borgar-about") => AboutAction,
@@ -74,17 +75,12 @@ impl Component for BorgarMenu {
     }
 
     fn init(
-        init: Self::Init,
+        auth: Self::Init,
         root: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let (api_client, config, server, account) = init;
-
         let model = BorgarMenu {
-            api_client,
-            config,
-            server,
-            account,
+            auth,
             preferences: None,
             sign_out_dialog: None,
             about: None,
@@ -94,12 +90,7 @@ impl Component for BorgarMenu {
 
         let widgets = view_output!();
 
-        let sign_out_action: RelmAction<SignOutAction> = RelmAction::new_stateless({
-            let sender = sender.clone();
-            move |_| {
-                sender.input(BorgarMenuInput::SignOut);
-            }
-        });
+        let mut group = RelmActionGroup::<BorgarMenuActionGroup>::new();
 
         let preferences_action: RelmAction<PreferencesAction> = RelmAction::new_stateless({
             let sender = sender.clone();
@@ -127,15 +118,19 @@ impl Component for BorgarMenu {
             }
         });
 
-        let mut group = RelmActionGroup::<BorgarMenuActionGroup>::new();
-        group.add_action(sign_out_action);
         group.add_action(preferences_action);
         group.add_action(keyboard_shortcuts_action);
         group.add_action(about_action);
+
+        if model.auth.is_some() {
+            add_signed_in_items(&sender, &mut group, &menu);
+        }
+
         group.register_for_widget(root);
 
         ComponentParts { model, widgets }
     }
+
     fn update_with_view(
         &mut self,
         widgets: &mut Self::Widgets,
@@ -144,16 +139,20 @@ impl Component for BorgarMenu {
         root: &Self::Root,
     ) {
         match message {
-            BorgarMenuInput::SignOut => {
+            BorgarMenuInput::SignOut => 'msg: {
+                let BorgarMenuAuth {
+                    api_client,
+                    server,
+                    account,
+                } = match &self.auth {
+                    Some(auth) => auth,
+                    _ => break 'msg,
+                };
+
                 self.sign_out_dialog = Some(
                     SignOutDialog::builder()
                         .transient_for(root)
-                        .launch((
-                            self.api_client.clone(),
-                            self.config.clone(),
-                            self.server.clone(),
-                            self.account.clone(),
-                        ))
+                        .launch((api_client.clone(), server.clone(), account.clone()))
                         .detach(),
                 );
             }
@@ -171,4 +170,23 @@ impl Component for BorgarMenu {
         }
         self.update_view(widgets, sender);
     }
+}
+
+fn add_signed_in_items(
+    sender: &ComponentSender<BorgarMenu>,
+    group: &mut RelmActionGroup<BorgarMenuActionGroup>,
+    menu: &gio::Menu,
+) {
+    let sign_out_action: RelmAction<SignOutAction> = RelmAction::new_stateless({
+        let sender = sender.clone();
+        move |_| {
+            sender.input(BorgarMenuInput::SignOut);
+        }
+    });
+    let section = gio::Menu::new();
+    menu.prepend_section(None, &section);
+    let sign_out_entry = RelmAction::<SignOutAction>::to_menu_item(tr!("borgar-sign-out"));
+    section.append_item(&sign_out_entry);
+
+    group.add_action(sign_out_action);
 }

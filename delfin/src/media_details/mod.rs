@@ -1,4 +1,4 @@
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use adw::prelude::*;
 use jellyfin_api::types::BaseItemDto;
@@ -9,8 +9,8 @@ use relm4::{
 };
 
 use crate::{
-    borgar::borgar_menu::BorgarMenu,
-    config::{Account, Config, Server},
+    borgar::borgar_menu::{BorgarMenu, BorgarMenuAuth},
+    config::{Account, Server},
     jellyfin_api::api_client::ApiClient,
     media_details::media_details_contents::MediaDetailsContents,
     tr,
@@ -41,13 +41,7 @@ pub enum MediaDetailsInput {
 
 #[relm4::component(pub)]
 impl SimpleComponent for MediaDetails {
-    type Init = (
-        Arc<ApiClient>,
-        BaseItemDto,
-        Arc<RwLock<Config>>,
-        Server,
-        Account,
-    );
+    type Init = (Arc<ApiClient>, BaseItemDto, Server, Account);
     type Input = MediaDetailsInput;
     type Output = ();
 
@@ -86,7 +80,7 @@ impl SimpleComponent for MediaDetails {
         root: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let (api_client, media, config, server, account) = init;
+        let (api_client, media, server, account) = init;
 
         root.set_title(
             &media
@@ -102,7 +96,11 @@ impl SimpleComponent for MediaDetails {
 
         let model = MediaDetails {
             borgar_menu: BorgarMenu::builder()
-                .launch((api_client, config, server, account))
+                .launch(Some(BorgarMenuAuth {
+                    api_client,
+                    server,
+                    account,
+                }))
                 .detach(),
             media_details_contents,
         };

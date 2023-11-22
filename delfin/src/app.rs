@@ -177,16 +177,7 @@ impl Component for App {
 
                 LIBRARY_BROKER.reset();
                 let library = Library::builder()
-                    .launch_with_broker(
-                        (
-                            // TODO
-                            Arc::new(RwLock::new(CONFIG.read().clone())),
-                            server,
-                            account,
-                            api_client,
-                        ),
-                        &LIBRARY_BROKER.read(),
-                    )
+                    .launch_with_broker((server, account, api_client), &LIBRARY_BROKER.read())
                     .forward(sender.input_sender(), convert_library_output);
                 navigation.push(library.widget());
                 self.library = Some(library);
@@ -196,14 +187,7 @@ impl Component for App {
                     (&self.api_client, &self.server, &self.account)
                 {
                     let media_details = MediaDetails::builder()
-                        .launch((
-                            api_client.clone(),
-                            media,
-                            // TODO
-                            Arc::new(RwLock::new(CONFIG.read().clone())),
-                            server.clone(),
-                            account.clone(),
-                        ))
+                        .launch((api_client.clone(), media, server.clone(), account.clone()))
                         .detach();
                     navigation.push(media_details.widget());
                     self.media_details = Some(media_details);
