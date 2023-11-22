@@ -115,7 +115,7 @@ impl Component for VideoPlayer {
             #[watch]
             set_title: &model.media.as_ref()
                 .and_then(|media| media
-                    .episode_name_with_number()
+                    .series_and_episode()
                     .or(media.name.clone()))
                 .unwrap_or(tr!("app-name").to_string()),
 

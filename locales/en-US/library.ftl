@@ -14,6 +14,7 @@ library-section-title =
     .latest-music = Latest Music
 
 library-episode-name-with-season-and-episode = S{$seasonNumber}:E{$episodeNumber} - {$episodeName}
+library-series-and-episode-name = {$seriesName} - {$episodeName}
 
 library-media-tile-unnamed-item = Unnamed Item
 
