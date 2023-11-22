@@ -1,7 +1,4 @@
-#![allow(unused_imports)]
-use std::any::Any;
 use std::sync::Arc;
-use std::unimplemented;
 
 use gtk::prelude::*;
 use relm4::{
@@ -11,7 +8,6 @@ use relm4::{
 use crate::jellyfin_api::api::views::UserView;
 use crate::jellyfin_api::api_client::ApiClient;
 use crate::jellyfin_api::models::display_preferences::{DisplayPreferences, HomeSection};
-use crate::utils::constants::{MAX_LIBRARY_WIDTH, PAGE_MARGIN};
 
 use super::home_sections::continue_watching::HomeSectionContinueWatching;
 use super::home_sections::latest::HomeSectionLatest;
@@ -47,10 +43,9 @@ impl SimpleComponent for Home {
     type Init = HomeInit;
 
     view! {
-        #[template]
-        LibraryContainer {
-            #[template_child]
-            contents {
+        gtk::ScrolledWindow {
+            #[template]
+            LibraryContainer {
                 #[name = "sections_container"]
                 #[wrap(Some)]
                 set_child = &gtk::Box {

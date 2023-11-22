@@ -11,7 +11,6 @@ use jellyfin_api::types::BaseItemDto;
 use relm4::{ComponentController, SharedState};
 use std::{
     collections::HashMap,
-    ops::Deref,
     sync::{Arc, RwLock},
 };
 use uuid::Uuid;
@@ -227,10 +226,10 @@ impl Component for Library {
 
                 // Clear the current set of pages before loading a new one
                 if let Some(home) = self.home.take() {
-                    view_stack.remove(home.widget().deref());
+                    view_stack.remove(home.widget());
                 }
                 for (_id, collection) in self.collections.drain() {
-                    view_stack.remove(collection.widget().deref());
+                    view_stack.remove(collection.widget());
                 }
 
                 self.initial_fetch(&sender);
@@ -319,7 +318,7 @@ impl Library {
             })
             .detach();
         view_stack.add_titled_with_icon(
-            home.widget().deref(),
+            home.widget(),
             Some("home"),
             tr!("library-page-home-title"),
             "home-filled",
@@ -345,7 +344,7 @@ impl Library {
                 .detach();
 
             view_stack.add_titled_with_icon(
-                collection.widget().deref(),
+                collection.widget(),
                 Some(&view.id.to_string()),
                 &view.name.clone(),
                 icon,

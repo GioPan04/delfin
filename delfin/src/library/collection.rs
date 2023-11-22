@@ -8,6 +8,7 @@ use crate::{
     jellyfin_api::{api::views::UserView, api_client::ApiClient},
     library::{media_grid::MediaGridInit, media_tile::MediaTileDisplay},
     tr,
+    utils::constants::PAGE_MARGIN,
 };
 
 use super::{library_container::LibraryContainer, media_grid::MediaGrid};
@@ -42,22 +43,79 @@ impl AsyncComponent for Collection {
     type CommandOutput = CollectionCommandOutput;
 
     view! {
-        #[template]
-        LibraryContainer {
-            #[template_child]
-            contents {
-                #[wrap(Some)]
-                set_child = &gtk::Box {
-                    set_orientation: gtk::Orientation::Vertical,
+        gtk::Box {
+            set_orientation: gtk::Orientation::Vertical,
 
-                    gtk::Spinner {
-                        #[watch]
-                        set_visible: model.total_item_count == 0,
-                        set_spinning: true,
-                        set_width_request: 32,
-                        set_height_request: 32,
+            #[template]
+            LibraryContainer {
+                set_margin_top: 0,
+                set_margin_bottom: 0,
+
+                gtk::Box {
+                    set_orientation: gtk::Orientation::Horizontal,
+                    set_margin_top: PAGE_MARGIN,
+                    set_margin_bottom: PAGE_MARGIN,
+
+                    gtk::Label {
+                        set_label: &model.view.name,
+                        add_css_class: "title-1",
+                        set_margin_end: 8,
                     },
 
+                    gtk::Label {
+                        set_halign: gtk::Align::End,
+                        set_hexpand: true,
+                        set_margin_end: 8,
+                        #[watch]
+                        set_label: tr!("library-item-count", {
+                            "start" => model.cur_page * ITEMS_PER_PAGE + 1,
+                            "end" => cmp::min(model.total_item_count, (model.cur_page + 1) * ITEMS_PER_PAGE),
+                            "total" => model.total_item_count,
+                        }),
+                    },
+
+                    gtk::Box {
+                        set_orientation: gtk::Orientation::Horizontal,
+                        add_css_class: "linked",
+
+                        gtk::Button {
+                            set_icon_name: "left",
+                            add_css_class: "flat",
+                            #[watch]
+                            set_sensitive: model.cur_page > 0,
+                            connect_clicked[sender] => move |_| {
+                                sender.input(CollectionInput::PrevPage);
+                            },
+                        },
+
+                        gtk::Button {
+                            set_icon_name: "right",
+                            add_css_class: "flat",
+                            #[watch]
+                            set_sensitive: (model.cur_page as f32) < (model.total_item_count as f32 / ITEMS_PER_PAGE as f32) - 1.0,
+                            connect_clicked[sender] => move |_| {
+                                sender.input(CollectionInput::NextPage);
+                            },
+                        },
+                    },
+                },
+            },
+
+            gtk::Spinner {
+                #[watch]
+                set_visible: model.total_item_count == 0,
+                set_spinning: true,
+                set_width_request: 32,
+                set_height_request: 32,
+            },
+
+
+            gtk::ScrolledWindow {
+                set_hexpand: true,
+                set_vexpand: true,
+
+                #[template]
+                LibraryContainer {
                     #[name = "container"]
                     gtk::Box {
                         set_orientation: gtk::Orientation::Vertical,
@@ -65,52 +123,6 @@ impl AsyncComponent for Collection {
                         #[watch]
                         set_visible: model.total_item_count > 0,
 
-                        gtk::Box {
-                            set_orientation: gtk::Orientation::Horizontal,
-
-                            gtk::Label {
-                                set_label: &model.view.name,
-                                add_css_class: "title-1",
-                                set_margin_end: 8,
-                            },
-
-                            gtk::Label {
-                                set_halign: gtk::Align::End,
-                                set_hexpand: true,
-                                set_margin_end: 8,
-                                #[watch]
-                                set_label: tr!("library-item-count", {
-                                    "start" => model.cur_page * ITEMS_PER_PAGE + 1,
-                                    "end" => cmp::min(model.total_item_count, (model.cur_page + 1) * ITEMS_PER_PAGE),
-                                    "total" => model.total_item_count,
-                                }),
-                            },
-
-                        gtk::Box {
-                            set_orientation: gtk::Orientation::Horizontal,
-                            add_css_class: "linked",
-
-                            gtk::Button {
-                                set_icon_name: "left",
-                                add_css_class: "flat",
-                                #[watch]
-                                set_sensitive: model.cur_page > 0,
-                                connect_clicked[sender] => move |_| {
-                                    sender.input(CollectionInput::PrevPage);
-                                },
-                            },
-
-                            gtk::Button {
-                                set_icon_name: "right",
-                                add_css_class: "flat",
-                                #[watch]
-                                set_sensitive: (model.cur_page as f32) < (model.total_item_count as f32 / ITEMS_PER_PAGE as f32) - 1.0,
-                                connect_clicked[sender] => move |_| {
-                                    sender.input(CollectionInput::NextPage);
-                                },
-                            },
-                            },
-                        },
                     },
                 },
             },
