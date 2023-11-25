@@ -16,9 +16,7 @@ derive_builder = "0.12.0"
 dirs = "5.0.1"
 env_logger = "0.10.0"
 fluent-templates = { version = "0.8.0", features = ["tera"] }
-grass = { version = "0.13.1", default-features = false }
 jellyfin_api = "10.8.10-2"
-regex = "1.9.5"
 relm4 = { workspace = true }
 relm4-icons = { version = "0.7.0-alpha.2", features = [
     "check-round-outline",
@@ -56,3 +54,7 @@ uuid = { version = "1.4.1", features = ["v4"] }
 video_player_gst = { version = "0.1.0", path = "../video_player_gst", optional = true }
 video_player_mpv = { version = "0.1.0", path = "../video_player_mpv" }
 whoami = { version = "1.4.1", default-features = false }
+
+[build-dependencies]
+grass = "0.13.1"
+regex = "1.9.5"
