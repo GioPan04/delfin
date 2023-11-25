@@ -1,0 +1,9 @@
+// Override hsl() and hsla().
+// Sass sometimes converts the units in colours in a way that's incompatible with GTK's CSS parser. These overrides
+// always preserve the original units.
+@function hsl($h, $s, $l) {
+  @return unquote("hsl(#{$h}, #{$s}, #{$l})");
+}
+@function hsla($h, $s, $l, $a) {
+  @return unquote("hsla(#{$h}, #{$s}, #{$l}, #{$a})");
+}

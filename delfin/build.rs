@@ -20,7 +20,11 @@ fn main() {
 }
 
 fn build_css(out_dir: PathBuf) {
-    let css = grass::from_string(include_str!("src/app.scss"), &grass::Options::default()).unwrap();
+    let styles_path = PathBuf::from("src/styles");
+
+    println!("cargo:rerun-if-changed={styles_path:#?}");
+
+    let css = grass::from_path(styles_path.join("app.scss"), &grass::Options::default()).unwrap();
 
     // Output GTK's at-rules. Sass doesn't support custom at-rules, so we wrap
     // them in a string and unwrap them after Sass has done it's thing.

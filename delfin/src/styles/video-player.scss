@@ -1,0 +1,35 @@
+// There's an issue with the light theme where toe video player header bar's
+// background turns white when the window isn't focused, making the text
+// unreadable. As a workaround, we manually set the background to always use
+// the .osd background colour. This should match this variable:
+// https://gitlab.gnome.org/GNOME/libadwaita/-/blob/c174e07254aa423c704c3cdb62516249f8df5559/src/stylesheet/_colors.scss#L98
+// TODO: maybe file a bug report?
+.video-player-page headerbar {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.video-player {
+  .video-player-controls {
+    .scrubber-position-label {
+      // Match duration label padding (which is a button)
+      padding: 5px 17px;
+    }
+
+    .scrubber-duration-label {
+      font-weight: normal;
+    }
+
+    .scrubber-popover-thumbnail {
+      border-radius: 4px;
+    }
+  }
+
+  .next-up {
+    padding: 12px;
+    border-radius: 12px;
+
+    .next-up__thumbnail {
+      border-radius: 6px;
+    }
+  }
+}
