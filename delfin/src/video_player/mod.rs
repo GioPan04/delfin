@@ -38,6 +38,7 @@ use crate::video_player::next_up::{NextUp, NEXT_UP_VISIBILE};
 use self::backends::{PlayerState, VideoPlayerBackend};
 use self::controls::play_pause::{PlayPauseInput, PLAY_PAUSE_BROKER};
 use self::controls::scrubber::{ScrubberInput, SCRUBBER_BROKER};
+use self::controls::volume::{VolumeInput, VOLUME_BROKER};
 use self::controls::{VideoPlayerControls, VideoPlayerControlsInput};
 use self::next_up::NextUpInput;
 use self::session::SessionPlaybackReporter;
@@ -487,11 +488,11 @@ impl Component for VideoPlayer {
 
 impl VideoPlayer {
     fn set_player_state(&mut self, new_state: PlayerState) {
-        // Seek once playback begins
-        // If we seek too early, MPV ignores it
         if matches!(self.player_state, PlayerState::Loading)
             && matches!(new_state, PlayerState::Playing { paused: _ })
         {
+            // Seek once playback begins
+            // If we seek too early, MPV ignores it
             if let Some(playback_position_ticks) = self
                 .media
                 .as_ref()
@@ -501,6 +502,9 @@ impl VideoPlayer {
                 let playback_position = ticks_to_seconds(playback_position_ticks);
                 self.backend.borrow().seek_to(playback_position as usize);
             }
+
+            // Load volume settings once playback starts
+            VOLUME_BROKER.send(VolumeInput::LoadSettings);
         }
 
         match new_state {

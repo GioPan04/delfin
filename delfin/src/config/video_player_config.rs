@@ -42,6 +42,8 @@ pub struct VideoPlayerConfig {
     pub intro_skipper: bool,
     pub intro_skipper_auto_skip: bool,
     pub jellyscrub: bool,
+    pub volume: f64,
+    pub muted: bool,
 }
 
 impl Default for VideoPlayerConfig {
@@ -55,6 +57,8 @@ impl Default for VideoPlayerConfig {
             intro_skipper: true,
             intro_skipper_auto_skip: true,
             jellyscrub: true,
+            volume: 1.0,
+            muted: false,
         }
     }
 }
