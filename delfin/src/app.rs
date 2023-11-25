@@ -69,6 +69,7 @@ pub enum AppInput {
     ShowDetails(BaseItemDto),
     PlayVideo(BaseItemDto),
     SignOut,
+    SetThemeDark(bool),
 }
 
 #[relm4::component(pub)]
@@ -109,7 +110,20 @@ impl Component for App {
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         gtk::Window::set_default_icon_name(APP_ID);
-        adw::StyleManager::default().set_color_scheme(CONFIG.read().general.theme().into());
+
+        let style_manager = adw::StyleManager::default();
+        style_manager.set_color_scheme(CONFIG.read().general.theme().into());
+        style_manager.connect_dark_notify({
+            let sender = sender.clone();
+            move |style_manager| {
+                sender.input(AppInput::SetThemeDark(style_manager.is_dark()));
+            }
+        });
+        root.add_css_class(if style_manager.is_dark() {
+            "dark"
+        } else {
+            "light"
+        });
 
         // Use development styles when running debug build
         #[cfg(debug_assertions)]
@@ -147,7 +161,7 @@ impl Component for App {
         widgets: &mut Self::Widgets,
         message: Self::Input,
         sender: ComponentSender<Self>,
-        _root: &Self::Root,
+        root: &Self::Root,
     ) {
         let navigation = &widgets.navigation;
 
@@ -218,6 +232,15 @@ impl Component for App {
             }
             AppInput::SignOut => {
                 navigation.pop_to_tag(AppPage::Servers.into());
+            }
+            AppInput::SetThemeDark(dark) => {
+                if dark {
+                    root.remove_css_class("light");
+                    root.add_css_class("dark");
+                } else {
+                    root.remove_css_class("dark");
+                    root.add_css_class("light");
+                }
             }
         }
 

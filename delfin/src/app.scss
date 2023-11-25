@@ -1,4 +1,12 @@
-$clear: #ffffff00;
+// Override hsl() and hsla().
+// Sass sometimes converts the units in colours in a way that's incompatible with GTK's CSS parser. These overrides
+// always preserve the original units.
+@function hsl($h, $s, $l) {
+  @return unquote("hsl(#{$h}, #{$s}, #{$l})");
+}
+@function hsla($h, $s, $l, $a) {
+  @return unquote("hsla(#{$h}, #{$s}, #{$l}, #{$a})");
+}
 
 .media-tile {
   $media-tile-br: 10px;
@@ -102,16 +110,65 @@ $clear: #ffffff00;
 .media-details {
   .media-details-header {
     .media-details-header-overlay {
-      background: linear-gradient(180deg, $clear, "@window_bg_color");
       padding: 0 32px;
+
+      background: linear-gradient(
+        to top,
+        hsl(0, 0%, 98%) 0%,
+        hsla(0, 0%, 98%, 0.987) 12.1%,
+        hsla(0, 0%, 98%, 0.951) 23%,
+        hsla(0, 0%, 98%, 0.896) 33.1%,
+        hsla(0, 0%, 98%, 0.825) 42.1%,
+        hsla(0, 0%, 98%, 0.741) 50.4%,
+        hsla(0, 0%, 98%, 0.648) 57.8%,
+        hsla(0, 0%, 98%, 0.55) 64.5%,
+        hsla(0, 0%, 98%, 0.45) 70.6%,
+        hsla(0, 0%, 98%, 0.352) 76%,
+        hsla(0, 0%, 98%, 0.259) 81%,
+        hsla(0, 0%, 98%, 0.175) 85.4%,
+        hsla(0, 0%, 98%, 0.104) 89.5%,
+        hsla(0, 0%, 98%, 0.049) 93.2%,
+        hsla(0, 0%, 98%, 0.013) 96.7%,
+        hsla(0, 0%, 98%, 0) 100%
+      );
+      @at-root .dark & {
+        // Non-linear gradient generated with https://non-boring-gradients.netlify.app/
+        background: linear-gradient(
+          0deg,
+          rgb(36, 36, 36) 0%,
+          rgba(36, 36, 36, 0.9903926402) 6.25%,
+          rgba(35, 35, 35, 0.9619397663) 12.5%,
+          rgba(33, 33, 33, 0.9157348062) 18.75%,
+          rgba(31, 31, 31, 0.8535533906) 25%,
+          rgba(28, 28, 28, 0.7777851165) 31.25%,
+          rgba(25, 25, 25, 0.6913417162) 37.5%,
+          rgba(22, 22, 22, 0.597545161) 43.75%,
+          rgba(18, 18, 18, 0.5) 50%,
+          rgba(14, 14, 14, 0.402454839) 56.25%,
+          rgba(11, 11, 11, 0.3086582838) 62.5%,
+          rgba(8, 8, 8, 0.2222148835) 68.75%,
+          rgba(5, 5, 5, 0.1464466094) 75%,
+          rgba(3, 3, 3, 0.0842651938) 81.25%,
+          rgba(1, 1, 1, 0.0380602337) 87.5%,
+          rgba(0, 0, 0, 0.0096073598) 93.75%,
+          rgba(0, 0, 0, 0) 100%
+        );
+      }
     }
 
     .media-details-backdrop-overlay-left {
-      background: linear-gradient(0.75turn, $clear, "@window_bg_color");
+      background: linear-gradient(0.75turn, #ffffff00, "@window_bg_color");
     }
-
     .media-details-backdrop-overlay-right {
-      background: linear-gradient(0.25turn, $clear, "@window_bg_color");
+      background: linear-gradient(0.25turn, #ffffff00, "@window_bg_color");
+    }
+    @at-root .dark & {
+      .media-details-backdrop-overlay-left {
+        background: linear-gradient(0.75turn, transparent, "@window_bg_color");
+      }
+      .media-details-backdrop-overlay-right {
+        background: linear-gradient(0.25turn, transparent, "@window_bg_color");
+      }
     }
 
     .media-details-backdrop-blur {
