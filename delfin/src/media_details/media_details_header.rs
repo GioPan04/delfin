@@ -112,8 +112,15 @@ impl Component for MediaDetailsHeader {
 
                         add_overlay = &gtk::Box {
                             set_orientation: gtk::Orientation::Horizontal,
-                            add_css_class: "media-details-header-overlay",
                             set_valign: gtk::Align::End,
+                            #[watch]
+                            set_css_classes: &{
+                                let mut classes = vec!["media-details-header-overlay"];
+                                if model.backdrop.is_some() {
+                                    classes.push("gradient");
+                                }
+                                classes
+                            },
 
                             gtk::Box {
                                 set_orientation: gtk::Orientation::Horizontal,
