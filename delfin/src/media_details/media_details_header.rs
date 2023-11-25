@@ -58,17 +58,6 @@ impl Component for MediaDetailsHeader {
                 add_css_class: "media-details-header",
                 set_overflow: gtk::Overflow::Hidden,
 
-                // Leaving this here for now, might come back to this later
-                // gtk::Picture {
-                //     #[watch]
-                //     set_paintable: model.backdrop.as_ref(),
-                //
-                //     add_css_class: "media-details-backdrop-blur",
-                //     set_halign: gtk::Align::Center,
-                //     set_valign: gtk::Align::Center,
-                //     set_content_fit: gtk::ContentFit::Fill,
-                // },
-
                 add_overlay = &adw::Clamp {
                     set_maximum_size: MAX_LIBRARY_WIDTH,
                     set_tightening_threshold: MAX_LIBRARY_WIDTH,
@@ -126,58 +115,52 @@ impl Component for MediaDetailsHeader {
                             add_css_class: "media-details-header-overlay",
                             set_valign: gtk::Align::End,
 
-                            // adw::Clamp {
-                            //     set_maximum_size: MAX_LIBRARY_WIDTH,
-                            //     set_tightening_threshold: MAX_LIBRARY_WIDTH,
+                            gtk::Box {
+                                set_orientation: gtk::Orientation::Horizontal,
+                                set_valign: gtk::Align::End,
+                                set_margin_start:  32,
+                                set_margin_end: 32,
+                                set_spacing: 32,
 
-                                gtk::Box {
-                                    set_orientation: gtk::Orientation::Horizontal,
-                                    set_valign: gtk::Align::End,
-                                    set_margin_start:  32,
-                                    set_margin_end: 32,
-                                    set_spacing: 32,
-
-                                    gtk::Label {
-                                        set_label: &title,
-                                        // Show full title in tooltip in case label is ellipsized
-                                        set_tooltip: &title,
-                                        set_valign: gtk::Align::Center,
-                                        set_ellipsize: gtk::pango::EllipsizeMode::End,
-                                        add_css_class: "media-details-header-title",
-                                    },
-
-                                    gtk::Button {
-                                        add_css_class: "pill",
-                                        add_css_class: "suggested-action",
-                                        set_halign: gtk::Align::End,
-                                        set_valign: gtk::Align::Center,
-                                        set_hexpand: true,
-                                        set_vexpand: false,
-                                        #[watch]
-                                        set_visible: model.play_next_label.is_some() && model.play_next_media.is_some(),
-
-                                        connect_clicked[sender] => move |_| {
-                                            sender.input(MediaDetailsHeaderInput::PlayNext);
-                                        },
-
-                                        #[wrap(Some)]
-                                        set_child = &gtk::Box {
-                                            set_orientation: gtk::Orientation::Horizontal,
-                                            set_spacing: 8,
-
-                                            gtk::Image::from_icon_name("play-filled"),
-
-                                            if model.play_next_label.is_some() {
-                                                gtk::Label {
-                                                    #[watch]
-                                                    set_label: model.play_next_label.as_ref().unwrap(),
-                                                }
-                                            } else { gtk::Spinner { set_spinning: true } },
-                                        },
-                                    },
+                                gtk::Label {
+                                    set_label: &title,
+                                    // Show full title in tooltip in case label is ellipsized
+                                    set_tooltip: &title,
+                                    set_valign: gtk::Align::Center,
+                                    set_ellipsize: gtk::pango::EllipsizeMode::End,
+                                    add_css_class: "media-details-header-title",
                                 },
 
-                            // },
+                                gtk::Button {
+                                    add_css_class: "pill",
+                                    add_css_class: "suggested-action",
+                                    set_halign: gtk::Align::End,
+                                    set_valign: gtk::Align::Center,
+                                    set_hexpand: true,
+                                    set_vexpand: false,
+                                    #[watch]
+                                    set_visible: model.play_next_label.is_some() && model.play_next_media.is_some(),
+
+                                    connect_clicked[sender] => move |_| {
+                                        sender.input(MediaDetailsHeaderInput::PlayNext);
+                                    },
+
+                                    #[wrap(Some)]
+                                    set_child = &gtk::Box {
+                                        set_orientation: gtk::Orientation::Horizontal,
+                                        set_spacing: 8,
+
+                                        gtk::Image::from_icon_name("play-filled"),
+
+                                        if model.play_next_label.is_some() {
+                                            gtk::Label {
+                                                #[watch]
+                                                set_label: model.play_next_label.as_ref().unwrap(),
+                                            }
+                                        } else { gtk::Spinner { set_spinning: true } },
+                                    },
+                                },
+                            },
                         },
                     },
                 },
