@@ -58,8 +58,10 @@ pub struct VideoPlayer {
     session_playback_reporter: SessionPlaybackReporter,
     player_state: PlayerState,
     next: Option<BaseItemDto>,
+
     cursor: Option<gdk::Cursor>,
     cursor_debounce: Debounce,
+    last_mouse_position: (f64, f64),
 
     controls: Controller<VideoPlayerControls>,
     next_up: Controller<NextUp>,
@@ -76,7 +78,7 @@ pub enum VideoPlayerInput {
     StopPlayer,
     PlayerStateChanged(PlayerState),
     SetRevealerRevealChild(bool),
-    MouseMove,
+    MouseMove(f64, f64),
     MouseHide,
 }
 
@@ -107,8 +109,8 @@ impl Component for VideoPlayer {
             #[watch]
             set_cursor: model.cursor.as_ref(),
             add_controller = gtk::EventControllerMotion {
-                connect_motion[sender] => move |_, _, _| {
-                    sender.input(VideoPlayerInput::MouseMove);
+                connect_motion[sender] => move |_, x, y| {
+                    sender.input(VideoPlayerInput::MouseMove(x, y));
                 },
             },
 
@@ -211,6 +213,7 @@ impl Component for VideoPlayer {
             Box::new({
                 let sender = sender.clone();
                 move || {
+                    println!("mouse hide debounce");
                     sender.input(VideoPlayerInput::MouseHide);
                 }
             }),
@@ -228,8 +231,10 @@ impl Component for VideoPlayer {
             session_playback_reporter: SessionPlaybackReporter::default(),
             player_state: PlayerState::Loading,
             next: None,
+
             cursor: None,
             cursor_debounce,
+            last_mouse_position: (0.0, 0.0),
 
             controls,
             next_up,
@@ -431,9 +436,15 @@ impl Component for VideoPlayer {
             VideoPlayerInput::SetRevealerRevealChild(reveal) => {
                 self.revealer_reveal_child = reveal;
             }
-            VideoPlayerInput::MouseMove => {
-                self.cursor = None;
-                self.cursor_debounce.debounce();
+            VideoPlayerInput::MouseMove(x, y) => {
+                // For some reason mouse move events were getting fired even though the mouse
+                // position didn't change. For now, store the last position so we can check if it
+                // actually moved.
+                if (x, y) != self.last_mouse_position {
+                    self.cursor = None;
+                    self.cursor_debounce.debounce();
+                    self.last_mouse_position = (x, y);
+                }
             }
             VideoPlayerInput::MouseHide => {
                 self.cursor = gdk::Cursor::from_name("none", None);
