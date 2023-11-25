@@ -214,7 +214,6 @@ impl Component for VideoPlayer {
             Box::new({
                 let sender = sender.clone();
                 move || {
-                    println!("mouse hide debounce");
                     sender.input(VideoPlayerInput::MouseHide);
                 }
             }),
