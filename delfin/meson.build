@@ -38,4 +38,7 @@ custom_target(
   ],
   install: true,
   install_dir: bindir,
+  env: {
+    'MESON_BUILD_ROOT': meson.project_build_root(),
+  },
 )
