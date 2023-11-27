@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+project_root="$(dirname "${BASH_SOURCE[0]}")/../"
+cd "$project_root" || exit
+
+rm -rf build-dist/
+meson setup -Dprofile=release -Dflatpak=true build-dist/
+meson dist -C build-dist/
+cd build-dist/meson-dist/ || exit

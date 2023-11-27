@@ -32,13 +32,11 @@ if get_option('profile') == 'dev'
   endif
 endif
 
-if get_option('flatpak')
-  meson.add_dist_script(
-    'build-aux/dist-vendor',
-    meson.project_build_root() / 'meson-dist' / meson.project_name() + '-' + meson.project_version(),
-    meson.project_source_root()
-  )
-endif
+meson.add_dist_script(
+  'build-aux/dist-vendor',
+  meson.project_build_root() / 'meson-dist' / meson.project_name() + '-' + meson.project_version(),
+  meson.project_source_root()
+)
 
 prefix = get_option('prefix')
 bindir = prefix / get_option('bindir')
