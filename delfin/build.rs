@@ -18,6 +18,14 @@ fn main() {
 fn link_libvideo_player_mpv(build_root: PathBuf) {
     let vpm_build_dir = build_root.join("video_player_mpv/sys");
     println!("cargo:rustc-link-search={}", vpm_build_dir.display());
+
+    let flatpak = std::env::var("FLATPAK")
+        .map(|flatpak| flatpak == "true")
+        .unwrap_or(false);
+    if flatpak {
+        // Link mpv when building Flatpak
+        println!("cargo:rustc-link-search=/app/lib");
+    }
 }
 
 fn build_css(out_dir: PathBuf) {

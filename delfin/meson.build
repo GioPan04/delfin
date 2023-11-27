@@ -40,5 +40,6 @@ custom_target(
   install_dir: bindir,
   env: {
     'MESON_BUILD_ROOT': meson.project_build_root(),
+    'FLATPAK': get_option('flatpak') ? 'true' : 'false',
   },
 )
