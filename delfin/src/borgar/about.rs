@@ -14,7 +14,7 @@ impl SimpleComponent for About {
     view! {
         adw::AboutWindow::from_appdata(
             &format!("/cafe/avery/Delfin/{}.metainfo.xml", APP_ID),
-            None,
+            Some(VERSION),
         ) {
             set_modal: true,
             set_visible: true,
