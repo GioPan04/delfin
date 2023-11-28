@@ -48,4 +48,14 @@
   <provides>
     <binary>delfin</binary>
   </provides>
+
+  <releases>
+    <release version="0.1.0" date="2023-11-27">
+      <description>
+        <p>This is the first release of Delfin! 🎉</p>
+        <p>Currently, Delfin lets you stream movies and TV shows from your Jellyfin server.</p>
+        <p>This is an early release, you may run into bugs and missing features.</p>
+      </description>
+    </release>
+  </releases>
 </component>
