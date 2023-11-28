@@ -1,0 +1,32 @@
+steps:
+  build-flatpak-dist:
+    image: archlinux:base-devel
+    when:
+      - event: tag
+    commands:
+      - pacman -Syu --noconfirm
+      - pacman -S --noconfirm
+        clang
+        git
+        gtk4
+        libadwaita
+        meson
+        mold
+        mpv
+        ninja
+        rust
+      - ./build-aux/build-flatpak-dist
+      - mv build-dist/meson-dist/delfin-*.tar.xz "delfin-flatpak-dist-$CI_COMMIT_TAG.tar.xz"
+      - mv build-dist/meson-dist/delfin-*.tar.xz.sha256sum "delfin-flatpak-dist-$CI_COMMIT_TAG.tar.xz.sha256sum"
+  release:
+    image: woodpeckerci/plugin-gitea-release
+    when:
+      - event: tag
+    settings:
+      base_url: https://codeberg.org
+      api_key:
+        from_secret: codeberg_token_release
+      files:
+        - "delfin-flatpak-dist-*"
+      draft: true
+      target: main
