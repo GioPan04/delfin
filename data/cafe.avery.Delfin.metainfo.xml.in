@@ -18,6 +18,18 @@
       configured on your server to be available from Delfin.</p>
   </description>
 
+  <screenshots>
+    <screenshot type="default">
+      <image>https://delfin.avery.cafe/screenshots/flathub-1.png</image>
+    </screenshot>
+    <screenshot>
+      <image>https://delfin.avery.cafe/screenshots/flathub-2.png</image>
+    </screenshot>
+    <screenshot>
+      <image>https://delfin.avery.cafe/screenshots/flathub-3.png</image>
+    </screenshot>
+  </screenshots>
+
   <metadata_license>CC-BY-SA-4.0</metadata_license>
   <project_license>GPL-3.0</project_license>
 
