@@ -20,14 +20,25 @@
   </description>
 
   <screenshots>
-    <screenshot type="default">
-      <image>https://delfin.avery.cafe/screenshots/flathub-1.png</image>
+    <screenshot type="default" environment="gnome:dark">
+      <caption>The library home page</caption>
+      <image type="source">https://delfin.avery.cafe/screenshots/flathub-1.png</image>
     </screenshot>
-    <screenshot>
-      <image>https://delfin.avery.cafe/screenshots/flathub-2.png</image>
+    <screenshot environment="gnome:dark">
+      <caption>Viewing details and episodes for a TV show</caption>
+      <image type="source">https://delfin.avery.cafe/screenshots/flathub-2.png</image>
     </screenshot>
-    <screenshot>
-      <image>https://delfin.avery.cafe/screenshots/flathub-3.png</image>
+    <screenshot environment="gnome:dark">
+      <caption>The video player</caption>
+      <image type="source">https://delfin.avery.cafe/screenshots/flathub-3.png</image>
+    </screenshot>
+    <screenshot environment="gnome">
+      <caption>The library home page</caption>
+      <image type="source">https://delfin.avery.cafe/screenshots/flathub-4.png</image>
+    </screenshot>
+    <screenshot environment="gnome">
+      <caption>Viewing details and episodes for a TV show</caption>
+      <image type="source">https://delfin.avery.cafe/screenshots/flathub-5.png</image>
     </screenshot>
   </screenshots>
 
