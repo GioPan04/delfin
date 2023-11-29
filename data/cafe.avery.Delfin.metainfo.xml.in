@@ -6,10 +6,16 @@
   <summary>Stream movies and TV shows from Jellyfin</summary>
 
   <description>
-    <p>
-      TODO - Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-      incididunt ut labore et dolore magna aliqua.
-    </p>
+    <p>Delfin is a native client for the Jellyfin media server. It features a fast and clean
+      interface to stream your media in an embedded MPV-based video player.</p>
+
+    <p>Delfin currently supprts streaming movies and TV shows from your library. The video player
+      supports the Intro Skipper plugin for skipping intros automatically, and the Jellyscrub plugin
+      to show thumbnails while scrubbing through videos.</p>
+
+    <p>This is an early release, you may run into bugs or missing features. Delfin does not come
+      with any media, you must connect to a Jellyfin server. Plugins must be installed and
+      configured on your server to be available from Delfin.</p>
   </description>
 
   <metadata_license>CC-BY-SA-4.0</metadata_license>
