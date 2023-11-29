@@ -12,17 +12,15 @@ metainfo_file = configure_file(
   },
 )
 
-# Validate MetaInfo file
-# Skipping this for now - we use developerr_name, which is deprecated but still used by libadwaita
-# if ascli_exe.found()
-#   test('validate metainfo file',
-#         ascli_exe,
-#         args: ['validate',
-#                '--no-net',
-#                '--strict',
-#                metainfo_file]
-#   )
-# endif
+if ascli_exe.found()
+  test('validate metainfo file',
+    ascli_exe,
+    args: ['validate',
+      '--no-net',
+      '--strict',
+      metainfo_file]
+  )
+endif
 
 install_data(
   metainfo_file,

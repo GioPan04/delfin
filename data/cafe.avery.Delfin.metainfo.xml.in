@@ -50,8 +50,9 @@
   <url type="translate">https://translate.codeberg.org/projects/delfin/</url>
   <url type="vcs-browser">https://codeberg.org/avery42/delfin</url>
 
-  <!-- Deprecated field - keep until libadwaita and flatpak updated -->
-  <developer_name>Avery</developer_name>
+  <developer id="avery.cafe">
+    <name>Avery</name>
+  </developer>
 
   <update_contact>delfin@avery.cafe</update_contact>
 
