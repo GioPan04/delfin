@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Delfin
+Comment=Stream movies and TV shows from Jellyfin
+Icon=@APP_ID@
+Exec=delfin
+Categories=AudioVideo;Video;Player;TV;GTK;GNOME

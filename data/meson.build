@@ -29,15 +29,17 @@ install_data(
   install_dir: metainfodir,
 )
 
-desktop_file = '@0@.desktop'.format(app_id)
+desktop_file = configure_file(
+  input: 'cafe.avery.Delfin.desktop.in',
+  output: '@0@.desktop'.format(app_id),
+  configuration: {
+    'APP_ID': app_id,
+  },
+)
 
-# Create desktop-entry file from metainfo
-custom_target('gen-desktop-entry',
-    input : [metainfo_file],
-    output : [desktop_file],
-    command : [ascli_exe, 'make-desktop-file', '@INPUT@', '@OUTPUT@'],
-    install: true,
-    install_dir: appsdir,
+install_data(
+  desktop_file,
+  install_dir: appsdir,
 )
 
 resources_file = configure_file(
@@ -49,7 +51,7 @@ resources_file = configure_file(
 )
 
 # Compile and install resources
-resources = gnome.compile_resources(
+gnome.compile_resources(
   'resources',
   resources_file,
   gresource_bundle: true,

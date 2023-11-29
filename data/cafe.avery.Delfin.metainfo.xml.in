@@ -68,8 +68,6 @@
 
   <launchable type="desktop-id">@APP_ID@.desktop</launchable>
 
-  <icon type="stock">@APP_ID@</icon>
-
   <categories>
     <category>AudioVideo</category>
     <category>Video</category>
