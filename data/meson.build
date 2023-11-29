@@ -26,7 +26,7 @@ metainfo_file = configure_file(
 
 install_data(
   metainfo_file,
-  install_dir: datadir / meson.project_name(),
+  install_dir: metainfodir,
 )
 
 desktop_file = '@0@.desktop'.format(app_id)

@@ -44,6 +44,7 @@ datadir = prefix / get_option('datadir')
 pkgdatadir = datadir / meson.project_name()
 appsdir = datadir / 'applications'
 iconsdir = datadir / 'icons'
+metainfodir = datadir / 'metainfo'
 
 subproject('sys')
 subdir('delfin')
