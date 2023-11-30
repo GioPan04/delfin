@@ -1,4 +1,5 @@
-name: "Bug Report"
+name: Bug Report
+about: Report an issue
 labels: ["Kind/Bug"]
 body:
   - type: markdown
@@ -14,26 +15,28 @@ body:
       description: |
         Please provide a detailed description of your issue.
         Be descriptive, and provide the steps required to reproduce the issue if possible.
-      validations:
-        required: true
+    validations:
+      required: true
 
   - id: screenshots
     type: textarea
     attributes:
       label: Screenshots
       description: If possible, provide screenshots of your issue.
-      validations:
-        required: false
+    validations:
+      required: false
 
   - id: version
     type: input
     attributes:
       label: Delfin Version
       description: |
-        The version of Delfin that you're using.
-        You can find it in Delfin by opening the main menu near the top right, clicking on "About Delfin", and clicking on the blue version number to copy it.
-      validations:
-        required: true
+        The version of Delfin that you're using. You can find this in Delfin by:
+        - opening the main menu near the top right
+        - clicking on "About Delfin"
+        - clicking on the blue version number to copy it
+    validations:
+      required: true
 
   - id: installed-from
     type: dropdown
@@ -45,13 +48,13 @@ body:
         - "Nix"
         - "Compiled from source"
         - "Other (please mention in description)"
-      validations:
-        required: true
+    validations:
+      required: true
 
   - id: os
     type: input
     attributes:
       label: Operating System/Distro
       description: The operating system that you're running Delfin on
-      validations:
-        required: true
+    validations:
+      required: true
