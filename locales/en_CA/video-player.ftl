@@ -43,13 +43,13 @@ vp-skip-forwards-backwards-tooltip =
     }
 vp-skip-intro =
     .manual = Skip Intro
-    .auto = Skipping intro in { $seconds }...
+    .auto = Skipping intro in { $seconds }…
 vp-subtitle-track-menu = Subtitle Track
 vp-next-up-starting =
     Next episode starting in { $remaining } { $remaining ->
         [one] second
        *[other] seconds
-    }...
+    }…
 vp-backend-mpv-track-name =
     .title-and-language = { $title } – { $language }
     .id-and-language = Track { $id } – { $language }
