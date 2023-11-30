@@ -1,6 +1,6 @@
 library-page-title = Library
 library-refresh-button = Refresh library
-library-loading = Loading your library...
+library-loading = Loading your library…
 library-page-home-title = Home
 library-section-title =
     .continue-watching = Continue Watching
