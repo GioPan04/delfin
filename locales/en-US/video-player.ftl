@@ -3,7 +3,7 @@ vp-next-up-starting =
     Next episode starting in { $remaining } { $remaining ->
         [one] second
        *[other] seconds
-    }...
+    }…
 vp-next-up-action =
     .play = Play now
     .hide = Hide
@@ -35,7 +35,7 @@ vp-skip-forwards-backwards-tooltip =
     }
 vp-skip-intro =
     .manual = Skip Intro
-    .auto = Skipping intro in { $seconds }...
+    .auto = Skipping intro in { $seconds }…
 vp-audio-track-tooltip = Audio Tracks
 vp-audio-track-menu = Audio Track
 vp-subtitle-track-tooltip =
