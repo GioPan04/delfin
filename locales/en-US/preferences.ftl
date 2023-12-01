@@ -1,5 +1,4 @@
 prefs-window-title = Preferences
-
 prefs-general-page = General
 prefs-vp-page = Video Player
 
@@ -16,11 +15,10 @@ prefs-general-theme =
 # =========
 
 prefs-vp-interface = Interface
-
-prefs-skip-amount = {$seconds} {
-        $seconds ->
-            [one] second
-            *[other] seconds
+prefs-skip-amount =
+    { $seconds } { $seconds ->
+        [one] second
+       *[other] seconds
     }
 prefs-vp-skip-backwards =
     .title = Skip backwards amount
@@ -33,37 +31,32 @@ prefs-vp-skip-forwards =
 # =======
 
 prefs-vp-plugins = Plugins
-
 prefs-vp-intro-skipper =
     .title = Intro Skipper plugin
     .subtitle =
         Shows a Skip Intro button during episode intros.
-        This requires the <a href="{$introSkipperUrl}">Intro Skipper</a> plugin to be installed on your server.
+        This requires the <a href="{ $introSkipperUrl }">Intro Skipper</a> plugin to be installed on your server.
 prefs-vp-intro-skipper-auto-skip =
     .title = Automatically skip intros
     .subtitle = Skip intros without having to press the Skip Intro button
-
 prefs-vp-jellyscrub =
     .title = Jellyscrub plugin
     .subtitle =
         Show thumbnails while hovering over the video progress bar.
-        This requires the <a href="{$jellyscrubUrl}">Jellyscrub</a> plugin to be installed on your server.
+        This requires the <a href="{ $jellyscrubUrl }">Jellyscrub</a> plugin to be installed on your server.
 
 # Other
 # =====
 
 prefs-vp-other = Other
-
 prefs-vp-experimental =
     .title = Experimental Preferences
     .subtitle =
         These preferences may be broken or incomplete.
         Modifying them is not recommended.
-
 prefs-vp-backend =
     .title = Video player backend
-    .subtitle = Requires restarting {app-name}.
+    .subtitle = Requires restarting { app-name }.
     .value-mpv = MPV
     .value-gstreamer = GStreamer
-
 prefs-vp-hls-playback = HLS playback
