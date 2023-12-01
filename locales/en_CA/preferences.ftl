@@ -44,3 +44,9 @@ prefs-vp-intro-skipper =
     .subtitle =
         Shows a Skip Intro button during episode intros.
         This requires the <a href="{ $introSkipperUrl }">Intro Skipper</a> plugin to be installed on your server.
+prefs-vp-on-left-click-options =
+    .play-pause = Play/pause video
+    .toggle-controls = Show/hide controls
+prefs-vp-on-left-click =
+    .title = When the mouse is clicked
+    .subtitle = What happens when you left click inside the video player
