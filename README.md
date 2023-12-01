@@ -1,4 +1,4 @@
-# Delfin
+# Delfin [![status-badge](https://ci.codeberg.org/api/badges/12819/status.svg)](https://ci.codeberg.org/repos/12819)
 
 Stream movies and TV shows from Jellyfin.
 
