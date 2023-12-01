@@ -2,6 +2,8 @@
 
 Stream movies and TV shows from Jellyfin.
 
+Downloads are available at [delfin.avery.cafe](https://delfin.avery.cafe/).
+
 ## Development Setup
 
 - Install pre-commit hooks with `pre-commit install`
