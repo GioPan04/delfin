@@ -26,6 +26,12 @@ prefs-vp-skip-backwards =
 prefs-vp-skip-forwards =
     .title = Skip forwards amount
     .subtitle = How many seconds to skip forwards at a time
+prefs-vp-on-left-click =
+    .title = When the mouse is clicked
+    .subtitle = What happens when you left click inside the video player
+prefs-vp-on-left-click-options =
+    .play-pause = Play/pause video
+    .toggle-controls = Show/hide controls
 
 # Plugins
 # =======

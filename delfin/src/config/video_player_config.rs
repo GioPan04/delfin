@@ -37,6 +37,7 @@ pub struct VideoPlayerConfig {
     pub position_update_frequency: usize,
     pub skip_backwards_amount: VideoPlayerSkipAmount,
     pub skip_forwards_amount: VideoPlayerSkipAmount,
+    pub on_left_click: VideoPlayerOnLeftClick,
     pub backend: VideoPlayerBackendPreference,
     pub hls_playback: bool,
     pub intro_skipper: bool,
@@ -52,6 +53,7 @@ impl Default for VideoPlayerConfig {
             position_update_frequency: 10,
             skip_backwards_amount: VideoPlayerSkipAmount::Ten,
             skip_forwards_amount: VideoPlayerSkipAmount::Thirty,
+            on_left_click: VideoPlayerOnLeftClick::PlayPause,
             backend: VideoPlayerBackendPreference::Mpv,
             hls_playback: false,
             intro_skipper: true,
@@ -68,4 +70,10 @@ impl Default for VideoPlayerConfig {
 pub enum VideoPlayerSkipAmount {
     Ten = 10,
     Thirty = 30,
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Clone, Copy)]
+pub enum VideoPlayerOnLeftClick {
+    PlayPause,
+    ToggleControls,
 }

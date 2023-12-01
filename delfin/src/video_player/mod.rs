@@ -5,6 +5,7 @@ mod next_up;
 mod session;
 mod skip_intro;
 
+use crate::config::video_player_config::VideoPlayerOnLeftClick;
 use crate::video_player::keybindings::keybindings_controller;
 use std::cell::RefCell;
 use std::sync::atomic::{self, AtomicBool};
@@ -81,6 +82,7 @@ pub enum VideoPlayerInput {
     SetRevealerRevealChild(bool),
     MouseMove(f64, f64),
     MouseHide,
+    MouseClick,
 }
 
 #[derive(Debug)]
@@ -132,7 +134,7 @@ impl Component for VideoPlayer {
                     video_player -> gtk::Widget {
                         add_controller = gtk::GestureClick {
                             connect_pressed[sender] => move |_, _, _, _| {
-                                sender.input(VideoPlayerInput::ToggleControls);
+                                sender.input(VideoPlayerInput::MouseClick);
                             },
                         },
                     },
@@ -444,11 +446,38 @@ impl Component for VideoPlayer {
                     self.cursor = None;
                     self.cursor_debounce.debounce();
                     self.last_mouse_position = (x, y);
+
+                    if matches!(
+                        CONFIG.read().video_player.on_left_click,
+                        VideoPlayerOnLeftClick::PlayPause
+                    ) && !self.show_controls_locked
+                    {
+                        sender.input(VideoPlayerInput::SetShowControls {
+                            show: true,
+                            locked: self.show_controls_locked,
+                        });
+                    }
                 }
             }
             VideoPlayerInput::MouseHide => {
                 self.cursor = gdk::Cursor::from_name("none", None);
+
+                if let VideoPlayerOnLeftClick::PlayPause = CONFIG.read().video_player.on_left_click
+                {
+                    sender.input(VideoPlayerInput::SetShowControls {
+                        show: false,
+                        locked: self.show_controls_locked,
+                    });
+                }
             }
+            VideoPlayerInput::MouseClick => match CONFIG.read().video_player.on_left_click {
+                VideoPlayerOnLeftClick::PlayPause => {
+                    PLAY_PAUSE_BROKER.send(PlayPauseInput::TogglePlaying);
+                }
+                VideoPlayerOnLeftClick::ToggleControls => {
+                    sender.input(VideoPlayerInput::ToggleControls);
+                }
+            },
         }
 
         self.update_view(widgets, sender);

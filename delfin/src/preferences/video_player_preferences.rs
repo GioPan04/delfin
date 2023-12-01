@@ -2,7 +2,9 @@ use adw::prelude::*;
 use relm4::prelude::*;
 
 use crate::{
-    config::video_player_config::{VideoPlayerBackendPreference, VideoPlayerSkipAmount},
+    config::video_player_config::{
+        VideoPlayerBackendPreference, VideoPlayerOnLeftClick, VideoPlayerSkipAmount,
+    },
     globals::CONFIG,
     tr,
 };
@@ -13,6 +15,7 @@ pub struct VideoPlayerPreferences;
 pub enum VideoPlayerPreferencesInput {
     SkipBackwardsAmount(u32),
     SkipForwardsAmount(u32),
+    OnLeftClick(u32),
     IntroSkipper(bool),
     IntroSkipperAutoSkip(bool),
     Jellyscrub(bool),
@@ -59,6 +62,20 @@ impl SimpleComponent for VideoPlayerPreferences {
                     set_selected: if let VideoPlayerSkipAmount::Ten = video_player_config.skip_forwards_amount { 0 } else { 1 },
                     connect_selected_notify[sender] => move |cb| {
                         sender.input(VideoPlayerPreferencesInput::SkipForwardsAmount(cb.selected()));
+                    },
+                },
+
+                add = &adw::ComboRow {
+                    set_title: tr!("prefs-vp-on-left-click.title"),
+                    set_subtitle: tr!("prefs-vp-on-left-click.subtitle"),
+                    #[wrap(Some)]
+                    set_model = &gtk::StringList::new(&[
+                        tr!("prefs-vp-on-left-click-options.play-pause"),
+                        tr!("prefs-vp-on-left-click-options.toggle-controls"),
+                    ]),
+                    set_selected: if let VideoPlayerOnLeftClick::PlayPause = video_player_config.on_left_click { 0 } else { 1 },
+                    connect_selected_notify[sender] => move |cb| {
+                        sender.input(VideoPlayerPreferencesInput::OnLeftClick(cb.selected()));
                     },
                 },
             },
@@ -161,6 +178,12 @@ impl SimpleComponent for VideoPlayerPreferences {
                 config.video_player.skip_forwards_amount = match index {
                     0 => VideoPlayerSkipAmount::Ten,
                     _ => VideoPlayerSkipAmount::Thirty,
+                };
+            }
+            VideoPlayerPreferencesInput::OnLeftClick(index) => {
+                config.video_player.on_left_click = match index {
+                    0 => VideoPlayerOnLeftClick::PlayPause,
+                    _ => VideoPlayerOnLeftClick::ToggleControls,
                 };
             }
             VideoPlayerPreferencesInput::IntroSkipper(intro_skipper) => {
