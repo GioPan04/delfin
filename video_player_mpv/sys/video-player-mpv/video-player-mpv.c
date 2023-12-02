@@ -460,3 +460,9 @@ void vpm_video_player_mpv_set_subtitle_track(VpmVideoPlayerMpv *self,
   uint64_t id = (uint64_t)subtitle_track_id;
   mpv_set_property(self->mpv_ctx->handle, "sid", MPV_FORMAT_INT64, &id);
 }
+
+void vpm_video_player_mpv_set_subtitle_scale(VpmVideoPlayerMpv *self,
+                                             double subtitle_scale) {
+  mpv_set_option(self->mpv_ctx->handle, "sub-scale", MPV_FORMAT_DOUBLE,
+                 &subtitle_scale);
+}

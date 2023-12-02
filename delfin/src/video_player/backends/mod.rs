@@ -95,6 +95,9 @@ pub trait VideoPlayerBackend: fmt::Debug {
     /// Set the current audio track.
     fn set_audio_track(&self, audio_track_id: Option<usize>);
 
+    /// Set Subtitle scale.
+    fn set_subtitle_scale(&self, subtitle_scale: f64);
+
     /// Get notified when video player reaches the end of the current video.
     fn connect_end_of_stream(&mut self, callback: Box<dyn Fn() + Send + 'static>);
 

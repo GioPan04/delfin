@@ -208,6 +208,10 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
             .set_audio_track(audio_track_id.map(|id| id as u32).unwrap_or(0));
     }
 
+    fn set_subtitle_scale(&self, subtitle_scale: f64) {
+        self.widget.set_subtitle_scale(subtitle_scale);
+    }
+
     fn disconnect_signal_handler(&mut self, id: &Uuid) {
         match self.signal_handler_ids.remove(id) {
             Some(signal_handler_id) => {

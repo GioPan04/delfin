@@ -111,6 +111,13 @@ impl VideoPlayerMpv {
         }
     }
 
+    #[doc(alias = "vpm_video_player_mpv_set_subtitle_scale")]
+    pub fn set_subtitle_scale(&self, subtitle_scale: f64) {
+        unsafe {
+            ffi::vpm_video_player_mpv_set_subtitle_scale(self.to_glib_none().0, subtitle_scale);
+        }
+    }
+
     #[doc(alias = "vpm_video_player_mpv_set_subtitle_track")]
     pub fn set_subtitle_track(&self, subtitle_track_id: u32) {
         unsafe {

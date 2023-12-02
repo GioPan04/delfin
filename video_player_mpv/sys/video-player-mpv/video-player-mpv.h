@@ -36,4 +36,7 @@ int vpm_video_player_mpv_current_subtitle_track(VpmVideoPlayerMpv *self);
 void vpm_video_player_mpv_set_subtitle_track(VpmVideoPlayerMpv *self,
                                              uint subtitle_track_id);
 
+void vpm_video_player_mpv_set_subtitle_scale(VpmVideoPlayerMpv *self,
+                                             double subtitle_scale);
+
 G_END_DECLS

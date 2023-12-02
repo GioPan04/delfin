@@ -18,3 +18,4 @@ repos:
         args: ["--", "-Dwarnings"]
       - id: cargo-test
       - id: cargo-fmt
+        exclude: video_player_mpv/

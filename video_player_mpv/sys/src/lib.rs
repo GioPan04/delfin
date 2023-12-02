@@ -136,6 +136,10 @@ extern "C" {
         audio_track_id: c_uint,
     );
     pub fn vpm_video_player_mpv_set_mute(self_: *mut VpmVideoPlayerMpv, mute: bool);
+    pub fn vpm_video_player_mpv_set_subtitle_scale(
+        self_: *mut VpmVideoPlayerMpv,
+        subtitle_scale: c_double,
+    );
     pub fn vpm_video_player_mpv_set_subtitle_track(
         self_: *mut VpmVideoPlayerMpv,
         subtitle_track_id: c_uint,
