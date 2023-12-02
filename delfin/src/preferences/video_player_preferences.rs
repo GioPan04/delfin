@@ -3,16 +3,20 @@ use relm4::prelude::*;
 
 use crate::{
     config::video_player_config::{
-        VideoPlayerBackendPreference, VideoPlayerOnLeftClick, VideoPlayerSkipAmount,
+        VideoPlayerBackendPreference, VideoPlayerConfig, VideoPlayerOnLeftClick,
+        VideoPlayerSkipAmount,
     },
     globals::CONFIG,
     tr,
 };
 
-pub struct VideoPlayerPreferences;
+pub struct VideoPlayerPreferences {
+    video_player_config: VideoPlayerConfig,
+}
 
 #[derive(Debug)]
 pub enum VideoPlayerPreferencesInput {
+    UpdateConfig(VideoPlayerConfig),
     SkipBackwardsAmount(u32),
     SkipForwardsAmount(u32),
     OnLeftClick(u32),
@@ -24,10 +28,11 @@ pub enum VideoPlayerPreferencesInput {
 }
 
 #[relm4::component(pub)]
-impl SimpleComponent for VideoPlayerPreferences {
+impl Component for VideoPlayerPreferences {
     type Init = ();
     type Input = VideoPlayerPreferencesInput;
     type Output = ();
+    type CommandOutput = ();
 
     view! {
         &adw::PreferencesPage {
@@ -83,26 +88,36 @@ impl SimpleComponent for VideoPlayerPreferences {
             add = &adw::PreferencesGroup {
                 set_title: tr!("prefs-vp-plugins"),
 
-                add = &adw::SwitchRow {
+                #[name = "intro_skipper_expander"]
+                add = &adw::ExpanderRow {
                     set_title: tr!("prefs-vp-intro-skipper.title"),
                     set_subtitle: tr!("prefs-vp-intro-skipper.subtitle", {
                         "introSkipperUrl" => "https://github.com/ConfusedPolarBear/intro-skipper/",
                     }),
-                    set_active: video_player_config.intro_skipper,
-                    connect_active_notify[sender] => move |sr| {
-                        sender.input(VideoPlayerPreferencesInput::IntroSkipper(sr.is_active()));
-                    },
-                },
-
-                add = &adw::SwitchRow {
-                    set_title: tr!("prefs-vp-intro-skipper-auto-skip.title"),
-                    set_subtitle: tr!("prefs-vp-intro-skipper-auto-skip.subtitle"),
-                    set_active: video_player_config.intro_skipper_auto_skip,
-                    connect_active_notify[sender] => move |sr| {
-                        sender.input(VideoPlayerPreferencesInput::IntroSkipperAutoSkip(sr.is_active()));
-                    },
+                    set_show_enable_switch: false,
                     #[watch]
-                    set_sensitive: CONFIG.read().video_player.intro_skipper,
+                    set_enable_expansion: model.video_player_config.intro_skipper,
+                    #[watch]
+                    set_expanded: model.video_player_config.intro_skipper,
+
+                    add_suffix = &gtk::Switch {
+                        set_valign: gtk::Align::Center,
+                        set_active: video_player_config.intro_skipper,
+                        connect_active_notify[sender] => move |switch| {
+                            sender.input(VideoPlayerPreferencesInput::IntroSkipper(switch.is_active()));
+                        },
+                    },
+
+                    add_row = &adw::SwitchRow {
+                        set_title: tr!("prefs-vp-intro-skipper-auto-skip.title"),
+                        set_subtitle: tr!("prefs-vp-intro-skipper-auto-skip.subtitle"),
+                        set_active: video_player_config.intro_skipper_auto_skip,
+                        connect_active_notify[sender] => move |sr| {
+                            sender.input(VideoPlayerPreferencesInput::IntroSkipperAutoSkip(sr.is_active()));
+                        },
+                        #[watch]
+                        set_sensitive: model.video_player_config.intro_skipper,
+                    },
                 },
 
                 add = &adw::SwitchRow {
@@ -159,15 +174,36 @@ impl SimpleComponent for VideoPlayerPreferences {
         let config = CONFIG.read();
         let video_player_config = &config.video_player;
 
-        let model = VideoPlayerPreferences;
+        let model = VideoPlayerPreferences {
+            video_player_config: video_player_config.clone(),
+        };
+        model.subscribe_to_config(&sender);
+
         let widgets = view_output!();
+
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+    fn update_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        message: Self::Input,
+        sender: ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        if let VideoPlayerPreferencesInput::UpdateConfig(video_player_config) = message {
+            self.video_player_config = video_player_config;
+            self.update_view(widgets, sender);
+            return;
+        }
+
         let mut config = CONFIG.write();
 
         match message {
+            VideoPlayerPreferencesInput::UpdateConfig(_) => {
+                // Already handled above
+                unreachable!();
+            }
             VideoPlayerPreferencesInput::SkipBackwardsAmount(index) => {
                 config.video_player.skip_backwards_amount = match index {
                     0 => VideoPlayerSkipAmount::Ten,
@@ -207,5 +243,15 @@ impl SimpleComponent for VideoPlayerPreferences {
         };
 
         config.save().expect("Error saving config");
+
+        self.update_view(widgets, sender);
+    }
+}
+
+impl VideoPlayerPreferences {
+    fn subscribe_to_config(&self, sender: &ComponentSender<Self>) {
+        CONFIG.subscribe(sender.input_sender(), |config| {
+            VideoPlayerPreferencesInput::UpdateConfig(config.video_player.clone())
+        });
     }
 }
