@@ -43,6 +43,12 @@ pub fn keybindings_controller() -> EventControllerKey {
                     .read()
                     .send(SubtitlesInput::ToggleSubtitles);
             }
+            gdk::Key::comma => {
+                SKIP_BACKWARDS_BROKER.send(SkipForwardsBackwardsInput::FrameStep);
+            }
+            gdk::Key::period => {
+                SKIP_FORWARDS_BROKER.send(SkipForwardsBackwardsInput::FrameStep);
+            }
             _ => return Propagation::Proceed,
         };
         Propagation::Stop

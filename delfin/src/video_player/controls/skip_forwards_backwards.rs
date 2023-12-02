@@ -43,6 +43,7 @@ pub enum SkipForwardsBackwardsInput {
     Skip,
     SetLoading(bool),
     SkipAmountUpdated(VideoPlayerSkipAmount),
+    FrameStep,
 }
 
 #[relm4::component(pub(super))]
@@ -112,6 +113,14 @@ impl SimpleComponent for SkipForwardsBackwards {
             }
             SkipForwardsBackwardsInput::SkipAmountUpdated(skip_amount) => {
                 self.skip_amount = skip_amount;
+            }
+            SkipForwardsBackwardsInput::FrameStep => {
+                let player = self.player.borrow();
+                if let SkipForwardsBackwardsDirection::Forwards = self.direction {
+                    player.frame_step_forwards();
+                } else {
+                    player.frame_step_backwards();
+                }
             }
         }
     }

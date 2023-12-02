@@ -11,3 +11,4 @@ sc-vp-volume = Adjust volume
 sc-vp-mute = Mute/unmute
 sc-vp-subtitles = Toggle subtitles
 sc-vp-fullscreen = Toggle fullscreen
+sc-vp-frame-step = Seek frame-by-frame
