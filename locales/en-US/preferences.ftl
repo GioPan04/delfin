@@ -33,6 +33,14 @@ prefs-vp-on-left-click-options =
     .play-pause = Play/pause video
     .toggle-controls = Show/hide controls
 
+# Subtitles
+# =========
+
+prefs-vp-subs = Subtitles
+prefs-vp-subs-scale =
+    .title = Subtitle scale
+    .subtitle = Scaling factor for subtitle text
+
 # Plugins
 # =======
 

@@ -5,7 +5,7 @@ mod next_up;
 mod session;
 mod skip_intro;
 
-use crate::config::video_player_config::VideoPlayerOnLeftClick;
+use crate::config::video_player_config::{VideoPlayerConfig, VideoPlayerOnLeftClick};
 use crate::video_player::keybindings::keybindings_controller;
 use std::cell::RefCell;
 use std::sync::atomic::{self, AtomicBool};
@@ -72,6 +72,7 @@ pub struct VideoPlayer {
 
 #[derive(Debug)]
 pub enum VideoPlayerInput {
+    ConfigUpdated(VideoPlayerConfig),
     Toast(String),
     PlayVideo(Arc<ApiClient>, Box<BaseItemDto>),
     SetShowControls { show: bool, locked: bool },
@@ -243,6 +244,9 @@ impl Component for VideoPlayer {
             skip_intro,
         };
 
+        model.configure_player(&CONFIG.read().video_player);
+        model.subscribe_to_config(&sender);
+
         model.backend.borrow_mut().connect_player_state_changed({
             let sender = sender.clone();
             Box::new(move |state| {
@@ -311,6 +315,9 @@ impl Component for VideoPlayer {
         _root: &Self::Root,
     ) {
         match message {
+            VideoPlayerInput::ConfigUpdated(video_player_config) => {
+                self.configure_player(&video_player_config);
+            }
             VideoPlayerInput::Toast(message) => {
                 let toast = adw::Toast::new(&message);
                 widgets.toaster.add_toast(toast);
@@ -515,6 +522,17 @@ impl Component for VideoPlayer {
 }
 
 impl VideoPlayer {
+    fn subscribe_to_config(&self, sender: &ComponentSender<Self>) {
+        CONFIG.subscribe(sender.input_sender(), |config| {
+            VideoPlayerInput::ConfigUpdated(config.video_player.clone())
+        });
+    }
+
+    fn configure_player(&self, video_player_config: &VideoPlayerConfig) {
+        let player = self.backend.borrow();
+        player.set_subtitle_scale(video_player_config.subtitle_scale);
+    }
+
     fn set_player_state(&mut self, new_state: PlayerState) {
         if matches!(self.player_state, PlayerState::Loading)
             && matches!(new_state, PlayerState::Playing { paused: _ })

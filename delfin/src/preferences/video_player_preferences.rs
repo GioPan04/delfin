@@ -17,12 +17,17 @@ pub struct VideoPlayerPreferences {
 #[derive(Debug)]
 pub enum VideoPlayerPreferencesInput {
     UpdateConfig(VideoPlayerConfig),
+
     SkipBackwardsAmount(u32),
     SkipForwardsAmount(u32),
     OnLeftClick(u32),
+
+    SubtitleScale(f64),
+
     IntroSkipper(bool),
     IntroSkipperAutoSkip(bool),
     Jellyscrub(bool),
+
     Backend(u32),
     HlsPlayback(bool),
 }
@@ -81,6 +86,27 @@ impl Component for VideoPlayerPreferences {
                     set_selected: if let VideoPlayerOnLeftClick::PlayPause = video_player_config.on_left_click { 0 } else { 1 },
                     connect_selected_notify[sender] => move |cb| {
                         sender.input(VideoPlayerPreferencesInput::OnLeftClick(cb.selected()));
+                    },
+                },
+            },
+
+            add = &adw::PreferencesGroup {
+                set_title: tr!("prefs-vp-subs"),
+
+                add = &adw::SpinRow::new(
+                    Some(&gtk::Adjustment::new(
+                        video_player_config.subtitle_scale,
+                        0.0, 100.0, 0.1, 1.0, 0.0,
+                    )),
+                    // Climb rate
+                    1.0,
+                    // Digits
+                    1,
+                ) {
+                    set_title: tr!("prefs-vp-subs-scale.title"),
+                    set_subtitle: tr!("prefs-vp-subs-scale.subtitle"),
+                    connect_changed[sender] => move |spinrow| {
+                        sender.input(VideoPlayerPreferencesInput::SubtitleScale(spinrow.value()));
                     },
                 },
             },
@@ -222,6 +248,11 @@ impl Component for VideoPlayerPreferences {
                     _ => VideoPlayerOnLeftClick::ToggleControls,
                 };
             }
+
+            VideoPlayerPreferencesInput::SubtitleScale(subtitle_scale) => {
+                config.video_player.subtitle_scale = subtitle_scale;
+            }
+
             VideoPlayerPreferencesInput::IntroSkipper(intro_skipper) => {
                 config.video_player.intro_skipper = intro_skipper;
             }
@@ -231,6 +262,7 @@ impl Component for VideoPlayerPreferences {
             VideoPlayerPreferencesInput::Jellyscrub(jellyscrub) => {
                 config.video_player.jellyscrub = jellyscrub;
             }
+
             VideoPlayerPreferencesInput::Backend(index) => {
                 config.video_player.backend = match index {
                     0 => VideoPlayerBackendPreference::Mpv,
