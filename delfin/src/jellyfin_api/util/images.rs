@@ -65,4 +65,18 @@ impl ApiClient {
 
         Ok(url.to_string())
     }
+
+    pub fn get_next_up_thumbnail_url(&self, item: &BaseItemDto) -> Result<String> {
+        let item_id = match item.id {
+            Some(item_id) => item_id,
+            None => bail!("Missing item ID"),
+        };
+
+        let mut url = self.root.join(&format!("Items/{item_id}/Images/Primary"))?;
+        url.query_pairs_mut()
+            .append_pair("fillHeight", "150")
+            .append_pair("quality", "96");
+
+        Ok(url.to_string())
+    }
 }

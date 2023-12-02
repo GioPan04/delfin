@@ -274,7 +274,7 @@ impl NextUp {
 
     fn fetch_next_up_thumbnail(&mut self, sender: &ComponentSender<Self>, api_client: &ApiClient) {
         if let Some(next_up) = &self.next_up.0 {
-            if let Ok(img_url) = api_client.get_episode_thumbnail_url(&next_up.item) {
+            if let Ok(img_url) = api_client.get_next_up_thumbnail_url(&next_up.item) {
                 sender.oneshot_command(async {
                     let img_bytes: VecDeque<u8> = reqwest::get(img_url)
                         .await
