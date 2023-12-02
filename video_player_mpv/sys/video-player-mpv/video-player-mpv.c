@@ -390,6 +390,16 @@ void vpm_video_player_mpv_seek_by(VpmVideoPlayerMpv *self, int seconds) {
   mpv_command(self->mpv_ctx->handle, cmd);
 }
 
+void vpm_video_player_mpv_frame_step_forwards(VpmVideoPlayerMpv *self) {
+  const char *cmd[] = {"frame-step", NULL};
+  mpv_command(self->mpv_ctx->handle, cmd);
+}
+
+void vpm_video_player_mpv_frame_step_backwards(VpmVideoPlayerMpv *self) {
+  const char *cmd[] = {"frame-back-step", NULL};
+  mpv_command(self->mpv_ctx->handle, cmd);
+}
+
 bool vpm_video_player_mpv_mute(VpmVideoPlayerMpv *self) {
   bool mute = false;
   if (mpv_get_property(self->mpv_ctx->handle, "ao-mute", MPV_FORMAT_FLAG,

@@ -20,6 +20,8 @@ void vpm_video_player_mpv_stop(VpmVideoPlayerMpv *self);
 double vpm_video_player_mpv_position(VpmVideoPlayerMpv *self);
 void vpm_video_player_mpv_seek_to(VpmVideoPlayerMpv *self, uint seconds);
 void vpm_video_player_mpv_seek_by(VpmVideoPlayerMpv *self, int seconds);
+void vpm_video_player_mpv_frame_step_forwards(VpmVideoPlayerMpv *self);
+void vpm_video_player_mpv_frame_step_backwards(VpmVideoPlayerMpv *self);
 
 bool vpm_video_player_mpv_mute(VpmVideoPlayerMpv *self);
 void vpm_video_player_mpv_set_mute(VpmVideoPlayerMpv *self, bool mute);

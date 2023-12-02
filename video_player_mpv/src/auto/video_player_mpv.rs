@@ -38,6 +38,20 @@ impl VideoPlayerMpv {
         unsafe { ffi::vpm_video_player_mpv_current_subtitle_track(self.to_glib_none().0) }
     }
 
+    #[doc(alias = "vpm_video_player_mpv_frame_step_backwards")]
+    pub fn frame_step_backwards(&self) {
+        unsafe {
+            ffi::vpm_video_player_mpv_frame_step_backwards(self.to_glib_none().0);
+        }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_frame_step_forwards")]
+    pub fn frame_step_forwards(&self) {
+        unsafe {
+            ffi::vpm_video_player_mpv_frame_step_forwards(self.to_glib_none().0);
+        }
+    }
+
     #[doc(alias = "vpm_video_player_mpv_mute")]
     pub fn mute(&self) -> bool {
         unsafe { ffi::vpm_video_player_mpv_mute(self.to_glib_none().0) }

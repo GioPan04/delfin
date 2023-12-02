@@ -156,6 +156,14 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
         self.widget.seek_by(seconds as i32);
     }
 
+    fn frame_step_forwards(&self) {
+        self.widget.frame_step_forwards();
+    }
+
+    fn frame_step_backwards(&self) {
+        self.widget.frame_step_backwards();
+    }
+
     fn muted(&self) -> bool {
         self.widget.mute()
     }

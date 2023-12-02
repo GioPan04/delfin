@@ -57,6 +57,12 @@ pub trait VideoPlayerBackend: fmt::Debug {
     /// Seek by seconds relative to current timestamp.
     fn seek_by(&self, seconds: isize);
 
+    /// Step forwards by one frame.
+    fn frame_step_forwards(&self);
+
+    /// Step backwards by one frame.
+    fn frame_step_backwards(&self);
+
     /// Check if the player is currently muted.
     fn muted(&self) -> bool;
 

@@ -122,6 +122,8 @@ extern "C" {
     pub fn vpm_video_player_mpv_new() -> *mut gtk::GtkWidget;
     pub fn vpm_video_player_mpv_current_audio_track(self_: *mut VpmVideoPlayerMpv) -> c_int;
     pub fn vpm_video_player_mpv_current_subtitle_track(self_: *mut VpmVideoPlayerMpv) -> c_int;
+    pub fn vpm_video_player_mpv_frame_step_backwards(self_: *mut VpmVideoPlayerMpv);
+    pub fn vpm_video_player_mpv_frame_step_forwards(self_: *mut VpmVideoPlayerMpv);
     pub fn vpm_video_player_mpv_mute(self_: *mut VpmVideoPlayerMpv) -> bool;
     pub fn vpm_video_player_mpv_pause(self_: *mut VpmVideoPlayerMpv);
     pub fn vpm_video_player_mpv_play(self_: *mut VpmVideoPlayerMpv);

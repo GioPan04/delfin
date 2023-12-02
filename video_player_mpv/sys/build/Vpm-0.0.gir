@@ -205,7 +205,7 @@ and/or use gtk-doc annotations.  -->
       <method name="current_audio_track"
               c:identifier="vpm_video_player_mpv_current_audio_track">
         <source-position filename="video-player-mpv/video-player-mpv.h"
-                         line="29"/>
+                         line="31"/>
         <return-value transfer-ownership="none">
           <type name="gint" c:type="int"/>
         </return-value>
@@ -218,7 +218,7 @@ and/or use gtk-doc annotations.  -->
       <method name="current_subtitle_track"
               c:identifier="vpm_video_player_mpv_current_subtitle_track">
         <source-position filename="video-player-mpv/video-player-mpv.h"
-                         line="33"/>
+                         line="35"/>
         <return-value transfer-ownership="none">
           <type name="gint" c:type="int"/>
         </return-value>
@@ -228,9 +228,35 @@ and/or use gtk-doc annotations.  -->
           </instance-parameter>
         </parameters>
       </method>
-      <method name="mute" c:identifier="vpm_video_player_mpv_mute">
+      <method name="frame_step_backwards"
+              c:identifier="vpm_video_player_mpv_frame_step_backwards">
         <source-position filename="video-player-mpv/video-player-mpv.h"
                          line="24"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="frame_step_forwards"
+              c:identifier="vpm_video_player_mpv_frame_step_forwards">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="23"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+        </parameters>
+      </method>
+      <method name="mute" c:identifier="vpm_video_player_mpv_mute">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="26"/>
         <return-value transfer-ownership="none">
           <type name="gboolean" c:type="_Bool"/>
         </return-value>
@@ -324,7 +350,7 @@ and/or use gtk-doc annotations.  -->
       <method name="set_audio_track"
               c:identifier="vpm_video_player_mpv_set_audio_track">
         <source-position filename="video-player-mpv/video-player-mpv.h"
-                         line="30"/>
+                         line="32"/>
         <return-value transfer-ownership="none">
           <type name="none" c:type="void"/>
         </return-value>
@@ -339,7 +365,7 @@ and/or use gtk-doc annotations.  -->
       </method>
       <method name="set_mute" c:identifier="vpm_video_player_mpv_set_mute">
         <source-position filename="video-player-mpv/video-player-mpv.h"
-                         line="25"/>
+                         line="27"/>
         <return-value transfer-ownership="none">
           <type name="none" c:type="void"/>
         </return-value>
@@ -355,7 +381,7 @@ and/or use gtk-doc annotations.  -->
       <method name="set_subtitle_track"
               c:identifier="vpm_video_player_mpv_set_subtitle_track">
         <source-position filename="video-player-mpv/video-player-mpv.h"
-                         line="34"/>
+                         line="36"/>
         <return-value transfer-ownership="none">
           <type name="none" c:type="void"/>
         </return-value>
@@ -370,7 +396,7 @@ and/or use gtk-doc annotations.  -->
       </method>
       <method name="set_volume" c:identifier="vpm_video_player_mpv_set_volume">
         <source-position filename="video-player-mpv/video-player-mpv.h"
-                         line="27"/>
+                         line="29"/>
         <return-value transfer-ownership="none">
           <type name="none" c:type="void"/>
         </return-value>
@@ -397,7 +423,7 @@ and/or use gtk-doc annotations.  -->
       </method>
       <method name="volume" c:identifier="vpm_video_player_mpv_volume">
         <source-position filename="video-player-mpv/video-player-mpv.h"
-                         line="26"/>
+                         line="28"/>
         <return-value transfer-ownership="none">
           <type name="gdouble" c:type="double"/>
         </return-value>
