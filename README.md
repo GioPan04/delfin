@@ -9,6 +9,7 @@ Downloads are available at [delfin.avery.cafe](https://delfin.avery.cafe/).
 - Install pre-commit hooks with `pre-commit install`
 - `meson setup build && cd build`
 - `meson compile`
+- `./delfin/delfin`
 
 ## Translations
 
@@ -22,4 +23,3 @@ Contributions to translations are welcome on [Weblate](https://translate.codeber
 <a href="https://translate.codeberg.org/engage/delfin/">
     <img src="https://translate.codeberg.org/widget/delfin/multi-auto.svg" alt="Translation status" />
 </a>
-
