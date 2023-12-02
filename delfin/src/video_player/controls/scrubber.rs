@@ -293,7 +293,13 @@ impl Scrubber {
             }
         }
 
-        let image = &thumbnails[nearest_thumbnail_idx].image;
+        let image = match thumbnails.get(nearest_thumbnail_idx) {
+            Some(thumbnail) => &thumbnail.image,
+            _ => {
+                println!("Error getting trickplay thumbnail");
+                return None;
+            }
+        };
         let pixbuf = match gdk_pixbuf::Pixbuf::from_read(image.clone().reader()) {
             Ok(pixbuf) => pixbuf,
             Err(err) => {
