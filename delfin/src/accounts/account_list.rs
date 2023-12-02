@@ -47,7 +47,7 @@ impl Component for AccountList {
         adw::NavigationPage {
             set_title: tr!("account-list-page-title"),
 
-            connect_showing[sender] => move |_| {
+            connect_shown[sender] => move |_| {
                 sender.input(AccountListInput::ReloadAccounts);
             },
 
@@ -132,19 +132,20 @@ impl Component for AccountList {
             AccountListInput::ReloadAccounts => {
                 let mut accounts = self.accounts.guard();
                 accounts.clear();
-                for account in &self.server.accounts {
-                    accounts.push_back((self.server.url.clone(), account.clone()));
+                if let Some(server) = CONFIG
+                    .read()
+                    .servers
+                    .iter()
+                    .find(|s| s.id == self.server.id)
+                {
+                    for account in &server.accounts {
+                        accounts.push_back((self.server.url.clone(), account.clone()));
+                    }
                 }
             }
             AccountListInput::SetServer(server) => {
                 self.server = server.clone();
-
-                self.accounts.guard().clear();
-                for account in &server.accounts {
-                    self.accounts
-                        .guard()
-                        .push_back((self.server.url.clone(), account.clone()));
-                }
+                sender.input(AccountListInput::ReloadAccounts);
             }
             AccountListInput::AddAccount => {
                 let config = CONFIG.read();
