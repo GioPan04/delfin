@@ -40,6 +40,10 @@ prefs-vp-subs = Subtitles
 prefs-vp-subs-scale =
     .title = Subtitle scale
     .subtitle = Scaling factor for subtitle text
+prefs-vp-subs-colour =
+    .title = Subtitle text colour
+prefs-vp-subs-background-colour =
+    .title = Subtitle background colour
 
 # Plugins
 # =======

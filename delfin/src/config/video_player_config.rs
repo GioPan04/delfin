@@ -47,6 +47,8 @@ pub struct VideoPlayerConfig {
 
     #[serde(serialize_with = "round_one_place")]
     pub subtitle_scale: f64,
+    pub subtitle_colour: String,
+    pub subtitle_background_colour: String,
 
     pub intro_skipper: bool,
     pub intro_skipper_auto_skip: bool,
@@ -68,6 +70,8 @@ impl Default for VideoPlayerConfig {
             on_left_click: VideoPlayerOnLeftClick::PlayPause,
 
             subtitle_scale: 1.0,
+            subtitle_colour: "#FFFFFFFF".into(),
+            subtitle_background_colour: "#00000000".into(),
 
             backend: VideoPlayerBackendPreference::Mpv,
             hls_playback: false,

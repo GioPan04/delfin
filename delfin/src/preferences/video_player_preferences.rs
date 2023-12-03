@@ -1,4 +1,5 @@
 use adw::prelude::*;
+use gtk::gdk;
 use relm4::prelude::*;
 
 use crate::{
@@ -8,6 +9,7 @@ use crate::{
     },
     globals::CONFIG,
     tr,
+    utils::rgba::RGBA,
 };
 
 pub struct VideoPlayerPreferences {
@@ -23,6 +25,8 @@ pub enum VideoPlayerPreferencesInput {
     OnLeftClick(u32),
 
     SubtitleScale(f64),
+    SubtitleColour(RGBA),
+    SubtitleBackgroundColour(RGBA),
 
     IntroSkipper(bool),
     IntroSkipperAutoSkip(bool),
@@ -107,6 +111,38 @@ impl Component for VideoPlayerPreferences {
                     set_subtitle: tr!("prefs-vp-subs-scale.subtitle"),
                     connect_changed[sender] => move |spinrow| {
                         sender.input(VideoPlayerPreferencesInput::SubtitleScale(spinrow.value()));
+                    },
+                },
+
+                add = &adw::ActionRow {
+                    set_title: tr!("prefs-vp-subs-colour.title"),
+                    add_suffix = &gtk::Label {
+                        #[watch]
+                        set_label: &model.video_player_config.subtitle_colour,
+                    },
+                    add_suffix = &gtk::ColorDialogButton {
+                        set_valign: gtk::Align::Center,
+                        set_rgba: &gdk::RGBA::parse(video_player_config.subtitle_colour.clone()).unwrap(),
+                        set_dialog = &gtk::ColorDialog,
+                        connect_rgba_notify[sender] => move |btn| {
+                            sender.input(VideoPlayerPreferencesInput::SubtitleColour(btn.rgba().into()));
+                        },
+                    },
+                },
+
+                add = &adw::ActionRow {
+                    set_title: tr!("prefs-vp-subs-background-colour.title"),
+                    add_suffix = &gtk::Label {
+                        #[watch]
+                        set_label: &model.video_player_config.subtitle_background_colour,
+                    },
+                    add_suffix = &gtk::ColorDialogButton {
+                        set_valign: gtk::Align::Center,
+                        set_rgba: &gdk::RGBA::parse(video_player_config.subtitle_background_colour.clone()).unwrap(),
+                        set_dialog = &gtk::ColorDialog,
+                        connect_rgba_notify[sender] => move |btn| {
+                            sender.input(VideoPlayerPreferencesInput::SubtitleBackgroundColour(btn.rgba().into()));
+                        },
                     },
                 },
             },
@@ -251,6 +287,12 @@ impl Component for VideoPlayerPreferences {
 
             VideoPlayerPreferencesInput::SubtitleScale(subtitle_scale) => {
                 config.video_player.subtitle_scale = subtitle_scale;
+            }
+            VideoPlayerPreferencesInput::SubtitleColour(colour) => {
+                config.video_player.subtitle_colour = colour.to_hex();
+            }
+            VideoPlayerPreferencesInput::SubtitleBackgroundColour(background_colour) => {
+                config.video_player.subtitle_background_colour = background_colour.to_hex();
             }
 
             VideoPlayerPreferencesInput::IntroSkipper(intro_skipper) => {
