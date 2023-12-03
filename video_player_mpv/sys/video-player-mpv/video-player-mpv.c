@@ -461,6 +461,17 @@ void vpm_video_player_mpv_set_subtitle_track(VpmVideoPlayerMpv *self,
   mpv_set_property(self->mpv_ctx->handle, "sid", MPV_FORMAT_INT64, &id);
 }
 
+void vpm_video_player_mpv_add_subtitle_track(VpmVideoPlayerMpv *self,
+                                             const char *url,
+                                             const char *title) {
+  const char *cmd[] = {
+      "sub-add", url, "auto", title, NULL,
+  };
+  if (mpv_command(self->mpv_ctx->handle, cmd) < 0) {
+    printf("Error adding subtitle track %s", title);
+  }
+}
+
 void vpm_video_player_mpv_set_subtitle_scale(VpmVideoPlayerMpv *self,
                                              double subtitle_scale) {
   mpv_set_option(self->mpv_ctx->handle, "sub-scale", MPV_FORMAT_DOUBLE,

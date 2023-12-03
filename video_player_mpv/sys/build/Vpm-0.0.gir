@@ -202,6 +202,25 @@ and/or use gtk-doc annotations.  -->
           <type name="Gtk.Widget" c:type="GtkWidget*"/>
         </return-value>
       </constructor>
+      <method name="add_subtitle_track"
+              c:identifier="vpm_video_player_mpv_add_subtitle_track">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="38"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+          <parameter name="url" transfer-ownership="none">
+            <type name="utf8" c:type="const char*"/>
+          </parameter>
+          <parameter name="title" transfer-ownership="none">
+            <type name="utf8" c:type="const char*"/>
+          </parameter>
+        </parameters>
+      </method>
       <method name="current_audio_track"
               c:identifier="vpm_video_player_mpv_current_audio_track">
         <source-position filename="video-player-mpv/video-player-mpv.h"
@@ -381,7 +400,7 @@ and/or use gtk-doc annotations.  -->
       <method name="set_subtitle_scale"
               c:identifier="vpm_video_player_mpv_set_subtitle_scale">
         <source-position filename="video-player-mpv/video-player-mpv.h"
-                         line="39"/>
+                         line="42"/>
         <return-value transfer-ownership="none">
           <type name="none" c:type="void"/>
         </return-value>

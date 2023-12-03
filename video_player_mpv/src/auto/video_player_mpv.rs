@@ -28,6 +28,17 @@ impl VideoPlayerMpv {
         unsafe { gtk::Widget::from_glib_none(ffi::vpm_video_player_mpv_new()).unsafe_cast() }
     }
 
+    #[doc(alias = "vpm_video_player_mpv_add_subtitle_track")]
+    pub fn add_subtitle_track(&self, url: &str, title: &str) {
+        unsafe {
+            ffi::vpm_video_player_mpv_add_subtitle_track(
+                self.to_glib_none().0,
+                url.to_glib_none().0,
+                title.to_glib_none().0,
+            );
+        }
+    }
+
     #[doc(alias = "vpm_video_player_mpv_current_audio_track")]
     pub fn current_audio_track(&self) -> i32 {
         unsafe { ffi::vpm_video_player_mpv_current_audio_track(self.to_glib_none().0) }

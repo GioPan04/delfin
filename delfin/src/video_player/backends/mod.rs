@@ -89,6 +89,9 @@ pub trait VideoPlayerBackend: fmt::Debug {
     /// Set the current subtitle track.
     fn set_subtitle_track(&self, subtitle_track_id: Option<usize>);
 
+    /// Add a subtitle track.
+    fn add_subtitle_track(&self, url: &str, title: &str);
+
     /// Get the current audio track ID.
     fn current_audio_track(&self) -> Option<usize>;
 

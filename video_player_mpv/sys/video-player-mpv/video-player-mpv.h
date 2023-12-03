@@ -35,6 +35,9 @@ void vpm_video_player_mpv_set_audio_track(VpmVideoPlayerMpv *self,
 int vpm_video_player_mpv_current_subtitle_track(VpmVideoPlayerMpv *self);
 void vpm_video_player_mpv_set_subtitle_track(VpmVideoPlayerMpv *self,
                                              uint subtitle_track_id);
+void vpm_video_player_mpv_add_subtitle_track(VpmVideoPlayerMpv *self,
+                                             const char *url,
+                                             const char *title);
 
 void vpm_video_player_mpv_set_subtitle_scale(VpmVideoPlayerMpv *self,
                                              double subtitle_scale);

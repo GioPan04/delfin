@@ -196,6 +196,10 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
             .set_subtitle_track(subtitle_track_id.map(|id| id as u32).unwrap_or(0));
     }
 
+    fn add_subtitle_track(&self, url: &str, title: &str) {
+        self.widget.add_subtitle_track(url, title);
+    }
+
     fn current_audio_track(&self) -> Option<usize> {
         match self.widget.current_audio_track() {
             id @ 0.. => Some(id as usize),
