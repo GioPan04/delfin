@@ -74,7 +74,7 @@ prefs-vp-jellyscrub =
 
 prefs-vp-other = Other
 prefs-vp-experimental =
-    .title = Experimental Preferences
+    .title = Experimental preferences
     .subtitle =
         These preferences may be broken or incomplete.
         Modifying them is not recommended.
