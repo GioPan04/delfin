@@ -14,6 +14,7 @@ use std::{
 
 use crate::{
     app::APP_BROKER,
+    jellyfin_api::api_client::ApiClient,
     video_player::{
         backends::VideoPlayerBackend,
         controls::{
@@ -72,7 +73,10 @@ pub struct VideoPlayerControlsInit {
 pub enum VideoPlayerControlsInput {
     Noop,
     SetShowControls(bool),
-    SetPlaying(Box<BaseItemDto>),
+    SetPlaying {
+        api_client: Arc<ApiClient>,
+        item: Box<BaseItemDto>,
+    },
     SetNextPreviousEpisodes(Box<Option<BaseItemDto>>, Box<Option<BaseItemDto>>),
     PlayPreviousEpisode,
     PlayNextEpisode,
@@ -243,9 +247,9 @@ impl SimpleComponent for VideoPlayerControls {
             VideoPlayerControlsInput::SetShowControls(show_controls) => {
                 self.show_controls = show_controls
             }
-            VideoPlayerControlsInput::SetPlaying(_) => {
+            VideoPlayerControlsInput::SetPlaying { api_client, item } => {
                 if let Some(subtitles) = self.subtitles.get() {
-                    subtitles.emit(SubtitlesInput::Reset);
+                    subtitles.emit(SubtitlesInput::Reset { api_client, item });
                 }
                 if let Some(audio_tracks) = self.audio_tracks.get() {
                     audio_tracks.emit(AudioTracksInput::Reset);

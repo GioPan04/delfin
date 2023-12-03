@@ -44,6 +44,7 @@ vp-subtitle-track-tooltip =
        *[false] No Subtitle Tracks Available
     }
 vp-subtitle-track-menu = Subtitle Track
+vp-subtitle-track-external = External Subtitle Track
 vp-subtitle-track-off = Off
 vp-no-subtitles-available = No subtitles available.
 vp-volume-mute-tooltip =

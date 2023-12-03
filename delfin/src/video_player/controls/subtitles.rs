@@ -1,13 +1,15 @@
 use std::{cell::RefCell, sync::Arc};
 
 use gtk::prelude::*;
+use jellyfin_api::types::BaseItemDto;
 use relm4::{
     actions::{ActionGroupName, ActionName, RelmAction, RelmActionGroup},
     gtk::{self, gio},
-    Component, ComponentParts,
+    Component, ComponentParts, ComponentSender,
 };
 
 use crate::{
+    jellyfin_api::api_client::ApiClient,
     tr,
     utils::message_broker::ResettableMessageBroker,
     video_player::{
@@ -29,6 +31,12 @@ relm4::new_stateful_action!(
 );
 
 #[derive(Debug)]
+pub struct ExternalSubtitleTrack {
+    name: String,
+    url: String,
+}
+
+#[derive(Debug)]
 pub struct Subtitles {
     video_player: Arc<RefCell<dyn VideoPlayerBackend>>,
     menu: gio::Menu,
@@ -38,9 +46,17 @@ pub struct Subtitles {
 
 #[derive(Debug)]
 pub enum SubtitlesInput {
-    Reset,
+    Reset {
+        api_client: Arc<ApiClient>,
+        item: Box<BaseItemDto>,
+    },
     SubtitlesUpdated(Vec<SubtitleTrack>),
     ToggleSubtitles,
+}
+
+#[derive(Debug)]
+pub enum SubtitlesCommandOutput {
+    ExternalSubtitlesLoaded(Option<Vec<ExternalSubtitleTrack>>),
 }
 
 #[relm4::component(pub)]
@@ -48,7 +64,7 @@ impl Component for Subtitles {
     type Init = Arc<RefCell<dyn VideoPlayerBackend>>;
     type Input = SubtitlesInput;
     type Output = ();
-    type CommandOutput = ();
+    type CommandOutput = SubtitlesCommandOutput;
 
     view! {
         gtk::MenuButton {
@@ -114,9 +130,10 @@ impl Component for Subtitles {
         root: &Self::Root,
     ) {
         match message {
-            SubtitlesInput::Reset => {
+            SubtitlesInput::Reset { api_client, item } => {
                 self.subtitles_available = false;
                 self.previous_track = None;
+                self.load_external_subtitles(&sender, &api_client, item);
             }
             SubtitlesInput::SubtitlesUpdated(subtitle_streams) => {
                 if subtitle_streams.is_empty() {
@@ -186,5 +203,88 @@ impl Component for Subtitles {
         }
 
         self.update_view(widgets, sender);
+    }
+
+    fn update_cmd(
+        &mut self,
+        message: Self::CommandOutput,
+        _sender: ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match message {
+            SubtitlesCommandOutput::ExternalSubtitlesLoaded(Some(external_subtitles)) => {
+                for sub in external_subtitles {
+                    self.video_player
+                        .borrow()
+                        .add_subtitle_track(&sub.url, &sub.name);
+                }
+            }
+            SubtitlesCommandOutput::ExternalSubtitlesLoaded(None) => {}
+        }
+    }
+}
+
+impl Subtitles {
+    fn load_external_subtitles(
+        &self,
+        sender: &ComponentSender<Self>,
+        api_client: &Arc<ApiClient>,
+        item: Box<BaseItemDto>,
+    ) {
+        let item_id = match item.id {
+            Some(id) => id,
+            None => return,
+        };
+
+        sender.oneshot_command({
+            let api_client = api_client.clone();
+            async move {
+                let playback_info = match api_client.get_playback_info(&item_id).await {
+                    Ok(playback_info) => playback_info,
+                    Err(err) => {
+                        println!("Error getting playback info: {err}");
+                        return SubtitlesCommandOutput::ExternalSubtitlesLoaded(None);
+                    }
+                };
+
+                // Look through all media sources for external subtitles
+                let external_subtitles = playback_info
+                    .media_sources
+                    .iter()
+                    .cloned()
+                    .filter_map(|media_source| media_source.media_streams)
+                    .flatten()
+                    .filter_map(|stream| {
+                        match (
+                            stream.is_text_subtitle_stream,
+                            stream.is_external,
+                            stream.delivery_url,
+                        ) {
+                            (Some(true), Some(true), Some(delivery_url)) => {
+                                let name = stream
+                                    .display_title
+                                    .or(stream.language)
+                                    .unwrap_or(tr!("vp-subtitle-track-external").to_owned());
+
+                                // Strip leading slash
+                                let delivery_url =
+                                    delivery_url.strip_prefix('/').unwrap_or(&delivery_url);
+
+                                let url = api_client
+                                    .root
+                                    .join(delivery_url)
+                                    .expect("Error getting external subtitle track URL")
+                                    .to_string();
+
+                                Some(ExternalSubtitleTrack { name, url })
+                            }
+                            _ => None,
+                        }
+                    })
+                    .collect();
+
+                SubtitlesCommandOutput::ExternalSubtitlesLoaded(Some(external_subtitles))
+            }
+        });
     }
 }

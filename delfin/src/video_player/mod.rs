@@ -340,10 +340,10 @@ impl Component for VideoPlayer {
                     self.backend.borrow().seek_to(playback_position as usize);
                 }
 
-                self.controls
-                    .emit(VideoPlayerControlsInput::SetPlaying(Box::new(
-                        *item.clone(),
-                    )));
+                self.controls.emit(VideoPlayerControlsInput::SetPlaying {
+                    api_client: api_client.clone(),
+                    item: Box::new(*item.clone()),
+                });
 
                 if let Some(item_id) = item.id {
                     // Report start of playback
