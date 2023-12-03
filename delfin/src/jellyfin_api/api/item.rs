@@ -1,8 +1,11 @@
 use anyhow::Result;
-use jellyfin_api::types::BaseItemDto;
+use jellyfin_api::types::{BaseItemDto, PlaybackInfoDto, PlaybackInfoResponse};
 use uuid::Uuid;
 
-use crate::{globals::CONFIG, jellyfin_api::api_client::ApiClient};
+use crate::{
+    globals::CONFIG, jellyfin_api::api_client::ApiClient,
+    utils::device_profile::DEVICE_PROFILE_DIRECT_PLAY,
+};
 
 impl ApiClient {
     pub fn get_stream_url(&self, item_id: &Uuid) -> String {
@@ -29,5 +32,28 @@ impl ApiClient {
 
         let res = self.client.get(url).send().await?.json().await?;
         Ok(res)
+    }
+
+    pub async fn get_playback_info(&self, item_id: &Uuid) -> Result<PlaybackInfoResponse> {
+        let mut url = self
+            .root
+            .join(&format!("Items/{item_id}/PlaybackInfo"))
+            .unwrap();
+        url.query_pairs_mut()
+            .append_pair("userId", &self.account.id);
+
+        let body: PlaybackInfoDto = PlaybackInfoDto::builder()
+            .device_profile(Some(DEVICE_PROFILE_DIRECT_PLAY.clone()))
+            .try_into()
+            .unwrap();
+
+        Ok(self
+            .client
+            .post(url)
+            .json(&body)
+            .send()
+            .await?
+            .json()
+            .await?)
     }
 }
