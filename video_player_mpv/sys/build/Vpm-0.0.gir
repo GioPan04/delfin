@@ -429,6 +429,22 @@ and/or use gtk-doc annotations.  -->
           </parameter>
         </parameters>
       </method>
+      <method name="set_subtitle_position"
+              c:identifier="vpm_video_player_mpv_set_subtitle_position">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="48"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+          <parameter name="position" transfer-ownership="none">
+            <type name="guint" c:type="uint"/>
+          </parameter>
+        </parameters>
+      </method>
       <method name="set_subtitle_scale"
               c:identifier="vpm_video_player_mpv_set_subtitle_scale">
         <source-position filename="video-player-mpv/video-player-mpv.h"

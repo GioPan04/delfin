@@ -3,9 +3,10 @@
 // from sys/gir-files
 // DO NOT EDIT
 
-use glib::translate::*;
+use glib::{translate::*};
 
-#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Clone, Copy)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Copy)]
 #[non_exhaustive]
 #[doc(alias = "VpmTrackType")]
 pub enum TrackType {
@@ -15,7 +16,7 @@ pub enum TrackType {
     Audio,
     #[doc(alias = "VPM_TRACK_TYPE_SUBTITLE")]
     Subtitle,
-    #[doc(hidden)]
+#[doc(hidden)]
     __Unknown(i32),
 }
 
@@ -24,27 +25,27 @@ impl IntoGlib for TrackType {
     type GlibType = ffi::VpmTrackType;
 
     #[inline]
-    fn into_glib(self) -> ffi::VpmTrackType {
-        match self {
+fn into_glib(self) -> ffi::VpmTrackType {
+match self {
             Self::Video => ffi::VPM_TRACK_TYPE_VIDEO,
             Self::Audio => ffi::VPM_TRACK_TYPE_AUDIO,
             Self::Subtitle => ffi::VPM_TRACK_TYPE_SUBTITLE,
             Self::__Unknown(value) => value,
-        }
-    }
+}
+}
 }
 
 #[doc(hidden)]
 impl FromGlib<ffi::VpmTrackType> for TrackType {
     #[inline]
-    unsafe fn from_glib(value: ffi::VpmTrackType) -> Self {
+unsafe fn from_glib(value: ffi::VpmTrackType) -> Self {
         skip_assert_initialized!();
 
-        match value {
+match value {
             ffi::VPM_TRACK_TYPE_VIDEO => Self::Video,
             ffi::VPM_TRACK_TYPE_AUDIO => Self::Audio,
             ffi::VPM_TRACK_TYPE_SUBTITLE => Self::Subtitle,
             value => Self::__Unknown(value),
-        }
-    }
+}
+}
 }

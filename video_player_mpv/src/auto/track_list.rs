@@ -3,8 +3,8 @@
 // from sys/gir-files
 // DO NOT EDIT
 
-use crate::Track;
-use glib::translate::*;
+use crate::{Track};
+use glib::{translate::*};
 
 glib::wrapper! {
     #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -20,16 +20,22 @@ glib::wrapper! {
 impl TrackList {
     #[doc(alias = "vpm_track_list_is_empty")]
     pub fn is_empty(&self) -> bool {
-        unsafe { from_glib(ffi::vpm_track_list_is_empty(self.to_glib_none().0)) }
+        unsafe {
+            from_glib(ffi::vpm_track_list_is_empty(self.to_glib_none().0))
+        }
     }
 
     #[doc(alias = "vpm_track_list_len")]
     pub fn len(&self) -> u32 {
-        unsafe { ffi::vpm_track_list_len(self.to_glib_none().0) }
+        unsafe {
+            ffi::vpm_track_list_len(self.to_glib_none().0)
+        }
     }
 
     #[doc(alias = "vpm_track_list_track")]
     pub fn track(&self, index: u32) -> Option<Track> {
-        unsafe { from_glib_full(ffi::vpm_track_list_track(self.to_glib_none().0, index)) }
+        unsafe {
+            from_glib_full(ffi::vpm_track_list_track(self.to_glib_none().0, index))
+        }
     }
 }

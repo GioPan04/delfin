@@ -45,5 +45,7 @@ void vpm_video_player_mpv_set_subtitle_colour(VpmVideoPlayerMpv *self,
                                               char *colour);
 void vpm_video_player_mpv_set_subtitle_background_colour(
     VpmVideoPlayerMpv *self, char *colour);
+void vpm_video_player_mpv_set_subtitle_position(VpmVideoPlayerMpv *self,
+                                                uint position);
 
 G_END_DECLS

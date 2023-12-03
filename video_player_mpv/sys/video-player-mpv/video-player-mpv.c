@@ -489,3 +489,10 @@ void vpm_video_player_mpv_set_subtitle_background_colour(
   mpv_set_option(self->mpv_ctx->handle, "sub-back-color", MPV_FORMAT_STRING,
                  &colour);
 }
+
+void vpm_video_player_mpv_set_subtitle_position(VpmVideoPlayerMpv *self,
+                                                uint position) {
+  uint64_t position_int = (uint64_t)position;
+  mpv_set_option(self->mpv_ctx->handle, "sub-pos", MPV_FORMAT_INT64,
+                 &position_int);
+}
