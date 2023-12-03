@@ -225,6 +225,11 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
             .set_subtitle_background_colour(&colour.to_mpv_hex());
     }
 
+    fn set_subtitle_position(&self, position: u32) {
+        assert!((0..150).contains(&position));
+        self.widget.set_subtitle_position(position);
+    }
+
     fn disconnect_signal_handler(&mut self, id: &Uuid) {
         match self.signal_handler_ids.remove(id) {
             Some(signal_handler_id) => {

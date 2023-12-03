@@ -49,6 +49,7 @@ pub struct VideoPlayerConfig {
     pub subtitle_scale: f64,
     pub subtitle_colour: String,
     pub subtitle_background_colour: String,
+    pub subtitle_position: u32,
 
     pub intro_skipper: bool,
     pub intro_skipper_auto_skip: bool,
@@ -72,6 +73,7 @@ impl Default for VideoPlayerConfig {
             subtitle_scale: 1.0,
             subtitle_colour: "#FFFFFFFF".into(),
             subtitle_background_colour: "#00000000".into(),
+            subtitle_position: 100,
 
             backend: VideoPlayerBackendPreference::Mpv,
             hls_playback: false,

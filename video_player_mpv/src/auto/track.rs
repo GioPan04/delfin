@@ -3,8 +3,8 @@
 // from sys/gir-files
 // DO NOT EDIT
 
-use crate::{TrackType};
-use glib::{translate::*};
+use crate::TrackType;
+use glib::translate::*;
 
 glib::wrapper! {
     #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -21,43 +21,33 @@ impl Track {
     #[doc(alias = "vpm_track_new")]
     pub fn new() -> Track {
         assert_initialized_main_thread!();
-        unsafe {
-            from_glib_full(ffi::vpm_track_new())
-        }
+        unsafe { from_glib_full(ffi::vpm_track_new()) }
     }
 
     #[doc(alias = "vpm_track_id")]
     pub fn id(&self) -> i32 {
-        unsafe {
-            ffi::vpm_track_id(self.to_glib_none().0)
-        }
+        unsafe { ffi::vpm_track_id(self.to_glib_none().0) }
     }
 
     #[doc(alias = "vpm_track_language")]
     pub fn language(&self) -> Option<glib::GString> {
-        unsafe {
-            from_glib_full(ffi::vpm_track_language(self.to_glib_none().0))
-        }
+        unsafe { from_glib_full(ffi::vpm_track_language(self.to_glib_none().0)) }
     }
 
     #[doc(alias = "vpm_track_title")]
     pub fn title(&self) -> Option<glib::GString> {
-        unsafe {
-            from_glib_full(ffi::vpm_track_title(self.to_glib_none().0))
-        }
+        unsafe { from_glib_full(ffi::vpm_track_title(self.to_glib_none().0)) }
     }
 
     #[doc(alias = "vpm_track_type")]
     #[doc(alias = "type")]
     pub fn type_(&self) -> TrackType {
-        unsafe {
-            from_glib(ffi::vpm_track_type(self.to_glib_none().0))
-        }
+        unsafe { from_glib(ffi::vpm_track_type(self.to_glib_none().0)) }
     }
 }
 
 impl Default for Track {
-                     fn default() -> Self {
-                         Self::new()
-                     }
-                 }
+    fn default() -> Self {
+        Self::new()
+    }
+}

@@ -109,6 +109,9 @@ pub trait VideoPlayerBackend: fmt::Debug {
     /// Set subtitle background colour.
     fn set_subtitle_background_colour(&self, colour: RGBA);
 
+    /// Set subtitle position from 0 - 150, where 0 is the top of the screen and 100 is the bottom.
+    fn set_subtitle_position(&self, position: u32);
+
     /// Get notified when video player reaches the end of the current video.
     fn connect_end_of_stream(&mut self, callback: Box<dyn Fn() + Send + 'static>);
 

@@ -555,6 +555,7 @@ impl VideoPlayer {
                     )
                 }),
         );
+        player.set_subtitle_position(video_player_config.subtitle_position);
     }
 
     fn set_player_state(&mut self, new_state: PlayerState) {

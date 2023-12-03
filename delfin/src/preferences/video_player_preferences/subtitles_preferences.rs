@@ -18,6 +18,7 @@ pub(crate) enum SubtitlesPreferencesInput {
     SubtitleScale(f64),
     SubtitleColour(RGBA),
     SubtitleBackgroundColour(RGBA),
+    SubtitlePosition(f64),
 }
 
 #[relm4::component(pub(crate))]
@@ -59,11 +60,11 @@ impl SimpleComponent for SubtitlesPreferences {
                 set_subtitle: tr!("prefs-vp-subs-scale.subtitle"),
 
                 #[watch]
-                #[block_signal(change_handler)]
+                #[block_signal(subtitle_scale_change_handler)]
                 set_value: model.video_player_config.subtitle_scale,
                 connect_changed[sender] => move |spinrow| {
                     sender.input(SubtitlesPreferencesInput::SubtitleScale(spinrow.value()));
-                } @change_handler,
+                } @subtitle_scale_change_handler,
             },
 
             add = &adw::ActionRow {
@@ -103,6 +104,27 @@ impl SimpleComponent for SubtitlesPreferences {
                     } @background_colour_change_handler,
                 },
             },
+
+            add = &adw::SpinRow::new(
+                Some(&gtk::Adjustment::new(
+                    model.video_player_config.subtitle_position as f64,
+                    0.0, 150.0, 1.0, 1.0, 0.0,
+                )),
+                // Climb rate
+                1.0,
+                // Digits
+                0,
+            ) {
+                set_title: "Subtitles position",
+                set_subtitle: "Position on screen, where 0 is the top of the screen, and 100 is the bottom",
+
+                #[watch]
+                #[block_signal(subtitle_position_change_handler)]
+                set_value: model.video_player_config.subtitle_position as f64,
+                connect_changed[sender] => move |spinrow| {
+                    sender.input(SubtitlesPreferencesInput::SubtitlePosition(spinrow.value()));
+                } @subtitle_position_change_handler,
+            },
         }
     }
 
@@ -141,6 +163,7 @@ impl SimpleComponent for SubtitlesPreferences {
                 config.video_player.subtitle_scale = default.subtitle_scale;
                 config.video_player.subtitle_colour = default.subtitle_colour;
                 config.video_player.subtitle_background_colour = default.subtitle_background_colour;
+                config.video_player.subtitle_position = default.subtitle_position;
             }
             SubtitlesPreferencesInput::SubtitleScale(subtitle_scale) => {
                 config.video_player.subtitle_scale = subtitle_scale;
@@ -150,6 +173,9 @@ impl SimpleComponent for SubtitlesPreferences {
             }
             SubtitlesPreferencesInput::SubtitleBackgroundColour(background_colour) => {
                 config.video_player.subtitle_background_colour = background_colour.to_hex();
+            }
+            SubtitlesPreferencesInput::SubtitlePosition(position) => {
+                config.video_player.subtitle_position = position as u32;
             }
         }
 
@@ -166,5 +192,6 @@ impl SubtitlesPreferences {
             || (video_player_config.subtitle_colour != default.subtitle_colour)
             || (video_player_config.subtitle_background_colour
                 != default.subtitle_background_colour)
+            || (video_player_config.subtitle_position != default.subtitle_position)
     }
 }

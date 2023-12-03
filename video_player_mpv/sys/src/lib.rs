@@ -4,14 +4,19 @@
 // DO NOT EDIT
 
 #![allow(non_camel_case_types, non_upper_case_globals, non_snake_case)]
-#![allow(clippy::approx_constant, clippy::type_complexity, clippy::unreadable_literal, clippy::upper_case_acronyms)]
+#![allow(
+    clippy::approx_constant,
+    clippy::type_complexity,
+    clippy::unreadable_literal,
+    clippy::upper_case_acronyms
+)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-
 #[allow(unused_imports)]
-use libc::{c_int, c_char, c_uchar, c_float, c_uint, c_double,
-    c_short, c_ushort, c_long, c_ulong,
-    c_void, size_t, ssize_t, intptr_t, uintptr_t, FILE};
+use libc::{
+    c_char, c_double, c_float, c_int, c_long, c_short, c_uchar, c_uint, c_ulong, c_ushort, c_void,
+    intptr_t, size_t, ssize_t, uintptr_t, FILE,
+};
 
 #[allow(unused_imports)]
 use glib::{gboolean, gconstpointer, gpointer, GType};
@@ -35,11 +40,11 @@ pub struct VpmTrack {
 impl ::std::fmt::Debug for VpmTrack {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         f.debug_struct(&format!("VpmTrack @ {self:p}"))
-         .field("type_", &self.type_)
-         .field("id", &self.id)
-         .field("title", &self.title)
-         .field("language", &self.language)
-         .finish()
+            .field("type_", &self.type_)
+            .field("id", &self.id)
+            .field("title", &self.title)
+            .field("language", &self.language)
+            .finish()
     }
 }
 
@@ -52,8 +57,8 @@ pub struct VpmTrackList {
 impl ::std::fmt::Debug for VpmTrackList {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         f.debug_struct(&format!("VpmTrackList @ {self:p}"))
-         .field("tracks", &self.tracks)
-         .finish()
+            .field("tracks", &self.tracks)
+            .finish()
     }
 }
 
@@ -66,8 +71,8 @@ pub struct VpmVideoPlayerMpvClass {
 impl ::std::fmt::Debug for VpmVideoPlayerMpvClass {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         f.debug_struct(&format!("VpmVideoPlayerMpvClass @ {self:p}"))
-         .field("parent_class", &self.parent_class)
-         .finish()
+            .field("parent_class", &self.parent_class)
+            .finish()
     }
 }
 
@@ -81,7 +86,7 @@ pub struct VpmVideoPlayerMpv {
 impl ::std::fmt::Debug for VpmVideoPlayerMpv {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         f.debug_struct(&format!("VpmVideoPlayerMpv @ {self:p}"))
-         .finish()
+            .finish()
     }
 }
 
@@ -115,7 +120,11 @@ extern "C" {
     //=========================================================================
     pub fn vpm_video_player_mpv_get_type() -> GType;
     pub fn vpm_video_player_mpv_new() -> *mut gtk::GtkWidget;
-    pub fn vpm_video_player_mpv_add_subtitle_track(self_: *mut VpmVideoPlayerMpv, url: *const c_char, title: *const c_char);
+    pub fn vpm_video_player_mpv_add_subtitle_track(
+        self_: *mut VpmVideoPlayerMpv,
+        url: *const c_char,
+        title: *const c_char,
+    );
     pub fn vpm_video_player_mpv_current_audio_track(self_: *mut VpmVideoPlayerMpv) -> c_int;
     pub fn vpm_video_player_mpv_current_subtitle_track(self_: *mut VpmVideoPlayerMpv) -> c_int;
     pub fn vpm_video_player_mpv_frame_step_backwards(self_: *mut VpmVideoPlayerMpv);
@@ -127,13 +136,31 @@ extern "C" {
     pub fn vpm_video_player_mpv_position(self_: *mut VpmVideoPlayerMpv) -> c_double;
     pub fn vpm_video_player_mpv_seek_by(self_: *mut VpmVideoPlayerMpv, seconds: c_int);
     pub fn vpm_video_player_mpv_seek_to(self_: *mut VpmVideoPlayerMpv, seconds: c_uint);
-    pub fn vpm_video_player_mpv_set_audio_track(self_: *mut VpmVideoPlayerMpv, audio_track_id: c_uint);
+    pub fn vpm_video_player_mpv_set_audio_track(
+        self_: *mut VpmVideoPlayerMpv,
+        audio_track_id: c_uint,
+    );
     pub fn vpm_video_player_mpv_set_mute(self_: *mut VpmVideoPlayerMpv, mute: bool);
-    pub fn vpm_video_player_mpv_set_subtitle_background_colour(self_: *mut VpmVideoPlayerMpv, colour: *mut c_char);
-    pub fn vpm_video_player_mpv_set_subtitle_colour(self_: *mut VpmVideoPlayerMpv, colour: *mut c_char);
-    pub fn vpm_video_player_mpv_set_subtitle_position(self_: *mut VpmVideoPlayerMpv, position: c_uint);
-    pub fn vpm_video_player_mpv_set_subtitle_scale(self_: *mut VpmVideoPlayerMpv, subtitle_scale: c_double);
-    pub fn vpm_video_player_mpv_set_subtitle_track(self_: *mut VpmVideoPlayerMpv, subtitle_track_id: c_uint);
+    pub fn vpm_video_player_mpv_set_subtitle_background_colour(
+        self_: *mut VpmVideoPlayerMpv,
+        colour: *mut c_char,
+    );
+    pub fn vpm_video_player_mpv_set_subtitle_colour(
+        self_: *mut VpmVideoPlayerMpv,
+        colour: *mut c_char,
+    );
+    pub fn vpm_video_player_mpv_set_subtitle_position(
+        self_: *mut VpmVideoPlayerMpv,
+        position: c_uint,
+    );
+    pub fn vpm_video_player_mpv_set_subtitle_scale(
+        self_: *mut VpmVideoPlayerMpv,
+        subtitle_scale: c_double,
+    );
+    pub fn vpm_video_player_mpv_set_subtitle_track(
+        self_: *mut VpmVideoPlayerMpv,
+        subtitle_track_id: c_uint,
+    );
     pub fn vpm_video_player_mpv_set_volume(self_: *mut VpmVideoPlayerMpv, volume: c_double);
     pub fn vpm_video_player_mpv_stop(self_: *mut VpmVideoPlayerMpv);
     pub fn vpm_video_player_mpv_volume(self_: *mut VpmVideoPlayerMpv) -> c_double;
