@@ -115,8 +115,8 @@ impl SimpleComponent for SubtitlesPreferences {
                 // Digits
                 0,
             ) {
-                set_title: "Subtitles position",
-                set_subtitle: "Position on screen, where 0 is the top of the screen, and 100 is the bottom",
+                set_title: tr!("prefs-vp-subs-position.title"),
+                set_subtitle: tr!("prefs-vp-subs-position.subtitle"),
 
                 #[watch]
                 #[block_signal(subtitle_position_change_handler)]
