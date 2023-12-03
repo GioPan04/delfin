@@ -122,6 +122,26 @@ impl VideoPlayerMpv {
         }
     }
 
+    #[doc(alias = "vpm_video_player_mpv_set_subtitle_background_colour")]
+    pub fn set_subtitle_background_colour(&self, colour: &str) {
+        unsafe {
+            ffi::vpm_video_player_mpv_set_subtitle_background_colour(
+                self.to_glib_none().0,
+                colour.to_glib_none().0,
+            );
+        }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_set_subtitle_colour")]
+    pub fn set_subtitle_colour(&self, colour: &str) {
+        unsafe {
+            ffi::vpm_video_player_mpv_set_subtitle_colour(
+                self.to_glib_none().0,
+                colour.to_glib_none().0,
+            );
+        }
+    }
+
     #[doc(alias = "vpm_video_player_mpv_set_subtitle_scale")]
     pub fn set_subtitle_scale(&self, subtitle_scale: f64) {
         unsafe {

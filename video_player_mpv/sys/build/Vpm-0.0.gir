@@ -397,6 +397,38 @@ and/or use gtk-doc annotations.  -->
           </parameter>
         </parameters>
       </method>
+      <method name="set_subtitle_background_colour"
+              c:identifier="vpm_video_player_mpv_set_subtitle_background_colour">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="46"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+          <parameter name="colour" transfer-ownership="none">
+            <type name="utf8" c:type="char*"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="set_subtitle_colour"
+              c:identifier="vpm_video_player_mpv_set_subtitle_colour">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="44"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+          <parameter name="colour" transfer-ownership="none">
+            <type name="utf8" c:type="char*"/>
+          </parameter>
+        </parameters>
+      </method>
       <method name="set_subtitle_scale"
               c:identifier="vpm_video_player_mpv_set_subtitle_scale">
         <source-position filename="video-player-mpv/video-player-mpv.h"

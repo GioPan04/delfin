@@ -477,3 +477,15 @@ void vpm_video_player_mpv_set_subtitle_scale(VpmVideoPlayerMpv *self,
   mpv_set_option(self->mpv_ctx->handle, "sub-scale", MPV_FORMAT_DOUBLE,
                  &subtitle_scale);
 }
+
+void vpm_video_player_mpv_set_subtitle_colour(VpmVideoPlayerMpv *self,
+                                              char *colour) {
+  mpv_set_option(self->mpv_ctx->handle, "sub-color", MPV_FORMAT_STRING,
+                 &colour);
+}
+
+void vpm_video_player_mpv_set_subtitle_background_colour(
+    VpmVideoPlayerMpv *self, char *colour) {
+  mpv_set_option(self->mpv_ctx->handle, "sub-back-color", MPV_FORMAT_STRING,
+                 &colour);
+}

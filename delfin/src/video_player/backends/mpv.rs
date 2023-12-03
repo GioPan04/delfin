@@ -9,7 +9,7 @@ use relm4::gtk::{self, glib, prelude::*};
 use uuid::Uuid;
 use video_player_mpv::{Track, TrackType, VideoPlayerMpv};
 
-use crate::tr;
+use crate::{tr, utils::rgba::RGBA};
 
 use super::{
     AudioTrack, PlayerState, PlayerStateChangedCallback, SubtitleTrack, VideoPlayerBackend,
@@ -214,6 +214,15 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
 
     fn set_subtitle_scale(&self, subtitle_scale: f64) {
         self.widget.set_subtitle_scale(subtitle_scale);
+    }
+
+    fn set_subtitle_colour(&self, colour: RGBA) {
+        self.widget.set_subtitle_colour(&colour.to_mpv_hex());
+    }
+
+    fn set_subtitle_background_colour(&self, colour: RGBA) {
+        self.widget
+            .set_subtitle_background_colour(&colour.to_mpv_hex());
     }
 
     fn disconnect_signal_handler(&mut self, id: &Uuid) {

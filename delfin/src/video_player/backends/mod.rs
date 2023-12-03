@@ -3,6 +3,8 @@ use std::fmt;
 use relm4::gtk;
 use uuid::Uuid;
 
+use crate::utils::rgba::RGBA;
+
 #[cfg(feature = "gst")]
 pub mod gst;
 
@@ -100,6 +102,12 @@ pub trait VideoPlayerBackend: fmt::Debug {
 
     /// Set Subtitle scale.
     fn set_subtitle_scale(&self, subtitle_scale: f64);
+
+    /// Set subtitle text colour.
+    fn set_subtitle_colour(&self, colour: RGBA);
+
+    /// Set subtitle background colour.
+    fn set_subtitle_background_colour(&self, colour: RGBA);
 
     /// Get notified when video player reaches the end of the current video.
     fn connect_end_of_stream(&mut self, callback: Box<dyn Fn() + Send + 'static>);

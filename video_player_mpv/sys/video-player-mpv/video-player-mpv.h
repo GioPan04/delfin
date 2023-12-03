@@ -41,5 +41,9 @@ void vpm_video_player_mpv_add_subtitle_track(VpmVideoPlayerMpv *self,
 
 void vpm_video_player_mpv_set_subtitle_scale(VpmVideoPlayerMpv *self,
                                              double subtitle_scale);
+void vpm_video_player_mpv_set_subtitle_colour(VpmVideoPlayerMpv *self,
+                                              char *colour);
+void vpm_video_player_mpv_set_subtitle_background_colour(
+    VpmVideoPlayerMpv *self, char *colour);
 
 G_END_DECLS
