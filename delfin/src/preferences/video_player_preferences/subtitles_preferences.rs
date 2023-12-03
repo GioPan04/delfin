@@ -14,6 +14,7 @@ pub(crate) struct SubtitlesPreferences {
 #[derive(Debug)]
 pub(crate) enum SubtitlesPreferencesInput {
     UpdateConfig(VideoPlayerConfig),
+    Reset,
     SubtitleScale(f64),
     SubtitleColour(RGBA),
     SubtitleBackgroundColour(RGBA),
@@ -29,6 +30,21 @@ impl SimpleComponent for SubtitlesPreferences {
         adw::PreferencesGroup {
             set_title: tr!("prefs-vp-subs"),
 
+            #[wrap(Some)]
+            set_header_suffix = &gtk::Button {
+                adw::ButtonContent {
+                    set_icon_name: "edit-undo",
+                    set_label: tr!("prefs-vp-subs-reset.label"),
+                },
+                set_tooltip: tr!("prefs-vp-subs-reset.tooltip"),
+                add_css_class: "flat",
+                #[watch]
+                set_sensitive: model.can_reset(),
+                connect_clicked[sender] => move |_| {
+                    sender.input(SubtitlesPreferencesInput::Reset);
+                },
+            },
+
             add = &adw::SpinRow::new(
                 Some(&gtk::Adjustment::new(
                     model.video_player_config.subtitle_scale,
@@ -41,9 +57,13 @@ impl SimpleComponent for SubtitlesPreferences {
             ) {
                 set_title: tr!("prefs-vp-subs-scale.title"),
                 set_subtitle: tr!("prefs-vp-subs-scale.subtitle"),
+
+                #[watch]
+                #[block_signal(change_handler)]
+                set_value: model.video_player_config.subtitle_scale,
                 connect_changed[sender] => move |spinrow| {
                     sender.input(SubtitlesPreferencesInput::SubtitleScale(spinrow.value()));
-                },
+                } @change_handler,
             },
 
             add = &adw::ActionRow {
@@ -116,6 +136,12 @@ impl SimpleComponent for SubtitlesPreferences {
                 // Already handled above
                 unreachable!();
             }
+            SubtitlesPreferencesInput::Reset => {
+                let default = VideoPlayerConfig::default();
+                config.video_player.subtitle_scale = default.subtitle_scale;
+                config.video_player.subtitle_colour = default.subtitle_colour;
+                config.video_player.subtitle_background_colour = default.subtitle_background_colour;
+            }
             SubtitlesPreferencesInput::SubtitleScale(subtitle_scale) => {
                 config.video_player.subtitle_scale = subtitle_scale;
             }
@@ -128,5 +154,17 @@ impl SimpleComponent for SubtitlesPreferences {
         }
 
         config.save().expect("Error saving config");
+    }
+}
+
+impl SubtitlesPreferences {
+    fn can_reset(&self) -> bool {
+        let default = VideoPlayerConfig::default();
+        let video_player_config = &self.video_player_config;
+
+        (video_player_config.subtitle_scale != default.subtitle_scale)
+            || (video_player_config.subtitle_colour != default.subtitle_colour)
+            || (video_player_config.subtitle_background_colour
+                != default.subtitle_background_colour)
     }
 }

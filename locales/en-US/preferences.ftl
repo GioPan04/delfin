@@ -37,6 +37,9 @@ prefs-vp-on-left-click-options =
 # =========
 
 prefs-vp-subs = Subtitles
+prefs-vp-subs-reset =
+    .label = Reset
+    .tooltip = Reset subtitle settings
 prefs-vp-subs-scale =
     .title = Subtitle scale
     .subtitle = Scaling factor for subtitle text
