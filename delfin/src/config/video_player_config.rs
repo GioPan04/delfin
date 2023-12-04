@@ -5,7 +5,9 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use crate::{
     utils::round::round_one_place,
-    video_player::backends::{mpv::VideoPlayerBackendMpv, VideoPlayerBackend},
+    video_player::backends::{
+        mpv::VideoPlayerBackendMpv, VideoPlayerBackend, VideoPlayerSubtitleFont,
+    },
 };
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
@@ -50,6 +52,7 @@ pub struct VideoPlayerConfig {
     pub subtitle_colour: String,
     pub subtitle_background_colour: String,
     pub subtitle_position: u32,
+    pub subtitle_font: VideoPlayerSubtitleFont,
 
     pub intro_skipper: bool,
     pub intro_skipper_auto_skip: bool,
@@ -74,6 +77,7 @@ impl Default for VideoPlayerConfig {
             subtitle_colour: "#FFFFFFFF".into(),
             subtitle_background_colour: "#00000000".into(),
             subtitle_position: 100,
+            subtitle_font: VideoPlayerSubtitleFont::default(),
 
             backend: VideoPlayerBackendPreference::Mpv,
             hls_playback: false,

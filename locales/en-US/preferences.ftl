@@ -50,6 +50,9 @@ prefs-vp-subs-background-colour =
 prefs-vp-subs-position =
     .title = Subtitle position
     .subtitle = Where 0 is the top of the screen, and 100 is the bottom
+prefs-vp-subs-font =
+    .title = Subtitle font
+    .subtitle = Only supported fonts are listed
 
 # Plugins
 # =======
