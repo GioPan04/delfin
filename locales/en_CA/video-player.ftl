@@ -57,3 +57,4 @@ vp-backend-mpv-track-name =
 vp-next-up-action =
     .play = Play now
     .hide = Hide
+vp-subtitle-track-external = External Subtitle Track
