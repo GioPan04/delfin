@@ -1,0 +1,12 @@
+account-list =
+    .title = Inicia sesión en { $serverName }
+    .description = Selecciona la cuenta con la que deseas iniciar sesión
+account-list-add-account-button = Añadir una cuenta
+account-list-add-account-password = Contraseña
+account-list-add-account-username = Nombre de usuario
+account-list-page-title = Cuentas
+account-list-add-account-title = Añadir una cuenta
+account-list-add-account-submit-button = Iniciar sesión
+account-list-empty =
+    .title = No hay cuentas disponibles
+    .subtitle = Añade una cuenta para empezar a ver
