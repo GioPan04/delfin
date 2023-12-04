@@ -1,6 +1,7 @@
 use std::fmt;
 
 use relm4::gtk;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::utils::rgba::RGBA;
@@ -112,6 +113,9 @@ pub trait VideoPlayerBackend: fmt::Debug {
     /// Set subtitle position from 0 - 150, where 0 is the top of the screen and 100 is the bottom.
     fn set_subtitle_position(&self, position: u32);
 
+    /// Set subtitle font.
+    fn set_subtitle_font(&self, font: &VideoPlayerSubtitleFont);
+
     /// Get notified when video player reaches the end of the current video.
     fn connect_end_of_stream(&mut self, callback: Box<dyn Fn() + Send + 'static>);
 
@@ -141,4 +145,44 @@ pub trait VideoPlayerBackend: fmt::Debug {
         &mut self,
         callback: Box<dyn Fn(Vec<AudioTrack>) + Send + Sync + 'static>,
     );
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
+pub struct VideoPlayerSubtitleFont {
+    pub family: String,
+    pub size: usize,
+    pub bold: bool,
+    pub italic: bool,
+}
+
+impl Default for VideoPlayerSubtitleFont {
+    fn default() -> Self {
+        Self {
+            family: "Sans".into(),
+            size: 55,
+            bold: false,
+            italic: false,
+        }
+    }
+}
+
+impl From<VideoPlayerSubtitleFont> for relm4::gtk::pango::FontDescription {
+    fn from(font: VideoPlayerSubtitleFont) -> Self {
+        use relm4::gtk::pango::{FontDescription, Style, Weight};
+
+        let mut desc = FontDescription::new();
+        desc.set_family(&font.family);
+        desc.set_size((font.size * 1024) as i32);
+        desc.set_weight(if font.bold {
+            Weight::Bold
+        } else {
+            Weight::Normal
+        });
+        desc.set_style(if font.italic {
+            Style::Italic
+        } else {
+            Style::Normal
+        });
+        desc
+    }
 }

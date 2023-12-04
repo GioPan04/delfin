@@ -13,6 +13,7 @@ use crate::{tr, utils::rgba::RGBA};
 
 use super::{
     AudioTrack, PlayerState, PlayerStateChangedCallback, SubtitleTrack, VideoPlayerBackend,
+    VideoPlayerSubtitleFont,
 };
 
 fn uuid() -> Uuid {
@@ -228,6 +229,14 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
     fn set_subtitle_position(&self, position: u32) {
         assert!((0..150).contains(&position));
         self.widget.set_subtitle_position(position);
+    }
+
+    fn set_subtitle_font(&self, font: &VideoPlayerSubtitleFont) {
+        let player = &self.widget;
+        player.set_subtitle_font_family(&font.family);
+        player.set_subtitle_font_size(font.size as u32);
+        player.set_subtitle_font_bold(font.bold);
+        player.set_subtitle_font_italic(font.italic);
     }
 
     fn disconnect_signal_handler(&mut self, id: &Uuid) {

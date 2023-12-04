@@ -142,6 +142,37 @@ impl VideoPlayerMpv {
         }
     }
 
+    #[doc(alias = "vpm_video_player_mpv_set_subtitle_font_bold")]
+    pub fn set_subtitle_font_bold(&self, bold: bool) {
+        unsafe {
+            ffi::vpm_video_player_mpv_set_subtitle_font_bold(self.to_glib_none().0, bold);
+        }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_set_subtitle_font_family")]
+    pub fn set_subtitle_font_family(&self, family: &str) {
+        unsafe {
+            ffi::vpm_video_player_mpv_set_subtitle_font_family(
+                self.to_glib_none().0,
+                family.to_glib_none().0,
+            );
+        }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_set_subtitle_font_italic")]
+    pub fn set_subtitle_font_italic(&self, italic: bool) {
+        unsafe {
+            ffi::vpm_video_player_mpv_set_subtitle_font_italic(self.to_glib_none().0, italic);
+        }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_set_subtitle_font_size")]
+    pub fn set_subtitle_font_size(&self, size: u32) {
+        unsafe {
+            ffi::vpm_video_player_mpv_set_subtitle_font_size(self.to_glib_none().0, size);
+        }
+    }
+
     #[doc(alias = "vpm_video_player_mpv_set_subtitle_position")]
     pub fn set_subtitle_position(&self, position: u32) {
         unsafe {

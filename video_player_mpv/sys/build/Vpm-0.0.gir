@@ -429,6 +429,70 @@ and/or use gtk-doc annotations.  -->
           </parameter>
         </parameters>
       </method>
+      <method name="set_subtitle_font_bold"
+              c:identifier="vpm_video_player_mpv_set_subtitle_font_bold">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="54"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+          <parameter name="bold" transfer-ownership="none">
+            <type name="gboolean" c:type="_Bool"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="set_subtitle_font_family"
+              c:identifier="vpm_video_player_mpv_set_subtitle_font_family">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="50"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+          <parameter name="family" transfer-ownership="none">
+            <type name="utf8" c:type="char*"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="set_subtitle_font_italic"
+              c:identifier="vpm_video_player_mpv_set_subtitle_font_italic">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="56"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+          <parameter name="italic" transfer-ownership="none">
+            <type name="gboolean" c:type="_Bool"/>
+          </parameter>
+        </parameters>
+      </method>
+      <method name="set_subtitle_font_size"
+              c:identifier="vpm_video_player_mpv_set_subtitle_font_size">
+        <source-position filename="video-player-mpv/video-player-mpv.h"
+                         line="52"/>
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="self" transfer-ownership="none">
+            <type name="VideoPlayerMpv" c:type="VpmVideoPlayerMpv*"/>
+          </instance-parameter>
+          <parameter name="size" transfer-ownership="none">
+            <type name="guint" c:type="uint"/>
+          </parameter>
+        </parameters>
+      </method>
       <method name="set_subtitle_position"
               c:identifier="vpm_video_player_mpv_set_subtitle_position">
         <source-position filename="video-player-mpv/video-player-mpv.h"

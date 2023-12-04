@@ -149,6 +149,16 @@ extern "C" {
         self_: *mut VpmVideoPlayerMpv,
         colour: *mut c_char,
     );
+    pub fn vpm_video_player_mpv_set_subtitle_font_bold(self_: *mut VpmVideoPlayerMpv, bold: bool);
+    pub fn vpm_video_player_mpv_set_subtitle_font_family(
+        self_: *mut VpmVideoPlayerMpv,
+        family: *mut c_char,
+    );
+    pub fn vpm_video_player_mpv_set_subtitle_font_italic(
+        self_: *mut VpmVideoPlayerMpv,
+        italic: bool,
+    );
+    pub fn vpm_video_player_mpv_set_subtitle_font_size(self_: *mut VpmVideoPlayerMpv, size: c_uint);
     pub fn vpm_video_player_mpv_set_subtitle_position(
         self_: *mut VpmVideoPlayerMpv,
         position: c_uint,
