@@ -1,5 +1,5 @@
 prefs-vp-experimental =
-    .title = Experimental Preferences
+    .title = Experimental preferences
     .subtitle =
         These preferences may be broken or incomplete.
         Modifying them is not recommended.
@@ -44,3 +44,23 @@ prefs-vp-intro-skipper =
     .subtitle =
         Shows a Skip Intro button during episode intros.
         This requires the <a href="{ $introSkipperUrl }">Intro Skipper</a> plugin to be installed on your server.
+prefs-vp-on-left-click-options =
+    .play-pause = Play/pause video
+    .toggle-controls = Show/hide controls
+prefs-vp-on-left-click =
+    .title = When the mouse is clicked
+    .subtitle = What happens when you left click inside the video player
+prefs-vp-subs = Subtitles
+prefs-vp-subs-position =
+    .title = Subtitles position
+    .subtitle = Where 0 is the top of the screen, and 100 is the bottom
+prefs-vp-subs-scale =
+    .title = Subtitle scale
+    .subtitle = Scaling factor for subtitle text
+prefs-vp-subs-colour =
+    .title = Subtitle text colour
+prefs-vp-subs-background-colour =
+    .title = Subtitle background colour
+prefs-vp-subs-reset =
+    .label = Reset
+    .tooltip = Reset subtitle settings

@@ -11,3 +11,4 @@ sc-vp = Video Player
 sc-vp-subtitles = Toggle subtitles
 sc-vp-seek = Seek
 sc-vp-play-pause = Play/pause
+sc-vp-frame-step = Seek frame-by-frame
