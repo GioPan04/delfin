@@ -9,6 +9,7 @@ fluent_templates::static_loader! {
     pub static LOCALES = {
         locales: "../locales/",
         fallback_language: "en-US",
+        customise: |bundle| bundle.set_use_isolating(false),
     };
 }
 
