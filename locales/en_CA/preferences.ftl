@@ -64,3 +64,21 @@ prefs-vp-subs-background-colour =
 prefs-vp-subs-reset =
     .label = Reset
     .tooltip = Reset subtitle settings
+prefs-general-language =
+    .title = Language
+    .subtitle = Contribute to translations on <a href="{ $weblateUrl }">Weblate</a>
+    .option-default = System Default ({ $languageId })
+prefs-vp-subs-style-ass-warning =
+    These settings don't apply to ASS/SSA subtitles.
+    For ASS/SSA subtitles, see "{ prefs-vp-subs-more }".
+prefs-vp-subs-font =
+    .title = Subtitle font
+    .subtitle = Only supported fonts are listed
+prefs-vp-subs-style = Subtitle style
+prefs-vp-subs-more-ass-warning =
+    .title = These preferences will affect ASS/SSA subtitles!
+    .subtitle =
+        ASS/SSA subtitles often include special styling and positioning. Changing these preferences may cause ASS/SSA subtitles to render incorrectly.
+
+        If you only want to change the style for other subtitle formats, it's recommended that you change the preferences under "{ prefs-vp-subs-style }" instead.
+prefs-vp-subs-more = More subtitle preferences
