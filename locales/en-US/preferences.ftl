@@ -45,19 +45,34 @@ prefs-vp-subs = Subtitles
 prefs-vp-subs-reset =
     .label = Reset
     .tooltip = Reset subtitle settings
-prefs-vp-subs-scale =
-    .title = Subtitle scale
-    .subtitle = Scaling factor for subtitle text
+
+prefs-vp-subs-style = Subtitle style
+prefs-vp-subs-style-ass-warning =
+    These settings don't apply to ASS/SSA subtitles.
+    For ASS/SSA subtitles, see "{prefs-vp-subs-more}".
+
 prefs-vp-subs-colour =
     .title = Subtitle text color
 prefs-vp-subs-background-colour =
     .title = Subtitle background color
-prefs-vp-subs-position =
-    .title = Subtitle position
-    .subtitle = Where 0 is the top of the screen, and 100 is the bottom
 prefs-vp-subs-font =
     .title = Subtitle font
     .subtitle = Only supported fonts are listed
+
+prefs-vp-subs-more = More subtitle preferences
+prefs-vp-subs-more-ass-warning =
+    .title = These preferences will affect ASS/SSA subtitles!
+    .subtitle =
+        ASS/SSA subtitles often include special styling and positioning. Changing these preferences may cause ASS/SSA subtitles to render incorrectly.
+
+        If you only want to change the style for other subtitle formats, it's recommended that you change the preferences under "{prefs-vp-subs-style}" instead.
+
+prefs-vp-subs-scale =
+    .title = Subtitle scale
+    .subtitle = Scaling factor for subtitle text
+prefs-vp-subs-position =
+    .title = Subtitle position
+    .subtitle = Where 0 is the top of the screen, and 100 is the bottom
 
 # Plugins
 # =======
