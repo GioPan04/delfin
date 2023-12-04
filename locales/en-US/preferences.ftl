@@ -48,7 +48,7 @@ prefs-vp-subs-colour =
 prefs-vp-subs-background-colour =
     .title = Subtitle background color
 prefs-vp-subs-position =
-    .title = Subtitles position
+    .title = Subtitle position
     .subtitle = Where 0 is the top of the screen, and 100 is the bottom
 
 # Plugins
