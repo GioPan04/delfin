@@ -48,117 +48,141 @@ impl SimpleComponent for SubtitlesPreferences {
                 },
             },
 
-            add = &adw::SpinRow::new(
-                Some(&gtk::Adjustment::new(
-                    model.video_player_config.subtitle_scale,
-                    0.0, 100.0, 0.1, 1.0, 0.0,
-                )),
-                // Climb rate
-                1.0,
-                // Digits
-                1,
-            ) {
-                set_title: tr!("prefs-vp-subs-scale.title"),
-                set_subtitle: tr!("prefs-vp-subs-scale.subtitle"),
+            add = &adw::ExpanderRow {
+                set_title: tr!("prefs-vp-subs-style"),
 
-                #[watch]
-                #[block_signal(subtitle_scale_change_handler)]
-                set_value: model.video_player_config.subtitle_scale,
-                connect_changed[sender] => move |spinrow| {
-                    sender.input(SubtitlesPreferencesInput::SubtitleScale(spinrow.value()));
-                } @subtitle_scale_change_handler,
-            },
-
-            add = &adw::ActionRow {
-                set_title: tr!("prefs-vp-subs-colour.title"),
-                add_suffix = &gtk::Label {
-                    #[watch]
-                    set_label: &model.video_player_config.subtitle_colour,
+                add_row = &adw::ActionRow {
+                    set_subtitle: tr!("prefs-vp-subs-style-ass-warning"),
                 },
-                add_suffix = &gtk::ColorDialogButton {
-                    set_valign: gtk::Align::Center,
-                    set_dialog = &gtk::ColorDialog,
-                    #[watch]
-                    #[block_signal(colour_change_handler)]
-                    set_rgba: &gdk::RGBA::parse(model.video_player_config.subtitle_colour.clone())
-                        .unwrap_or_else(|_| panic!("Error parsing colour: {}", model.video_player_config.subtitle_colour.clone())),
-                    connect_rgba_notify[sender] => move |btn| {
-                        sender.input(SubtitlesPreferencesInput::SubtitleColour(btn.rgba().into()));
-                    } @colour_change_handler,
-                },
-            },
 
-            add = &adw::ActionRow {
-                set_title: tr!("prefs-vp-subs-background-colour.title"),
-                add_suffix = &gtk::Label {
-                    #[watch]
-                    set_label: &model.video_player_config.subtitle_background_colour,
-                },
-                add_suffix = &gtk::ColorDialogButton {
-                    set_valign: gtk::Align::Center,
-                    set_dialog = &gtk::ColorDialog,
-                    #[watch]
-                    #[block_signal(background_colour_change_handler)]
-                    set_rgba: &gdk::RGBA::parse(model.video_player_config.subtitle_background_colour.clone())
-                        .unwrap_or_else(|_| panic!("Error parsing colour: {}", model.video_player_config.subtitle_background_colour.clone())),
-                    connect_rgba_notify[sender] => move |btn| {
-                        sender.input(SubtitlesPreferencesInput::SubtitleBackgroundColour(btn.rgba().into()));
-                    } @background_colour_change_handler,
-                },
-            },
+                add_row = &adw::ActionRow {
+                    set_title: tr!("prefs-vp-subs-colour.title"),
 
-            add = &adw::SpinRow::new(
-                Some(&gtk::Adjustment::new(
-                    model.video_player_config.subtitle_position as f64,
-                    0.0, 150.0, 1.0, 1.0, 0.0,
-                )),
-                // Climb rate
-                1.0,
-                // Digits
-                0,
-            ) {
-                set_title: tr!("prefs-vp-subs-position.title"),
-                set_subtitle: tr!("prefs-vp-subs-position.subtitle"),
-
-                #[watch]
-                #[block_signal(subtitle_position_change_handler)]
-                set_value: model.video_player_config.subtitle_position as f64,
-                connect_changed[sender] => move |spinrow| {
-                    sender.input(SubtitlesPreferencesInput::SubtitlePosition(spinrow.value()));
-                } @subtitle_position_change_handler,
-            },
-
-            add = &adw::ActionRow {
-                set_title: "Subtitle font",
-                set_subtitle: "Only supported fonts are listed",
-                add_suffix = &gtk::FontDialogButton {
-                    set_valign: gtk::Align::Center,
-
-                    #[watch]
-                    #[block_signal(subtitle_font_change_handler)]
-                    set_font_desc: &model.video_player_config.subtitle_font.clone().into(),
-                    set_use_font: true,
-                    set_dialog = &gtk::FontDialog {
-                        set_filter: Some(&model.font_filter()),
+                    add_suffix = &gtk::Label {
+                        #[watch]
+                        set_label: &model.video_player_config.subtitle_colour,
                     },
 
-                    connect_font_desc_notify => move |fdb| {
-                        let font = fdb.font_desc().unwrap();
+                    add_suffix = &gtk::ColorDialogButton {
+                        set_valign: gtk::Align::Center,
+                        set_dialog = &gtk::ColorDialog,
+                        #[watch]
+                        #[block_signal(colour_change_handler)]
+                        set_rgba: &gdk::RGBA::parse(model.video_player_config.subtitle_colour.clone())
+                            .unwrap_or_else(|_| panic!("Error parsing colour: {}", model.video_player_config.subtitle_colour.clone())),
+                        connect_rgba_notify[sender] => move |btn| {
+                            sender.input(SubtitlesPreferencesInput::SubtitleColour(btn.rgba().into()));
+                        } @colour_change_handler,
+                    },
+                },
 
-                        let mut size = font.size();
-                        if !font.is_size_absolute() {
-                            size /= 1024;
-                        }
+                add_row = &adw::ActionRow {
+                    set_title: tr!("prefs-vp-subs-background-colour.title"),
 
-                        if let Some(family) = font.family() {
-                            sender.input(SubtitlesPreferencesInput::SubtitleFont(VideoPlayerSubtitleFont {
-                                family: family.into(),
-                                size: size as usize,
-                                bold: font.weight() == gtk::pango::Weight::Bold,
-                                italic: font.style() == gtk::pango::Style::Italic,
-                            }));
-                        }
-                    } @subtitle_font_change_handler,
+                    add_suffix = &gtk::Label {
+                        #[watch]
+                        set_label: &model.video_player_config.subtitle_background_colour,
+                    },
+
+                    add_suffix = &gtk::ColorDialogButton {
+                        set_valign: gtk::Align::Center,
+                        set_dialog = &gtk::ColorDialog,
+                        #[watch]
+                        #[block_signal(background_colour_change_handler)]
+                        set_rgba: &gdk::RGBA::parse(model.video_player_config.subtitle_background_colour.clone())
+                            .unwrap_or_else(|_| panic!("Error parsing colour: {}", model.video_player_config.subtitle_background_colour.clone())),
+                        connect_rgba_notify[sender] => move |btn| {
+                            sender.input(SubtitlesPreferencesInput::SubtitleBackgroundColour(btn.rgba().into()));
+                        } @background_colour_change_handler,
+                    },
+                },
+
+                add_row = &adw::ActionRow {
+                    set_title: tr!("prefs-vp-subs-font.title"),
+                    set_subtitle: tr!("prefs-vp-subs-font.subtitle"),
+
+                    add_suffix = &gtk::FontDialogButton {
+                        set_valign: gtk::Align::Center,
+
+                        #[watch]
+                        #[block_signal(subtitle_font_change_handler)]
+                        set_font_desc: &model.video_player_config.subtitle_font.clone().into(),
+                        set_use_font: true,
+                        set_dialog = &gtk::FontDialog {
+                            set_filter: Some(&model.font_filter()),
+                        },
+
+                        connect_font_desc_notify[sender] => move |fdb| {
+                            let font = fdb.font_desc().unwrap();
+
+                            let mut size = font.size();
+                            if !font.is_size_absolute() {
+                                size /= 1024;
+                            }
+
+                            if let Some(family) = font.family() {
+                                sender.input(SubtitlesPreferencesInput::SubtitleFont(VideoPlayerSubtitleFont {
+                                    family: family.into(),
+                                    size: size as usize,
+                                    bold: font.weight() == gtk::pango::Weight::Bold,
+                                    italic: font.style() == gtk::pango::Style::Italic,
+                                }));
+                            }
+                        } @subtitle_font_change_handler,
+                    },
+                },
+            },
+
+            add = &adw::ExpanderRow {
+                set_title: tr!("prefs-vp-subs-more"),
+
+                add_row = &adw::ActionRow {
+                    add_prefix = &gtk::Image::from_icon_name("warning"),
+                    set_title: tr!("prefs-vp-subs-more-ass-warning.title"),
+                    set_subtitle: tr!("prefs-vp-subs-more-ass-warning.subtitle"),
+                },
+
+                add_row = &adw::SpinRow::new(
+                    Some(&gtk::Adjustment::new(
+                        model.video_player_config.subtitle_scale,
+                        0.0, 100.0, 0.1, 1.0, 0.0,
+                    )),
+                    // Climb rate
+                    1.0,
+                    // Digits
+                    1,
+                ) {
+                    set_title: tr!("prefs-vp-subs-scale.title"),
+                    set_subtitle: tr!("prefs-vp-subs-scale.subtitle"),
+
+                    #[watch]
+                    #[block_signal(subtitle_scale_change_handler)]
+                    set_value: model.video_player_config.subtitle_scale,
+                    connect_changed[sender] => move |spinrow| {
+                        sender.input(SubtitlesPreferencesInput::SubtitleScale(spinrow.value()));
+                    } @subtitle_scale_change_handler,
+                },
+
+
+                add_row = &adw::SpinRow::new(
+                    Some(&gtk::Adjustment::new(
+                        model.video_player_config.subtitle_position as f64,
+                        0.0, 150.0, 1.0, 1.0, 0.0,
+                    )),
+                    // Climb rate
+                    1.0,
+                    // Digits
+                    0,
+                ) {
+                    set_title: tr!("prefs-vp-subs-position.title"),
+                    set_subtitle: tr!("prefs-vp-subs-position.subtitle"),
+
+                    #[watch]
+                    #[block_signal(subtitle_position_change_handler)]
+                    set_value: model.video_player_config.subtitle_position as f64,
+                    connect_changed[sender] => move |spinrow| {
+                        sender.input(SubtitlesPreferencesInput::SubtitlePosition(spinrow.value()));
+                    } @subtitle_position_change_handler,
                 },
             },
         }
