@@ -331,7 +331,9 @@ impl Library {
             .filter(|view| matches!(view.collection_type.as_ref(), "movies" | "tvshows"))
             .collect();
 
-        for view in user_views {
+        // TODO: handle overflow when user has too many collections
+        // For now we limit them to 5, user can change order in Jellyfin settings
+        for &view in user_views.iter().take(5) {
             let icon = match view.collection_type.as_str() {
                 "movies" => "video-clip-multiple-filled",
                 "tvshows" => "video-clip-multiple-filled",
