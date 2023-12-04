@@ -5,6 +5,11 @@ prefs-vp-page = Video Player
 # General
 # =======
 
+prefs-general-language =
+    .title = Language
+    .subtitle = Contribute to translations on <a href="{ $weblateUrl }">Weblate</a>
+    .option-default = System Default ({ $languageId })
+
 prefs-general-theme =
     .title = Theme
     .option-default = System Default

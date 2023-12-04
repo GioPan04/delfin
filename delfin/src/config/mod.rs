@@ -5,25 +5,14 @@ use std::{fs, path::PathBuf};
 
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
-use sys_locale::get_locale;
-use unic_langid::{langid, LanguageIdentifier};
+use unic_langid::LanguageIdentifier;
 use uuid::Uuid;
 
 use self::{general::GeneralConfig, video_player_config::VideoPlayerConfig};
 
-fn get_default_language() -> LanguageIdentifier {
-    get_locale()
-        .and_then(|l| l.parse().ok())
-        .unwrap_or_else(|| {
-            println!("Error parsing system locale, defaulting to en-US");
-            langid!("en-US")
-        })
-}
-
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Config {
-    #[serde(default = "get_default_language")]
-    pub language: LanguageIdentifier,
+    pub language: Option<LanguageIdentifier>,
     pub device_id: String,
     pub servers: Vec<Server>,
     #[serde(default)]
@@ -35,7 +24,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            language: get_default_language(),
+            language: None,
             device_id: Uuid::new_v4().to_string(),
             servers: Vec::default(),
             general: GeneralConfig::default(),

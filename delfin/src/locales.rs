@@ -1,5 +1,7 @@
-use fluent_templates::FluentLoader;
+use fluent_templates::{lazy_static::lazy_static, FluentLoader};
+use sys_locale::get_locale;
 use tera::Tera;
+use unic_langid::{langid, LanguageIdentifier};
 
 use crate::globals::CONFIG;
 
@@ -10,14 +12,31 @@ fluent_templates::static_loader! {
     };
 }
 
+lazy_static! {
+    pub static ref DEFAULT_LANGUAGE: LanguageIdentifier = get_locale()
+        .and_then(|l| l.parse().ok())
+        .unwrap_or_else(|| {
+            println!("Error parsing system locale, defaulting to en-US");
+            langid!("en-US")
+        });
+}
+
+pub fn current_language() -> LanguageIdentifier {
+    CONFIG
+        .read()
+        .language
+        .clone()
+        .unwrap_or(DEFAULT_LANGUAGE.clone())
+}
+
 #[macro_export]
 macro_rules! tr {
     ($id:expr) => {{
         use fluent_templates::Loader;
-        use $crate::{globals::CONFIG, locales::LOCALES};
+        use $crate::{locales::{LOCALES, current_language}};
 
         &LOCALES
-            .lookup(&CONFIG.read().language, $id)
+            .lookup(&current_language(), $id)
             .expect(&format!("Error looking up message for identifier: {}", $id))
     }};
 
@@ -25,10 +44,10 @@ macro_rules! tr {
     ($id:expr, {$($k:expr => $v:expr),* $(,)?}$(,)?) => {{
         use fluent_templates::Loader;
         use std::collections::HashMap;
-        use $crate::{globals::CONFIG, locales::LOCALES};
+        use $crate::{locales::{LOCALES, current_language}};
 
         &LOCALES.lookup_with_args(
-            &CONFIG.read().language,
+            &current_language(),
             $id,
             &HashMap::from([$(($k, $v.into()),)*]),
         )
@@ -41,7 +60,7 @@ pub fn tera_tr(input: &str) -> Result<String, tera::Error> {
     let ctx = tera::Context::default();
     tera.register_function(
         "tr",
-        FluentLoader::new(&*LOCALES).with_default_lang(CONFIG.read().language.clone()),
+        FluentLoader::new(&*LOCALES).with_default_lang(current_language()),
     );
     tera.render_str(input, &ctx)
 }
