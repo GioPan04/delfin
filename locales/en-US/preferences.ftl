@@ -5,6 +5,11 @@ prefs-vp-page = Video Player
 # General
 # =======
 
+prefs-general-language =
+    .title = Language
+    .subtitle = Contribute to translations on <a href="{ $weblateUrl }">Weblate</a>
+    .option-default = System Default ({ $languageId })
+
 prefs-general-theme =
     .title = Theme
     .option-default = System Default
@@ -48,8 +53,11 @@ prefs-vp-subs-colour =
 prefs-vp-subs-background-colour =
     .title = Subtitle background color
 prefs-vp-subs-position =
-    .title = Subtitles position
+    .title = Subtitle position
     .subtitle = Where 0 is the top of the screen, and 100 is the bottom
+prefs-vp-subs-font =
+    .title = Subtitle font
+    .subtitle = Only supported fonts are listed
 
 # Plugins
 # =======

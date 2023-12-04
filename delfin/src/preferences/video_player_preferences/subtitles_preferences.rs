@@ -1,11 +1,12 @@
 use adw::prelude::*;
-use gtk::gdk;
+use gtk::{gdk, CustomFilter};
 use relm4::prelude::*;
 
 use crate::config::video_player_config::VideoPlayerConfig;
 use crate::globals::CONFIG;
 use crate::tr;
 use crate::utils::rgba::RGBA;
+use crate::video_player::backends::VideoPlayerSubtitleFont;
 
 pub(crate) struct SubtitlesPreferences {
     video_player_config: VideoPlayerConfig,
@@ -19,6 +20,7 @@ pub(crate) enum SubtitlesPreferencesInput {
     SubtitleColour(RGBA),
     SubtitleBackgroundColour(RGBA),
     SubtitlePosition(f64),
+    SubtitleFont(VideoPlayerSubtitleFont),
 }
 
 #[relm4::component(pub(crate))]
@@ -125,6 +127,40 @@ impl SimpleComponent for SubtitlesPreferences {
                     sender.input(SubtitlesPreferencesInput::SubtitlePosition(spinrow.value()));
                 } @subtitle_position_change_handler,
             },
+
+            add = &adw::ActionRow {
+                set_title: "Subtitle font",
+                set_subtitle: "Only supported fonts are listed",
+                add_suffix = &gtk::FontDialogButton {
+                    set_valign: gtk::Align::Center,
+
+                    #[watch]
+                    #[block_signal(subtitle_font_change_handler)]
+                    set_font_desc: &model.video_player_config.subtitle_font.clone().into(),
+                    set_use_font: true,
+                    set_dialog = &gtk::FontDialog {
+                        set_filter: Some(&model.font_filter()),
+                    },
+
+                    connect_font_desc_notify => move |fdb| {
+                        let font = fdb.font_desc().unwrap();
+
+                        let mut size = font.size();
+                        if !font.is_size_absolute() {
+                            size /= 1024;
+                        }
+
+                        if let Some(family) = font.family() {
+                            sender.input(SubtitlesPreferencesInput::SubtitleFont(VideoPlayerSubtitleFont {
+                                family: family.into(),
+                                size: size as usize,
+                                bold: font.weight() == gtk::pango::Weight::Bold,
+                                italic: font.style() == gtk::pango::Style::Italic,
+                            }));
+                        }
+                    } @subtitle_font_change_handler,
+                },
+            },
         }
     }
 
@@ -164,6 +200,7 @@ impl SimpleComponent for SubtitlesPreferences {
                 config.video_player.subtitle_colour = default.subtitle_colour;
                 config.video_player.subtitle_background_colour = default.subtitle_background_colour;
                 config.video_player.subtitle_position = default.subtitle_position;
+                config.video_player.subtitle_font = default.subtitle_font;
             }
             SubtitlesPreferencesInput::SubtitleScale(subtitle_scale) => {
                 config.video_player.subtitle_scale = subtitle_scale;
@@ -176,6 +213,9 @@ impl SimpleComponent for SubtitlesPreferences {
             }
             SubtitlesPreferencesInput::SubtitlePosition(position) => {
                 config.video_player.subtitle_position = position as u32;
+            }
+            SubtitlesPreferencesInput::SubtitleFont(font) => {
+                config.video_player.subtitle_font = font;
             }
         }
 
@@ -193,5 +233,30 @@ impl SubtitlesPreferences {
             || (video_player_config.subtitle_background_colour
                 != default.subtitle_background_colour)
             || (video_player_config.subtitle_position != default.subtitle_position)
+            || (video_player_config.subtitle_font != default.subtitle_font)
+    }
+
+    fn font_filter(&self) -> CustomFilter {
+        use gtk::pango::{FontFace, Style, Weight};
+
+        CustomFilter::new(|arg| {
+            if let Some(font_face) = arg.downcast_ref::<FontFace>() {
+                let desc = font_face.describe();
+
+                // MPV only supports normal or bold weight
+                if !matches!(desc.weight(), Weight::Normal | Weight::Bold) {
+                    return false;
+                }
+
+                // MPV only supports normal or italic
+                if !matches!(desc.style(), Style::Normal | Style::Italic) {
+                    return false;
+                }
+
+                return true;
+            }
+
+            false
+        })
     }
 }

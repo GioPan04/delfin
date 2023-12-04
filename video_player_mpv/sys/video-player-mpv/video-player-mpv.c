@@ -496,3 +496,34 @@ void vpm_video_player_mpv_set_subtitle_position(VpmVideoPlayerMpv *self,
   mpv_set_option(self->mpv_ctx->handle, "sub-pos", MPV_FORMAT_INT64,
                  &position_int);
 }
+
+void vpm_video_player_mpv_set_subtitle_font_family(VpmVideoPlayerMpv *self,
+                                                   char *family) {
+  int err = mpv_set_option(self->mpv_ctx->handle, "sub-font", MPV_FORMAT_STRING,
+                           &family);
+  if (err < 0) {
+    printf("Error setting sub-font: %d\n", err);
+  }
+}
+
+void vpm_video_player_mpv_set_subtitle_font_size(VpmVideoPlayerMpv *self,
+                                                 uint size) {
+  uint64_t size_int = (uint64_t)size;
+  int err = mpv_set_option(self->mpv_ctx->handle, "sub-font-size",
+                           MPV_FORMAT_INT64, &size_int);
+  if (err < 0) {
+    printf("Error setting sub-font-size: %d\n", err);
+  }
+}
+
+void vpm_video_player_mpv_set_subtitle_font_bold(VpmVideoPlayerMpv *self,
+                                                 bool bold) {
+  int val = bold;
+  mpv_set_property(self->mpv_ctx->handle, "sub-bold", MPV_FORMAT_FLAG, &val);
+}
+
+void vpm_video_player_mpv_set_subtitle_font_italic(VpmVideoPlayerMpv *self,
+                                                   bool italic) {
+  int val = italic;
+  mpv_set_property(self->mpv_ctx->handle, "sub-italic", MPV_FORMAT_FLAG, &val);
+}

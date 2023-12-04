@@ -47,5 +47,13 @@ void vpm_video_player_mpv_set_subtitle_background_colour(
     VpmVideoPlayerMpv *self, char *colour);
 void vpm_video_player_mpv_set_subtitle_position(VpmVideoPlayerMpv *self,
                                                 uint position);
+void vpm_video_player_mpv_set_subtitle_font_family(VpmVideoPlayerMpv *self,
+                                                   char *family);
+void vpm_video_player_mpv_set_subtitle_font_size(VpmVideoPlayerMpv *self,
+                                                 uint size);
+void vpm_video_player_mpv_set_subtitle_font_bold(VpmVideoPlayerMpv *self,
+                                                 bool bold);
+void vpm_video_player_mpv_set_subtitle_font_italic(VpmVideoPlayerMpv *self,
+                                                   bool italic);
 
 G_END_DECLS
