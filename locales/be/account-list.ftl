@@ -1,0 +1,12 @@
+account-list =
+    .title = Увайсці ў { $serverName }
+    .description = Выберыце ўліковы запісы з якім вы хочаце ўвайсці
+account-list-add-account-button = Дадаць уліковы запіс
+account-list-add-account-password = Пароль
+account-list-add-account-username = Імя карыстальніка
+account-list-page-title = Уліковыя запісы
+account-list-add-account-title = Дадаць уліковы запіс
+account-list-add-account-submit-button = Увайсці
+account-list-empty =
+    .title = Няма ўліковых запісаў
+    .subtitle = Дадайце ўліковы запіс каб пачаць прягляд
