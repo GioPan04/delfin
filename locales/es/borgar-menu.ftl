@@ -1,0 +1,11 @@
+borgar-keyboard-shortcuts = Atajos de teclado
+borgar-sign-out-dialog =
+    .heading = Cerrar sesión
+    .body = ¿Quieres cerrar sesión y eliminar esta cuenta de { app-name }?
+    .response-cancel = Cancelar
+    .response-sign-out = Cerrar sesión
+borgar-sign-out-dialog-remove-server = Eliminar este servidor de { app-name }
+borgar-menu-tooltip = Menú principal
+borgar-preferences = Preferencias
+borgar-about = Sobre { app-name }
+borgar-sign-out = Cerrar sesión
