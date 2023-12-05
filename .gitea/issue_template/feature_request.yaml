@@ -1,0 +1,40 @@
+name: Feature Request
+about: Request a new feature
+labels: ["Kind/Feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        - Before requesting a new feature, please [take a moment to check that it hasn't been requested before](https://codeberg.org/avery42/delfin/issues).
+        - Be civil, and follow the [Code of Conduct](https://codeberg.org/avery42/delfin/src/branch/main/CODE_OF_CONDUCT.md).
+
+  - id: problem
+    type: textarea
+    attributes:
+      label: Problem
+      description: |
+        If your feature is related to a problem you're running into, please describe the problem.
+    validations:
+      required: false
+
+  - id: solution
+    type: textarea
+    attributes:
+      label: Solution
+      description: |
+        Please provide a detailed description of how your feature works, and how it solves your problem.
+    validations:
+      required: true
+
+  - id: reference
+    type: textarea
+    attributes:
+      label: Reference Materials
+      description: |
+        If you'd like, feel free to provide additional reference material. This could include:
+            - Screenshots of how the feature works in other software
+            - A drawing or mockup of what the feature could look like
+            - Other users running into a similar problem that could be solved by this feature
+            - etc.
+    validations:
+      required: false
