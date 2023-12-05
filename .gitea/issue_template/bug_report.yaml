@@ -5,8 +5,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        - Before reporting an issue, please [take a moment to check that your issue hasn't been reported before](https://codeberg.org/avery42/delfin/issues).
-        - Please fill out all the relevant fields below - incomplete issues may be delayed or closed
+        - Before reporting an issue, please [take a moment to check that it hasn't been reported before](https://codeberg.org/avery42/delfin/issues).
+        - Please fill out all the relevant fields below - incomplete issues may be delayed or closed.
+        - Be civil, and follow the [Code of Conduct](https://codeberg.org/avery42/delfin/src/branch/main/CODE_OF_CONDUCT.md).
 
   - id: description
     type: textarea

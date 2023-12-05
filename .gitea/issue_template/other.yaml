@@ -1,0 +1,17 @@
+name: Other
+about: Something else
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        - If you're reporting a bug or requesting a feature, please [use the applicable issue template](https://codeberg.org/avery42/delfin/issues/new/choose).
+        - Before creating a new issue, please [take a moment to check that it doesn't already exist](https://codeberg.org/avery42/delfin/issues).
+        - Be civil, and follow the [Code of Conduct](https://codeberg.org/avery42/delfin/src/branch/main/CODE_OF_CONDUCT.md).
+
+  - id: description
+    type: textarea
+    attributes:
+      label: Description
+    validations:
+      required: false
