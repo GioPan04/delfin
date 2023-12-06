@@ -3,7 +3,7 @@ use std::{collections::VecDeque, sync::Arc};
 use gdk::Texture;
 use jellyfin_api::types::BaseItemDto;
 use relm4::{
-    gtk::{self, gdk, gdk_pixbuf, prelude::*},
+    gtk::{self, gdk, gdk_pixbuf, glib::markup_escape_text, prelude::*},
     prelude::{AsyncComponent, AsyncComponentParts},
     AsyncComponentSender,
 };
@@ -40,12 +40,17 @@ impl MediaTileDisplay {
 }
 
 fn get_item_label(item: &BaseItemDto) -> String {
-    match (&item.series_name, item.episode_name_with_number()) {
+    match (
+        &item.series_name.as_ref().map(|s| markup_escape_text(s)),
+        item.episode_name_with_number()
+            .as_ref()
+            .map(|s| markup_escape_text(s)),
+    ) {
         (Some(series_name), Some(name)) => format!(
             r#"{series_name}
 <span size="small">{name}</span>"#
         ),
-        (_, Some(name)) => name,
+        (_, Some(name)) => name.to_string(),
         _ => tr!("library-media-tile-unnamed-item").to_string(),
     }
 }

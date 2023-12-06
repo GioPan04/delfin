@@ -20,6 +20,7 @@ pub struct Fullscreen {
 #[derive(Debug)]
 pub enum FullscreenInput {
     ToggleFullscreen,
+    ExitFullscreen,
     WindowFullscreenChanged(bool),
 }
 
@@ -87,9 +88,19 @@ impl SimpleComponent for Fullscreen {
     fn update(&mut self, message: Self::Input, _sender: relm4::ComponentSender<Self>) {
         match message {
             FullscreenInput::ToggleFullscreen => {
-                self.fullscreen = !self.fullscreen;
                 if let Some(window) = get_main_window() {
+                    self.fullscreen = !self.fullscreen;
                     window.set_fullscreened(self.fullscreen);
+                } else {
+                    println!("Error getting main window");
+                }
+            }
+            FullscreenInput::ExitFullscreen => {
+                if let Some(window) = get_main_window() {
+                    self.fullscreen = false;
+                    window.set_fullscreened(false);
+                } else {
+                    println!("Error getting main window");
                 }
             }
             FullscreenInput::WindowFullscreenChanged(fullscreen) => {

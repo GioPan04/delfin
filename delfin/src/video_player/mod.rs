@@ -37,6 +37,7 @@ use crate::video_player::controls::VideoPlayerControlsInit;
 use crate::video_player::next_up::{NextUp, NEXT_UP_VISIBILE};
 
 use self::backends::{PlayerState, VideoPlayerBackend};
+use self::controls::fullscreen::{FullscreenInput, FULLSCREEN_BROKER};
 use self::controls::play_pause::{PlayPauseInput, PLAY_PAUSE_BROKER};
 use self::controls::scrubber::{ScrubberInput, SCRUBBER_BROKER};
 use self::controls::volume::{VolumeInput, VOLUME_BROKER};
@@ -83,7 +84,7 @@ pub enum VideoPlayerInput {
     SetRevealerRevealChild(bool),
     MouseMove(f64, f64),
     MouseHide,
-    MouseClick,
+    MouseClick(i32),
 }
 
 #[derive(Debug)]
@@ -134,8 +135,8 @@ impl Component for VideoPlayer {
                     #[local_ref]
                     video_player -> gtk::Widget {
                         add_controller = gtk::GestureClick {
-                            connect_pressed[sender] => move |_, _, _, _| {
-                                sender.input(VideoPlayerInput::MouseClick);
+                            connect_pressed[sender] => move |_, n_press, _, _| {
+                                sender.input(VideoPlayerInput::MouseClick(n_press));
                             },
                         },
                     },
@@ -438,6 +439,8 @@ impl Component for VideoPlayer {
 
                 // Stop background playback progress reporter
                 self.session_playback_reporter.stop(self.backend.clone());
+
+                FULLSCREEN_BROKER.send(FullscreenInput::ExitFullscreen);
             }
             VideoPlayerInput::PlayerStateChanged(play_state) => {
                 self.set_player_state(play_state);
@@ -477,13 +480,16 @@ impl Component for VideoPlayer {
                     });
                 }
             }
-            VideoPlayerInput::MouseClick => match CONFIG.read().video_player.on_left_click {
-                VideoPlayerOnLeftClick::PlayPause => {
-                    PLAY_PAUSE_BROKER.send(PlayPauseInput::TogglePlaying);
-                }
-                VideoPlayerOnLeftClick::ToggleControls => {
-                    sender.input(VideoPlayerInput::ToggleControls);
-                }
+            VideoPlayerInput::MouseClick(n_press) => match n_press {
+                2 => FULLSCREEN_BROKER.send(FullscreenInput::ToggleFullscreen),
+                _ => match CONFIG.read().video_player.on_left_click {
+                    VideoPlayerOnLeftClick::PlayPause => {
+                        PLAY_PAUSE_BROKER.send(PlayPauseInput::TogglePlaying);
+                    }
+                    VideoPlayerOnLeftClick::ToggleControls => {
+                        sender.input(VideoPlayerInput::ToggleControls);
+                    }
+                },
             },
         }
 
