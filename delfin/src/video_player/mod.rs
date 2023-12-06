@@ -439,6 +439,8 @@ impl Component for VideoPlayer {
 
                 // Stop background playback progress reporter
                 self.session_playback_reporter.stop(self.backend.clone());
+
+                FULLSCREEN_BROKER.send(FullscreenInput::ExitFullscreen);
             }
             VideoPlayerInput::PlayerStateChanged(play_state) => {
                 self.set_player_state(play_state);
