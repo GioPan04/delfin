@@ -9,7 +9,9 @@ use relm4::{
 use uuid::Uuid;
 
 use crate::{
-    jellyfin_api::{api::views::UserView, api_client::ApiClient},
+    jellyfin_api::{
+        api::views::UserView, api_client::ApiClient, models::collection_type::CollectionType,
+    },
     library::media_list::{
         MediaList, MediaListInit, MediaListOutput, MediaListType, MediaListTypeLatestParams,
     },
@@ -56,7 +58,12 @@ impl Component for HomeSectionLatest {
 
         let user_views: Vec<&UserView> = user_views
             .iter()
-            .filter(|view| matches!(view.collection_type.as_ref(), "movies" | "tvshows"))
+            .filter(|view| {
+                matches!(
+                    view.collection_type,
+                    CollectionType::Movies | CollectionType::TvShows
+                )
+            })
             .collect();
 
         for view in user_views {
@@ -117,10 +124,10 @@ impl SimpleComponent for LatestRow {
 
         let widgets = view_output!();
 
-        let title_text = match view.collection_type.as_str() {
-            "movies" => tr!("library-section-title.latest-movies").to_string(),
-            "tvshows" => tr!("library-section-title.latest-shows").to_string(),
-            "music" => tr!("library-section-title.latest-music").to_string(),
+        let title_text = match view.collection_type {
+            CollectionType::Movies => tr!("library-section-title.latest-movies").to_string(),
+            CollectionType::TvShows => tr!("library-section-title.latest-shows").to_string(),
+            CollectionType::Music => tr!("library-section-title.latest-music").to_string(),
             s => {
                 println!("Unknown collection type: {s}");
                 s.to_string()

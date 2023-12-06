@@ -20,8 +20,9 @@ use crate::{
     borgar::borgar_menu::{BorgarMenu, BorgarMenuAuth},
     config::{Account, Server},
     jellyfin_api::{
-        api::views::UserView, api_client::ApiClient,
-        models::display_preferences::DisplayPreferences,
+        api::views::UserView,
+        api_client::ApiClient,
+        models::{collection_type::CollectionType, display_preferences::DisplayPreferences},
     },
     media_details::MEDIA_DETAILS_REFRESH_QUEUED,
     tr,
@@ -328,20 +329,17 @@ impl Library {
 
         let user_views: Vec<&UserView> = user_views
             .iter()
-            .filter(|view| matches!(view.collection_type.as_ref(), "movies" | "tvshows"))
+            .filter(|view| {
+                matches!(
+                    view.collection_type,
+                    CollectionType::Movies | CollectionType::TvShows
+                )
+            })
             .collect();
 
         // TODO: handle overflow when user has too many collections
         // For now we limit them to 5, user can change order in Jellyfin settings
         for &view in user_views.iter().take(5) {
-            let icon = match view.collection_type.as_str() {
-                "movies" => "video-clip-multiple-filled",
-                "tvshows" => "video-clip-multiple-filled",
-                "music" => "play-multiple-filled",
-                "playlists" => "tag-multiple-filled",
-                _ => "video-clip-multiple-filled",
-            };
-
             let collection = Collection::builder()
                 .launch((self.api_client.clone(), view.clone()))
                 .detach();
@@ -350,7 +348,7 @@ impl Library {
                 collection.widget(),
                 Some(&view.id.to_string()),
                 &view.name.clone(),
-                icon,
+                &view.collection_type.icon(),
             );
 
             self.collections.insert(view.id, collection);
