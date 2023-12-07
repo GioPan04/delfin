@@ -1,0 +1,12 @@
+account-list-page-title = Comptes
+account-list =
+    .title = Se connecter sur { $serverName }
+    .description = Sélectionnez le compte avec lequel vous voudriez vous connecter
+account-list-add-account-button = Ajoutez un compte
+account-list-add-account-password = Mot de passe
+account-list-add-account-username = Nom de l'utilisateur·rice
+account-list-add-account-title = Ajoutez un compte
+account-list-add-account-submit-button = Connexion
+account-list-empty =
+    .title = Aucun compte disponible
+    .subtitle = Connectez un compte pour commencer

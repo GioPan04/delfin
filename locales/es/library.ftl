@@ -1,0 +1,14 @@
+library-series-and-episode-name = { $seriesName } - { $episodeName }
+library-section-title =
+    .continue-watching = Seguir viendo
+    .next-up = A continuación
+    .latest-movies = Películas más recientes
+    .latest-shows = Programas más recientes
+    .latest-music = Música más reciente
+library-media-tile-unnamed-item = Elemento sin nombre
+library-refresh-button = Actualizar biblioteca
+library-loading = Cargando tu biblioteca…
+library-item-count = { $start } - { $end } de { $total }
+library-page-title = Biblioteca
+library-episode-name-with-season-and-episode = T{ $seasonNumber }:E{ $episodeNumber } - { $episodeName }
+library-page-home-title = Inicio
