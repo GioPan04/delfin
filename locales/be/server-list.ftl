@@ -6,3 +6,7 @@ server-list-add-server-button = Дадаць сервер
 server-list =
     .title = Выберыце сервер
     .description = Выберыце, які сервер Jellyfin вы хочаце выкарыстоўваць
+server-list-add-server-name = Назва сервера
+server-list-add-server-submit-button = Дадаць
+server-list-add-server-url = Адрас сервера
+server-list-add-server-title = Дадаць сервер
