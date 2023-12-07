@@ -1,131 +1,148 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Copyright 2023 Avery -->
 <component type="desktop-application">
-    <id>@APP_ID@</id>
+  <id>@APP_ID@</id>
 
-    <name>Delfin</name>
-    <summary>Stream movies and TV shows from Jellyfin</summary>
+  <name>Delfin</name>
+  <summary>Stream movies and TV shows from Jellyfin</summary>
 
-    <description>
-        <p>Delfin is a native client for the Jellyfin media server. It features a fast and clean
-            interface to stream your media in an embedded MPV-based video player.</p>
+  <description>
+    <p>Delfin is a native client for the Jellyfin media server. It features a fast and clean
+      interface to stream your media in an embedded MPV-based video player.</p>
 
-        <p>Delfin currently supprts streaming movies and TV shows from your library. The video
-            player
-            supports the Intro Skipper plugin for skipping intros automatically, and the Jellyscrub
-            plugin
-            to show thumbnails while scrubbing through videos.</p>
+    <p>Delfin currently supprts streaming movies and TV shows from your library. The video
+      player
+      supports the Intro Skipper plugin for skipping intros automatically, and the Jellyscrub
+      plugin
+      to show thumbnails while scrubbing through videos.</p>
 
-        <p>This is an early release, you may run into bugs or missing features. Delfin does not come
-            with any media, you must connect to a Jellyfin server. Plugins must be installed and
-            configured on your server to be available from Delfin.</p>
-    </description>
+    <p>This is an early release, you may run into bugs or missing features. Delfin does not come
+      with any media, you must connect to a Jellyfin server. Plugins must be installed and
+      configured on your server to be available from Delfin.</p>
+  </description>
 
-    <screenshots>
-        <screenshot type="default" environment="gnome:dark">
-            <caption>The library home page</caption>
-            <image type="source">https://delfin.avery.cafe/screenshots/flathub-1.png</image>
-        </screenshot>
-        <screenshot environment="gnome:dark">
-            <caption>Viewing details and episodes for a TV show</caption>
-            <image type="source">https://delfin.avery.cafe/screenshots/flathub-2.png</image>
-        </screenshot>
-        <screenshot environment="gnome:dark">
-            <caption>The video player</caption>
-            <image type="source">https://delfin.avery.cafe/screenshots/flathub-3.png</image>
-        </screenshot>
-        <screenshot environment="gnome">
-            <caption>The library home page</caption>
-            <image type="source">https://delfin.avery.cafe/screenshots/flathub-4.png</image>
-        </screenshot>
-        <screenshot environment="gnome">
-            <caption>Viewing details and episodes for a TV show</caption>
-            <image type="source">https://delfin.avery.cafe/screenshots/flathub-5.png</image>
-        </screenshot>
-    </screenshots>
+  <screenshots>
+    <screenshot type="default" environment="gnome:dark">
+      <caption>The library home page</caption>
+      <image type="source">https://delfin.avery.cafe/screenshots/flathub-1.png</image>
+    </screenshot>
+    <screenshot environment="gnome:dark">
+      <caption>Viewing details and episodes for a TV show</caption>
+      <image type="source">https://delfin.avery.cafe/screenshots/flathub-2.png</image>
+    </screenshot>
+    <screenshot environment="gnome:dark">
+      <caption>The video player</caption>
+      <image type="source">https://delfin.avery.cafe/screenshots/flathub-3.png</image>
+    </screenshot>
+    <screenshot environment="gnome">
+      <caption>The library home page</caption>
+      <image type="source">https://delfin.avery.cafe/screenshots/flathub-4.png</image>
+    </screenshot>
+    <screenshot environment="gnome">
+      <caption>Viewing details and episodes for a TV show</caption>
+      <image type="source">https://delfin.avery.cafe/screenshots/flathub-5.png</image>
+    </screenshot>
+  </screenshots>
 
-    <metadata_license>CC-BY-SA-4.0</metadata_license>
-    <project_license>GPL-3.0</project_license>
+  <metadata_license>CC-BY-SA-4.0</metadata_license>
+  <project_license>GPL-3.0</project_license>
 
-    <url type="homepage">https://delfin.avery.cafe/</url>
-    <url type="bugtracker">https://codeberg.org/avery42/delfin/issues</url>
-    <url type="translate">https://translate.codeberg.org/projects/delfin/</url>
-    <url type="vcs-browser">https://codeberg.org/avery42/delfin</url>
+  <url type="homepage">https://delfin.avery.cafe/</url>
+  <url type="bugtracker">https://codeberg.org/avery42/delfin/issues</url>
+  <url type="translate">https://translate.codeberg.org/projects/delfin/</url>
+  <url type="vcs-browser">https://codeberg.org/avery42/delfin</url>
 
-    <developer id="avery.cafe">
-        <name>Avery</name>
-    </developer>
+  <developer id="avery.cafe">
+    <name>Avery</name>
+  </developer>
 
-    <update_contact>delfin@avery.cafe</update_contact>
+  <update_contact>delfin@avery.cafe</update_contact>
 
-    <content_rating type="oars-1.1" />
+  <content_rating type="oars-1.1" />
 
-    <recommends>
-        <display_length compare="ge">600</display_length>
-        <control>pointing</control>
-    </recommends>
+  <recommends>
+    <display_length compare="ge">600</display_length>
+    <control>pointing</control>
+  </recommends>
 
-    <supports>
-        <internet>always</internet>
-    </supports>
+  <supports>
+    <internet>always</internet>
+  </supports>
 
-    <launchable type="desktop-id">@APP_ID@.desktop</launchable>
+  <launchable type="desktop-id">@APP_ID@.desktop</launchable>
 
-    <categories>
-        <category>AudioVideo</category>
-        <category>Video</category>
-        <category>Player</category>
-        <category>TV</category>
-        <category>GTK</category>
-        <category>GNOME</category>
-    </categories>
+  <categories>
+    <category>AudioVideo</category>
+    <category>Video</category>
+    <category>Player</category>
+    <category>TV</category>
+    <category>GTK</category>
+    <category>GNOME</category>
+  </categories>
 
-    <provides>
-        <binary>delfin</binary>
-    </provides>
+  <provides>
+    <binary>delfin</binary>
+  </provides>
 
-    <releases>
-        <release version="0.2.0" date="2023-12-04">
-            <description>
-                <p>This release adds several new subtitle features, some new video player features,
-                    and some minor changes and bug fixes.</p>
+  <releases>
+    <release version="0.2.1" date="2023-12-06">
+      <description>
+        <p>This release contains minor changes and bug fixes.</p>
+        <ul>
+          <li>Double clicking in the video player will toggle fullscreen - #17</li>
+          <li>Exiting the video player will exit fullscreen - #10</li>
+          <li>Fix library not loading when user has a library with mixed content types. For now,
+            only libraries that have their content type explicitely set to movies or TV shows will
+            be
+            available. - #7</li>
+          <li>Fix content titles being missing if they contain an ampersand - #9</li>
+          <li>Translation updates from Weblate (thanks to @IngrownMink4, @DegradingVagabond, and
+            @k1llo on Codeberg) - #8, #29</li>
+        </ul>
+      </description>
+    </release>
 
-                <p>Features:</p>
-                <ul>
-                    <li>External subtitles (that aren't embedded in the video stream) will now be
-                        available</li>
-                    <li>Add subtitle style preferences, allowing you to configure subtitle font,
-                        colours, size, and position</li>
-                    <li>Add keybindings (comma and period) to seek through videos frame-by-frame</li>
-                    <li>By default, the video player controls will be shown when you move the mouse,
-                        and hidden a few seconds after you stop moving the mouse</li>
-                    <li>Add a preference that lets you configure left mouse click to toggle the
-                        video player controls, instead of using mouse movement</li>
-                    <li>Add a preference to manually change the app's language</li>
-                </ul>
+    <release version="0.2.0" date="2023-12-04">
+      <description>
+        <p>This release adds several new subtitle features, some new video player features,
+          and some minor changes and bug fixes.</p>
 
-                <p>Changes and bugfixes:</p>
-                <ul>
-                    <li>Fix a crash when trickplay thumbnails are missing</li>
-                    <li>Use a higher resolution thumbnail while counting down to the next episode</li>
-                    <li>Fix the account list not always updating after adding or removing an account</li>
-                    <li>Improve grouping of plugin preferences</li>
-                    <li>Limit the library to only show the user's first five collections.
-                        Previously, users with a large number of collections would run into UI
-                        issues. A better fix that allows access to all libraries is coming, but for
-                        now you can reorder your libraries in Jellyfin's settings to make them
-                        accessible.</li>
-                    <li>Fix links in the preferences not opening when you click on them</li>
-                </ul>
-            </description>
-        </release>
+        <p>Features:</p>
+        <ul>
+          <li>External subtitles (that aren't embedded in the video stream) will now be
+            available</li>
+          <li>Add subtitle style preferences, allowing you to configure subtitle font,
+            colours, size, and position</li>
+          <li>Add keybindings (comma and period) to seek through videos frame-by-frame</li>
+          <li>By default, the video player controls will be shown when you move the mouse,
+            and hidden a few seconds after you stop moving the mouse</li>
+          <li>Add a preference that lets you configure left mouse click to toggle the
+            video player controls, instead of using mouse movement</li>
+          <li>Add a preference to manually change the app's language</li>
+        </ul>
 
-        <release version="0.1.0" date="2023-11-27">
-            <description>
-                <p>This is the first release of Delfin!</p>
-                <p>Currently, Delfin lets you stream movies and TV shows from your Jellyfin server.</p>
-                <p>This is an early release, you may run into bugs and missing features.</p>
-            </description>
-        </release>
-    </releases>
+        <p>Changes and bugfixes:</p>
+        <ul>
+          <li>Fix a crash when trickplay thumbnails are missing</li>
+          <li>Use a higher resolution thumbnail while counting down to the next episode</li>
+          <li>Fix the account list not always updating after adding or removing an account</li>
+          <li>Improve grouping of plugin preferences</li>
+          <li>Limit the library to only show the user's first five collections.
+            Previously, users with a large number of collections would run into UI
+            issues. A better fix that allows access to all libraries is coming, but for
+            now you can reorder your libraries in Jellyfin's settings to make them
+            accessible.</li>
+          <li>Fix links in the preferences not opening when you click on them</li>
+        </ul>
+      </description>
+    </release>
+
+    <release version="0.1.0" date="2023-11-27">
+      <description>
+        <p>This is the first release of Delfin!</p>
+        <p>Currently, Delfin lets you stream movies and TV shows from your Jellyfin server.</p>
+        <p>This is an early release, you may run into bugs and missing features.</p>
+      </description>
+    </release>
+  </releases>
 </component>
