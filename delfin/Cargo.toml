@@ -1,6 +1,6 @@
 [package]
 name = "delfin"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 rust-version = "1.74.0"
 
@@ -19,28 +19,28 @@ fluent-templates = { version = "0.8.0", features = ["tera"] }
 jellyfin_api = "10.8.10-2"
 relm4 = { workspace = true }
 relm4-icons = { version = "0.7.0-alpha.2", features = [
-    "check-round-outline",
-    "video-clip-multiple-filled",
-    "play-multiple-filled",
-    "tag-multiple-filled",
-    "home-filled",
-    "closed-captioning",
-    "music-note-single",
-    "star-large",
-    "play-filled",
-    "pause-filled",
-    "fast-forward-filled",
-    "rewind-filled",
-    "skip-forward-10",
-    "skip-forward-30",
-    "skip-backwards-10",
-    "skip-backwards-30",
-    "left",
-    "right",
-    "refresh",
-    "settings",
-    "warning",
-    "folder-filled",
+  "check-round-outline",
+  "video-clip-multiple-filled",
+  "play-multiple-filled",
+  "tag-multiple-filled",
+  "home-filled",
+  "closed-captioning",
+  "music-note-single",
+  "star-large",
+  "play-filled",
+  "pause-filled",
+  "fast-forward-filled",
+  "rewind-filled",
+  "skip-forward-10",
+  "skip-forward-30",
+  "skip-backwards-10",
+  "skip-backwards-30",
+  "left",
+  "right",
+  "refresh",
+  "settings",
+  "warning",
+  "folder-filled",
 ] }
 reqwest = { version = "0.11.20", features = ["json"] }
 serde = { version = "1.0.188", features = ["derive"] }
