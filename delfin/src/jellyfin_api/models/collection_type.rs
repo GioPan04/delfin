@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use jellyfin_api::types::BaseItemKind;
+
 #[derive(Debug, Clone, Copy)]
 pub enum CollectionType {
     Movies,
@@ -47,5 +49,15 @@ impl CollectionType {
             Self::Other => "folder-filled",
         }
         .to_string()
+    }
+
+    pub fn item_type(&self) -> Option<BaseItemKind> {
+        match self {
+            Self::Movies => Some(BaseItemKind::Movie),
+            Self::TvShows => Some(BaseItemKind::Series),
+            Self::Music => Some(BaseItemKind::MusicAlbum),
+            Self::Playlists => Some(BaseItemKind::Playlist),
+            Self::Other => None,
+        }
     }
 }
