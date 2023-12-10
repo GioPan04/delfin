@@ -81,11 +81,6 @@ pub trait VideoPlayerBackend: fmt::Debug {
     /// Get current video position in seconds.
     fn position(&self) -> usize;
 
-    // Disconnects the signal handler for the given ID.
-    // TODO: All connect methods should return Uuid, and probably unify this with player state
-    // callbacks
-    fn disconnect_signal_handler(&mut self, id: &Uuid);
-
     /// Get the current subtitle track ID.
     fn current_subtitle_track(&self) -> Option<usize>;
 
@@ -117,7 +112,7 @@ pub trait VideoPlayerBackend: fmt::Debug {
     fn set_subtitle_font(&self, font: &VideoPlayerSubtitleFont);
 
     /// Get notified when video player reaches the end of the current video.
-    fn connect_end_of_stream(&mut self, callback: Box<dyn Fn() + Send + 'static>);
+    fn connect_end_of_stream(&mut self, callback: Box<dyn Fn() + Send + 'static>) -> Uuid;
 
     /// Get notified when the playback position changes.
     fn connect_position_updated(
@@ -126,25 +121,35 @@ pub trait VideoPlayerBackend: fmt::Debug {
     ) -> Uuid;
 
     /// Get notified when the media duration changes.
-    fn connect_duration_updated(&mut self, callback: Box<dyn Fn(usize) + Send + Sync + 'static>);
+    fn connect_duration_updated(
+        &mut self,
+        callback: Box<dyn Fn(usize) + Send + Sync + 'static>,
+    ) -> Uuid;
 
     /// Get notified when the player is muted or unmuted.
-    fn connect_mute_updated(&mut self, callback: Box<dyn Fn(bool) + Send + Sync + 'static>);
+    fn connect_mute_updated(&mut self, callback: Box<dyn Fn(bool) + Send + Sync + 'static>)
+        -> Uuid;
 
     /// Get notified when the player volume changes.
-    fn connect_volume_updated(&mut self, callback: Box<dyn Fn(f64) + Send + Sync + 'static>);
+    fn connect_volume_updated(
+        &mut self,
+        callback: Box<dyn Fn(f64) + Send + Sync + 'static>,
+    ) -> Uuid;
 
     /// Get notified when the list of avilable subtitle tracks changes.
     fn connect_subtitle_tracks_updated(
         &mut self,
         callback: Box<dyn Fn(Vec<SubtitleTrack>) + Send + Sync + 'static>,
-    );
+    ) -> Uuid;
 
     /// Get notified when the list of avilable audio tracks changes.
     fn connect_audio_tracks_updated(
         &mut self,
         callback: Box<dyn Fn(Vec<AudioTrack>) + Send + Sync + 'static>,
-    );
+    ) -> Uuid;
+
+    // Disconnects the signal handler for the given ID.
+    fn disconnect_signal_handler(&mut self, id: &Uuid);
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
