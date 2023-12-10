@@ -52,12 +52,19 @@ impl ApiClient {
             .root
             .join(&format!("Users/{}/Items", self.account.id))
             .unwrap();
+
         url.query_pairs_mut()
             .append_pair("ParentId", &view.id.to_string())
             .append_pair("SortBy", "SortName,ProductionYear")
             .append_pair("SortOrder", "Ascending")
+            .append_pair("Recursive", "true")
             .append_pair("StartIndex", &start_index.to_string())
             .append_pair("Limit", &limit.to_string());
+
+        if let Some(item_type) = view.collection_type.item_type() {
+            url.query_pairs_mut()
+                .append_pair("IncludeItemTypes", &item_type.to_string());
+        }
 
         let res: BaseItemDtoQueryResult = self.client.get(url).send().await?.json().await?;
 
