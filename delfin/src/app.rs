@@ -62,6 +62,7 @@ pub struct App {
 
 #[derive(Debug)]
 pub enum AppInput {
+    Present,
     NavigateBack,
     PopToPage(AppPage),
     ServerSelected(config::Server),
@@ -166,6 +167,9 @@ impl Component for App {
         let navigation = &widgets.navigation;
 
         match message {
+            AppInput::Present => {
+                root.present();
+            }
             AppInput::NavigateBack => {
                 navigation.pop();
             }

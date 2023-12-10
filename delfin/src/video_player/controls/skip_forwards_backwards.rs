@@ -1,4 +1,4 @@
-use std::{cell::RefCell, fmt::Display, sync::Arc};
+use std::{cell::RefCell, fmt::Display, sync::Arc, time::Duration};
 
 use gtk::prelude::*;
 use relm4::{prelude::*, ComponentParts, ComponentSender, SimpleComponent};
@@ -8,7 +8,7 @@ use crate::{
     utils::message_broker::ResettableMessageBroker, video_player::backends::VideoPlayerBackend,
 };
 
-use super::scrubber::SCRUBBER_BROKER;
+use super::scrubber::{ScrubberInput, SCRUBBER_BROKER};
 
 pub(crate) static SKIP_FORWARDS_BROKER: ResettableMessageBroker<SkipForwardsBackwardsInput> =
     ResettableMessageBroker::new();
@@ -41,6 +41,8 @@ pub(super) struct SkipForwardsBackwards {
 #[derive(Debug)]
 pub enum SkipForwardsBackwardsInput {
     Skip,
+    SkipByAmount(Duration),
+    SkipTo(Duration),
     SetLoading(bool),
     SkipAmountUpdated(VideoPlayerSkipAmount),
     FrameStep,
@@ -93,20 +95,35 @@ impl SimpleComponent for SkipForwardsBackwards {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
             SkipForwardsBackwardsInput::Skip => {
+                sender.input(SkipForwardsBackwardsInput::SkipByAmount(
+                    self.skip_amount.into(),
+                ));
+            }
+            SkipForwardsBackwardsInput::SkipByAmount(amount) => {
                 let position = self.player.borrow().position();
-                let skip_amount = self.skip_amount as isize;
-                let seek_to = if let SkipForwardsBackwardsDirection::Forwards = self.direction {
-                    self.player.borrow().seek_by(skip_amount);
-                    position + (skip_amount as usize)
-                } else {
-                    self.player.borrow().seek_by(-skip_amount);
-                    position.saturating_sub(skip_amount as usize)
+                let skip_amount = amount.as_secs() as usize;
+
+                let (seek_to, skip_amount) = match self.direction {
+                    SkipForwardsBackwardsDirection::Forwards => {
+                        (position + skip_amount, skip_amount as isize)
+                    }
+                    SkipForwardsBackwardsDirection::Backwards => (
+                        position.saturating_sub(skip_amount),
+                        -(skip_amount as isize),
+                    ),
                 };
 
-                SCRUBBER_BROKER.send(super::scrubber::ScrubberInput::SetPosition(seek_to));
+                self.player.borrow().seek_by(skip_amount);
+
+                SCRUBBER_BROKER.send(ScrubberInput::SetPosition(seek_to));
+            }
+            SkipForwardsBackwardsInput::SkipTo(position) => {
+                let position = position.as_secs() as usize;
+                self.player.borrow().seek_to(position);
+                SCRUBBER_BROKER.send(ScrubberInput::SetPosition(position));
             }
             SkipForwardsBackwardsInput::SetLoading(loading) => {
                 self.loading = loading;
