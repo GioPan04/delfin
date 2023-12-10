@@ -1,6 +1,7 @@
 pub mod backends;
 mod controls;
 mod keybindings;
+mod mpris;
 mod next_up;
 mod session;
 mod skip_intro;
@@ -42,6 +43,7 @@ use self::controls::play_pause::{PlayPauseInput, PLAY_PAUSE_BROKER};
 use self::controls::scrubber::{ScrubberInput, SCRUBBER_BROKER};
 use self::controls::volume::{VolumeInput, VOLUME_BROKER};
 use self::controls::{VideoPlayerControls, VideoPlayerControlsInput};
+use self::mpris::MprisPlaybackReporter;
 use self::next_up::NextUpInput;
 use self::session::SessionPlaybackReporter;
 use self::skip_intro::{SkipIntro, SkipIntroInput};
@@ -59,6 +61,7 @@ pub struct VideoPlayer {
     show_controls_locked: bool,
     revealer_reveal_child: bool,
     session_playback_reporter: SessionPlaybackReporter,
+    mpris_playback_reporter: Option<MprisPlaybackReporter>,
     player_state: PlayerState,
     next: Option<BaseItemDto>,
 
@@ -233,6 +236,7 @@ impl Component for VideoPlayer {
             show_controls_locked: false,
             revealer_reveal_child: show_controls,
             session_playback_reporter: SessionPlaybackReporter::default(),
+            mpris_playback_reporter: None,
             player_state: PlayerState::Loading,
             next: None,
 
@@ -370,6 +374,12 @@ impl Component for VideoPlayer {
                     self.backend.clone(),
                 );
 
+                self.mpris_playback_reporter = Some(MprisPlaybackReporter::new(
+                    api_client.clone(),
+                    *item.clone(),
+                    self.backend.clone(),
+                ));
+
                 self.api_client = Some(api_client);
 
                 self.fetch_next_prev(&sender, &item);
@@ -439,6 +449,8 @@ impl Component for VideoPlayer {
 
                 // Stop background playback progress reporter
                 self.session_playback_reporter.stop(self.backend.clone());
+
+                self.mpris_playback_reporter = None;
 
                 FULLSCREEN_BROKER.send(FullscreenInput::ExitFullscreen);
             }

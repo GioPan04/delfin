@@ -84,6 +84,11 @@ impl SimpleComponent for PlayPause {
             PlayPauseInput::SetPlaying(playing) => {
                 self.playing = playing;
                 self.loading = false;
+                if playing {
+                    self.video_player.borrow().play();
+                } else {
+                    self.video_player.borrow().pause();
+                }
             }
         }
     }

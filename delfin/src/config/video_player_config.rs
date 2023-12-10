@@ -1,4 +1,4 @@
-use std::{cell::RefCell, sync::Arc};
+use std::{cell::RefCell, sync::Arc, time::Duration};
 
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -93,6 +93,12 @@ impl Default for VideoPlayerConfig {
 pub enum VideoPlayerSkipAmount {
     Ten = 10,
     Thirty = 30,
+}
+
+impl From<VideoPlayerSkipAmount> for Duration {
+    fn from(value: VideoPlayerSkipAmount) -> Self {
+        Duration::from_secs(value as u64)
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone, Copy)]

@@ -1,6 +1,6 @@
 mod audio_tracks;
 pub(super) mod fullscreen;
-mod next_prev_episode;
+pub(super) mod next_prev_episode;
 pub(super) mod play_pause;
 pub(super) mod scrubber;
 pub(super) mod skip_forwards_backwards;
@@ -19,7 +19,10 @@ use crate::{
         backends::VideoPlayerBackend,
         controls::{
             fullscreen::FULLSCREEN_BROKER,
-            next_prev_episode::{NextPrevEpisodeDirection, NextPrevEpisodeOutput},
+            next_prev_episode::{
+                NextPrevEpisodeDirection, NextPrevEpisodeOutput, NEXT_EPISODE_BROKER,
+                PREV_EPISODE_BROKER,
+            },
             play_pause::PLAY_PAUSE_BROKER,
             scrubber::SCRUBBER_BROKER,
             skip_forwards_backwards::{
@@ -153,6 +156,8 @@ impl SimpleComponent for VideoPlayerControls {
         SCRUBBER_BROKER.reset();
         SKIP_BACKWARDS_BROKER.reset();
         SKIP_FORWARDS_BROKER.reset();
+        PREV_EPISODE_BROKER.reset();
+        NEXT_EPISODE_BROKER.reset();
         SUBTITLES_BROKER.reset();
         VOLUME_BROKER.reset();
 
@@ -163,9 +168,12 @@ impl SimpleComponent for VideoPlayerControls {
         model._scrubber = Some(scrubber);
 
         let prev_episode = NextPrevEpisode::builder()
-            .launch(NextPrevEpisodeDirection::Previous)
+            .launch_with_broker(
+                NextPrevEpisodeDirection::Previous,
+                &PREV_EPISODE_BROKER.read(),
+            )
             .forward(sender.input_sender(), |msg| match msg {
-                NextPrevEpisodeOutput::Clicked => VideoPlayerControlsInput::PlayPreviousEpisode,
+                NextPrevEpisodeOutput::Play => VideoPlayerControlsInput::PlayPreviousEpisode,
             });
         second_row.append(prev_episode.widget());
 
@@ -196,9 +204,9 @@ impl SimpleComponent for VideoPlayerControls {
             .unwrap();
 
         let next_episode = NextPrevEpisode::builder()
-            .launch(NextPrevEpisodeDirection::Next)
+            .launch_with_broker(NextPrevEpisodeDirection::Next, &NEXT_EPISODE_BROKER.read())
             .forward(sender.input_sender(), |msg| match msg {
-                NextPrevEpisodeOutput::Clicked => VideoPlayerControlsInput::PlayNextEpisode,
+                NextPrevEpisodeOutput::Play => VideoPlayerControlsInput::PlayNextEpisode,
             });
         second_row.append(next_episode.widget());
         model

@@ -239,24 +239,15 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
         player.set_subtitle_font_italic(font.italic);
     }
 
-    fn disconnect_signal_handler(&mut self, id: &Uuid) {
-        match self.signal_handler_ids.remove(id) {
-            Some(signal_handler_id) => {
-                self.widget.disconnect(signal_handler_id);
-            }
-            None => {
-                println!("Signal handler not found when trying to disconnect: {id}");
-            }
-        };
-    }
-
-    fn connect_end_of_stream(&mut self, callback: Box<dyn Fn() + Send + 'static>) {
+    fn connect_end_of_stream(&mut self, callback: Box<dyn Fn() + Send + 'static>) -> Uuid {
+        let id = uuid();
         self.signal_handler_ids.insert(
-            uuid(),
+            id,
             self.widget.connect_end_of_file(move |_| {
                 callback();
             }),
         );
+        id
     }
 
     fn connect_position_updated(
@@ -273,39 +264,55 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
         id
     }
 
-    fn connect_duration_updated(&mut self, callback: Box<dyn Fn(usize) + Send + Sync + 'static>) {
+    fn connect_duration_updated(
+        &mut self,
+        callback: Box<dyn Fn(usize) + Send + Sync + 'static>,
+    ) -> Uuid {
+        let id = uuid();
         self.signal_handler_ids.insert(
-            uuid(),
+            id,
             self.widget.connect_duration_updated(move |_, val| {
                 callback(val as usize);
             }),
         );
+        id
     }
 
-    fn connect_mute_updated(&mut self, callback: Box<dyn Fn(bool) + Send + Sync + 'static>) {
+    fn connect_mute_updated(
+        &mut self,
+        callback: Box<dyn Fn(bool) + Send + Sync + 'static>,
+    ) -> Uuid {
+        let id = uuid();
         self.signal_handler_ids.insert(
-            uuid(),
+            id,
             self.widget.connect_mute_updated(move |_, muted| {
                 callback(muted);
             }),
         );
+        id
     }
 
-    fn connect_volume_updated(&mut self, callback: Box<dyn Fn(f64) + Send + Sync + 'static>) {
+    fn connect_volume_updated(
+        &mut self,
+        callback: Box<dyn Fn(f64) + Send + Sync + 'static>,
+    ) -> Uuid {
+        let id = uuid();
         self.signal_handler_ids.insert(
-            uuid(),
+            id,
             self.widget.connect_volume_updated(move |_, volume| {
                 callback(volume / 100.0);
             }),
         );
+        id
     }
 
     fn connect_subtitle_tracks_updated(
         &mut self,
         callback: Box<dyn Fn(Vec<SubtitleTrack>) + Send + Sync + 'static>,
-    ) {
+    ) -> Uuid {
+        let id = uuid();
         self.signal_handler_ids.insert(
-            uuid(),
+            id,
             self.widget
                 .connect_tracks_updated(move |_player, track_list| {
                     let mut subtitle_tracks: Vec<SubtitleTrack> = vec![];
@@ -320,14 +327,16 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
                     callback(subtitle_tracks);
                 }),
         );
+        id
     }
 
     fn connect_audio_tracks_updated(
         &mut self,
         callback: Box<dyn Fn(Vec<AudioTrack>) + Send + Sync + 'static>,
-    ) {
+    ) -> Uuid {
+        let id = uuid();
         self.signal_handler_ids.insert(
-            uuid(),
+            id,
             self.widget
                 .connect_tracks_updated(move |_player, track_list| {
                     let mut audio_tracks: Vec<AudioTrack> = vec![];
@@ -342,6 +351,18 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
                     callback(audio_tracks);
                 }),
         );
+        id
+    }
+
+    fn disconnect_signal_handler(&mut self, id: &Uuid) {
+        match self.signal_handler_ids.remove(id) {
+            Some(signal_handler_id) => {
+                self.widget.disconnect(signal_handler_id);
+            }
+            None => {
+                println!("Signal handler not found when trying to disconnect: {id}");
+            }
+        };
     }
 }
 

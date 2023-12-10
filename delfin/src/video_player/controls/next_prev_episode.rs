@@ -3,7 +3,12 @@ use std::fmt::Display;
 use gtk::prelude::*;
 use relm4::{prelude::*, ComponentParts, ComponentSender, SimpleComponent};
 
-use crate::tr;
+use crate::{tr, utils::message_broker::ResettableMessageBroker};
+
+pub(crate) static NEXT_EPISODE_BROKER: ResettableMessageBroker<NextPrevEpisodeInput> =
+    ResettableMessageBroker::new();
+pub(crate) static PREV_EPISODE_BROKER: ResettableMessageBroker<NextPrevEpisodeInput> =
+    ResettableMessageBroker::new();
 
 #[derive(Debug)]
 pub(super) enum NextPrevEpisodeDirection {
@@ -27,14 +32,15 @@ pub(super) struct NextPrevEpisode {
 }
 
 #[derive(Debug)]
-pub(super) enum NextPrevEpisodeInput {
+pub enum NextPrevEpisodeInput {
     Show,
     Hide,
+    Play,
 }
 
 #[derive(Debug)]
 pub(super) enum NextPrevEpisodeOutput {
-    Clicked,
+    Play,
 }
 
 #[relm4::component(pub(super))]
@@ -62,7 +68,7 @@ impl SimpleComponent for NextPrevEpisode {
             )),
 
             connect_clicked[sender] => move |_| {
-                sender.output(NextPrevEpisodeOutput::Clicked).unwrap();
+                sender.input(NextPrevEpisodeInput::Play);
             },
         }
     }
@@ -80,10 +86,17 @@ impl SimpleComponent for NextPrevEpisode {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
-            NextPrevEpisodeInput::Show => self.show = true,
-            NextPrevEpisodeInput::Hide => self.show = false,
+            NextPrevEpisodeInput::Show => {
+                self.show = true;
+            }
+            NextPrevEpisodeInput::Hide => {
+                self.show = false;
+            }
+            NextPrevEpisodeInput::Play => {
+                sender.output(NextPrevEpisodeOutput::Play).unwrap();
+            }
         }
     }
 }
