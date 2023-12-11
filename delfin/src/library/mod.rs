@@ -37,8 +37,11 @@ use self::{
 pub static LIBRARY_BROKER: ResettableMessageBroker<LibraryInput> = ResettableMessageBroker::new();
 pub static LIBRARY_REFRESH_QUEUED: SharedState<bool> = SharedState::new();
 
-enum LibraryState {
+#[derive(Debug)]
+pub enum LibraryState {
     Loading,
+    Offline,
+    Error,
     Ready,
 }
 
@@ -67,6 +70,7 @@ pub enum LibraryOutput {
 #[derive(Debug)]
 pub enum LibraryCommandOutput {
     LibraryLoaded(Vec<UserView>, DisplayPreferences),
+    SetLibraryState(LibraryState),
 }
 
 #[relm4::component(pub)]
@@ -113,49 +117,86 @@ impl Component for Library {
                             set_orientation: gtk::Orientation::Vertical,
 
                             #[transition = "Crossfade"]
-                            append = if matches!(model.state, LibraryState::Loading) {
-                                gtk::Box {
-                                    set_orientation: gtk::Orientation::Vertical,
+                            append = match model.state {
+                                LibraryState::Loading => {
+                                    gtk::Box {
+                                        set_orientation: gtk::Orientation::Vertical,
 
-                                    adw::Clamp {
-                                        gtk::Box {
-                                            set_orientation: gtk::Orientation::Vertical,
-                                            set_hexpand: true,
-                                            set_vexpand: true,
-                                            set_halign: gtk::Align::Center,
-                                            set_valign: gtk::Align::Center,
-                                            set_spacing: 20,
+                                        adw::Clamp {
+                                            gtk::Box {
+                                                set_orientation: gtk::Orientation::Vertical,
+                                                set_hexpand: true,
+                                                set_vexpand: true,
+                                                set_halign: gtk::Align::Center,
+                                                set_valign: gtk::Align::Center,
+                                                set_spacing: 20,
 
-                                            gtk::Spinner {
-                                                set_spinning: true,
-                                                set_size_request: (64, 64),
+                                                gtk::Spinner {
+                                                    set_spinning: true,
+                                                    set_size_request: (64, 64),
+                                                },
+
+                                                gtk::Label {
+                                                    set_label: tr!("library-loading"),
+                                                    add_css_class: "title-2",
+                                                },
+                                            }
+                                        }
+                                    }
+                                }
+                                LibraryState::Ready => {
+                                    gtk::Box {
+                                        set_orientation: gtk::Orientation::Vertical,
+
+                                        #[local_ref]
+                                        view_stack -> adw::ViewStack {
+                                            connect_visible_child_notify[sender] => move |stack| {
+                                                if let Some(name) = stack.visible_child_name() {
+                                                    sender.input(LibraryInput::ViewStackChildVisible(name.into()));
+                                                }
                                             },
+                                            set_valign: gtk::Align::Fill,
+                                        },
 
-                                            gtk::Label {
-                                                set_label: tr!("library-loading"),
-                                                add_css_class: "title-2",
+                                        #[name = "view_switcher_bar"]
+                                        adw::ViewSwitcherBar {
+                                            set_stack: Some(&view_stack),
+                                        },
+                                    }
+                                }
+                                LibraryState::Offline => {
+                                    adw::StatusPage {
+                                        set_title: tr!("library-offline.title"),
+                                        set_description: Some(tr!("library-offline.description")),
+
+                                        set_icon_name: Some("warning"),
+                                        #[wrap(Some)]
+                                        set_child = &gtk::Button {
+                                            set_label: "Refresh",
+                                            set_halign: gtk::Align::Center,
+                                            set_css_classes: &["pill", "suggested-action"],
+                                            connect_clicked[sender] => move |_| {
+                                                sender.input(LibraryInput::Refresh);
                                             },
                                         }
                                     }
                                 }
-                            } else {
-                                gtk::Box {
-                                    set_orientation: gtk::Orientation::Vertical,
+                                LibraryState::Error => {
+                                    adw::StatusPage {
+                                        set_title: tr!("library-error.title"),
+                                        set_description: Some(tr!("library-error.description")),
 
-                                    #[local_ref]
-                                    view_stack -> adw::ViewStack {
-                                        connect_visible_child_notify[sender] => move |stack| {
-                                            if let Some(name) = stack.visible_child_name() {
-                                                sender.input(LibraryInput::ViewStackChildVisible(name.into()));
-                                            }
-                                        },
-                                        set_valign: gtk::Align::Fill,
-                                    },
-
-                                    #[name = "view_switcher_bar"]
-                                    adw::ViewSwitcherBar {
-                                        set_stack: Some(&view_stack),
-                                    },
+                                        set_icon_name: Some("warning"),
+                                        #[wrap(Some)]
+                                        set_child = &gtk::Button {
+                                            set_label: "Refresh",
+                                            set_halign: gtk::Align::Center,
+                                            set_css_classes: &["pill", "suggested-action"],
+                                            connect_clicked[sender] => move |_| {
+                                                sender.input(LibraryInput::Refresh);
+                                            },
+                                        }
+                                    }
                                 }
                             },
                         },
@@ -270,6 +311,9 @@ impl Component for Library {
             LibraryCommandOutput::LibraryLoaded(user_views, display_preferences) => {
                 self.display_user_views(widgets, &sender, user_views, display_preferences)
             }
+            LibraryCommandOutput::SetLibraryState(state) => {
+                self.state = state;
+            }
         }
 
         self.update_view(widgets, sender);
@@ -280,24 +324,29 @@ impl Library {
     fn initial_fetch(&self, sender: &relm4::ComponentSender<Self>) {
         let api_client = Arc::clone(&self.api_client);
         sender.oneshot_command(async move {
-            let (user_views, display_preferences) = tokio::join!(
-                async {
-                    api_client
-                        .get_user_views()
-                        .await
-                        .unwrap_or_else(|err| panic!("Error getting library: {}", err))
-                },
-                async {
-                    api_client
-                        // We might eventually want client-specific settings, but for
-                        // now use the Jellyfin ("emby") client settings
-                        .get_user_display_preferences("emby")
-                        .await
-                        .unwrap()
+            match api_client.ping().await {
+                Ok(_) => {}
+                Err(err) => {
+                    println!("Error pinging server: {err}");
+                    return LibraryCommandOutput::SetLibraryState(LibraryState::Offline);
                 }
-            );
+            }
 
-            LibraryCommandOutput::LibraryLoaded(user_views, display_preferences)
+            match tokio::try_join!(async { api_client.get_user_views().await }, async {
+                api_client
+                    // We might eventually want client-specific settings, but for
+                    // now use the Jellyfin ("emby") client settings
+                    .get_user_display_preferences("emby")
+                    .await
+            }) {
+                Ok((user_views, display_preferences)) => {
+                    LibraryCommandOutput::LibraryLoaded(user_views, display_preferences)
+                }
+                Err(err) => {
+                    println!("Error loading library: {err}");
+                    LibraryCommandOutput::SetLibraryState(LibraryState::Error)
+                }
+            }
         });
     }
 
