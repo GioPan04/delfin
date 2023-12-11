@@ -1,10 +1,10 @@
 pub mod display_preferences;
-pub mod info;
 pub mod intro_skipper;
 pub mod item;
 pub mod latest;
 pub mod playstate;
 pub mod shows;
+pub mod system;
 pub mod trickplay;
 pub mod user;
 pub mod views;
