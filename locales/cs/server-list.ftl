@@ -1,0 +1,12 @@
+server-list-add-server-name = Název serveru
+server-list-page-title = Servery
+server-list-empty =
+    .title = Nejsou dostupné žádné servery
+    .subtitle = Přidejte server a začněte sledovat
+server-list-add-server-submit-button = Přidat server
+server-list-add-server-button = Přidat server
+server-list-add-server-url = Adresa URL serveru
+server-list-add-server-title = Přidat server
+server-list =
+    .title = Vybrat server
+    .description = Vyberte, který server Jellyfin chcete použít
