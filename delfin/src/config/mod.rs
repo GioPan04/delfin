@@ -13,10 +13,15 @@ use self::{general::GeneralConfig, video_player_config::VideoPlayerConfig};
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Config {
     pub language: Option<LanguageIdentifier>,
+    #[serde(default)]
+    pub window: Window,
+
     pub device_id: String,
     pub servers: Vec<Server>,
+
     #[serde(default)]
     pub general: GeneralConfig,
+
     #[serde(default)]
     pub video_player: VideoPlayerConfig,
 }
@@ -25,6 +30,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             language: None,
+            window: Window::default(),
             device_id: Uuid::new_v4().to_string(),
             servers: Vec::default(),
             general: GeneralConfig::default(),
@@ -105,4 +111,21 @@ pub struct Account {
     pub username: String,
     // TODO: move to keyring
     pub access_token: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Window {
+    pub width: usize,
+    pub height: usize,
+    pub maximized: bool,
+}
+
+impl Default for Window {
+    fn default() -> Self {
+        Self {
+            width: 960,
+            height: 540,
+            maximized: false,
+        }
+    }
 }
