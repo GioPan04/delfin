@@ -1,4 +1,5 @@
 use adw::prelude::*;
+use gtk::glib;
 use jellyfin_api::types::BaseItemDto;
 use relm4::{prelude::*, MessageBroker};
 use std::{
@@ -84,8 +85,19 @@ impl Component for App {
         adw::ApplicationWindow {
             set_widget_name: MAIN_APP_WINDOW_NAME,
             set_title: Some(tr!("app-name")),
-            set_default_width: 960,
-            set_default_height: 540,
+
+            set_default_width: config.window.width as i32,
+            set_default_height: config.window.height as i32,
+            set_maximized: config.window.maximized,
+
+            connect_close_request => move |window| {
+                let mut config = CONFIG.write();
+                config.window.width = window.width() as usize;
+                config.window.height = window.height() as usize;
+                config.window.maximized = window.is_maximized();
+                config.save().expect("Failed to save window state");
+                glib::Propagation::Proceed
+            },
 
             add_controller: shift_state_controller(),
 
@@ -112,8 +124,10 @@ impl Component for App {
     ) -> relm4::ComponentParts<Self> {
         gtk::Window::set_default_icon_name(APP_ID);
 
+        let config = CONFIG.read();
+
         let style_manager = adw::StyleManager::default();
-        style_manager.set_color_scheme(CONFIG.read().general.theme().into());
+        style_manager.set_color_scheme(config.general.theme().into());
         style_manager.connect_dark_notify({
             let sender = sender.clone();
             move |style_manager| {
