@@ -66,3 +66,14 @@ prefs-vp-intro-skipper =
     .subtitle =
         Додаје дугме за премотавање шпица.
         Неопходно је да додатак <a href="{ $introSkipperUrl }">Intro Skipper</a> буде инсталиран на вашем серверу.
+prefs-vp-experimental =
+    .title = Експериментална подешавања
+    .subtitle =
+        Ова подешавања могу довести до проблема.
+        Није препоручљиво да их мењате.
+prefs-vp-jellyscrub =
+    .title = Додатак Jellyscrub
+    .subtitle =
+        Приказује сличице док је миш изнад траке за премотавање.
+        Неопходно је да буде инсталиран додатак <a href="{ $jellyscrubUrl }">Jellyscrub</a> на серверу.
+prefs-vp-hls-playback = Пуштање HLS
