@@ -14,3 +14,7 @@ library-refresh-button = Освежи библиотеку
 library-loading = Учитавам библиотеку…
 library-page-title = Библиотека
 library-page-home-title = Почетна страна
+library-series-and-episode-name = { $seriesName } - { $episodeName }
+library-media-tile-unnamed-item = Ставка без имена
+library-item-count = { $start } - { $end } од { $total }
+library-episode-name-with-season-and-episode = С{ $seasonNumber }:Е{ $episodeNumber } - { $episodeName }
