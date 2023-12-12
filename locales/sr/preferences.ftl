@@ -5,8 +5,8 @@ prefs-vp-interface = Korisnički prikaz
 prefs-general-page = Opšte
 prefs-skip-amount =
     { $seconds } { $seconds ->
-        [one] sekunda
-       *[other] sekunde
+        [one] секунда
+       *[other] секунди
     }
 prefs-window-title = Podešavanja
 prefs-vp-subs = Titl
@@ -49,3 +49,20 @@ prefs-general-theme =
     .option-light = Svetla
     .option-dark = Tamna
 prefs-vp-subs-more = Dodatne opcije za titlove
+prefs-vp-subs-style-ass-warning =
+    Ова подешавања не важе за титлове типа ASS/SSA.
+    За ASS/SSA, идите на "{ prefs-vp-subs-more }".
+prefs-vp-subs-reset =
+    .label = Ресетуј
+    .tooltip = Ресетуј подешавања за титлове
+prefs-vp-subs-more-ass-warning =
+    .title = Ово су подешавања за титлове типа ASS/SSA!
+    .subtitle =
+        Титлови ASS/SSA често садрже посебне стилове и позиционирање. Промене ових подешавања могу довести до тога да се не приказују како треба.
+
+        Ако желите да промените излгед осталих типова титлова, препоручено је да мењате подешавања у "{ prefs-vp-subs-style }".
+prefs-vp-intro-skipper =
+    .title = Додатак за прескакање шпица
+    .subtitle =
+        Додаје дугме за премотавање шпица.
+        Неопходно је да додатак <a href="{ $introSkipperUrl }">Intro Skipper</a> буде инсталиран на вашем серверу.
