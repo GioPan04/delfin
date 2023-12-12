@@ -1,0 +1,11 @@
+borgar-keyboard-shortcuts = Skróty klawiszowe
+borgar-sign-out-dialog =
+    .heading = Wyloguj
+    .body = Czy chcesz się wylogować i usunąć to konto { app-name }?
+    .response-cancel = Anuluj
+    .response-sign-out = Wyloguj
+borgar-sign-out-dialog-remove-server = Usunąć ten serwer z { app-name }
+borgar-menu-tooltip = Menu główne
+borgar-preferences = Preferencje
+borgar-about = O { app-name }
+borgar-sign-out = Wyloguj
