@@ -1,6 +1,6 @@
-media-details-refresh-button = Osveži
-media-details-unnamed-episode = Epizoda bez imena
-media-details-unnamed-item = Stavka bez imena
+media-details-refresh-button = Освежи
+media-details-unnamed-episode = Епизода без имена
+media-details-unnamed-item = Ставка без имена
 media-details-play-button =
     { $resume ->
         [true] Nastavi
@@ -12,7 +12,7 @@ media-details-play-button =
            *[false] Pusti
         } S{ $seasonNumber }:E{ $episodeNumber }
     .next-episode = Pusti sledeću epizodu
-media-details-unnamed-season = Sezona bez imena
+media-details-unnamed-season = Сезона без имена
 media-details-years = { $startYear } – { $endYear }
     .until-present = { $startYear } – Sada
     .present = Sada
