@@ -17,9 +17,9 @@ media-details-years = { $startYear } – { $endYear }
     .until-present = { $startYear } – Sada
     .present = Sada
 media-details-season-tooltip =
-    Niste odgledali { $unplayedItemCount } ove sezone { $unplayedItemCount ->
-        [jednu] epizodu
-       *[other] epizoda
+    Нисте одгледали { $unplayedItemCount }  { $unplayedItemCount ->
+        [one] епизоду
+       *[other] епизода
     }
-    .unknown-item-count = Niste odgledali sve epizode ove sezone
+    .unknown-item-count = Нисте одгледали све епизоде ове сезоне
 media-details-episode-list-empty = Nije pronađena ni jedna epizoda ove sezone.
