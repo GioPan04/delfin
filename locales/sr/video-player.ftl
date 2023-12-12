@@ -10,7 +10,7 @@ vp-subtitle-track-tooltip =
        *[false] Нема доступних титлова
     }
 vp-subtitle-track-off = Искључено
-vp-backend-gst-track-name = { $displayName } – { $title }
+vp-backend-gst-track-name = { $displayName } — { $title }
 vp-audio-track-tooltip = Звучни записи
 vp-no-subtitles-available = Нема доступних титлова.
 vp-audio-track-menu = Звучни запис
