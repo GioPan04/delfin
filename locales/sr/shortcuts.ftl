@@ -1,14 +1,14 @@
-sc-vp-volume = Podesite jačinu zvuka
-sc-vp-fullscreen = Uključi/isključi prikaz preko celog ekrana
-sc-gen-shortcuts = Prikaži prečice
+sc-vp-volume = Подешавање јачине звука
+sc-vp-fullscreen = Укључи/искључи приказ преко целог екрана
+sc-gen-shortcuts = Прикажи пречице
 # General
 # =======
-sc-gen = Opšte
-sc-vp-mute = Isključi/uključi zvuk
+sc-gen = Опште
+sc-vp-mute = Укључи/искључи звук
 # Video Player
 # ============
-sc-vp = Video plejer
-sc-vp-subtitles = Uključi/isključi titlove
-sc-vp-frame-step = Premotaj frejm po frejm
-sc-vp-seek = Premotaj
-sc-vp-play-pause = Pusti/zaustavi
+sc-vp = Видео плејер
+sc-vp-subtitles = Укључи/искључи титлове
+sc-vp-frame-step = Премотај рам по рам
+sc-vp-seek = Премотај
+sc-vp-play-pause = Пусти/заустави
