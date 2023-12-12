@@ -1,6 +1,6 @@
 prefs-vp-on-left-click-options =
-    .play-pause = Pusti/zaustavi video
-    .toggle-controls = Pokaži/sakrij kontrole
+    .play-pause = Пусти/заустави видео
+    .toggle-controls = Прикажи/сакриј контроле
 prefs-vp-interface = Кориснички приказ
 prefs-general-page = Опште
 prefs-skip-amount =
@@ -9,46 +9,46 @@ prefs-skip-amount =
        *[other] секунди
     }
 prefs-window-title = Подешавања
-prefs-vp-subs = Titl
+prefs-vp-subs = Титлови
 prefs-vp-intro-skipper-auto-skip =
-    .title = Automatski preskoči uvodne špice
-    .subtitle = Preskoči uvodne špice bez pritiskanja dugmeta
+    .title = Аутомаски прескочи уводне шпице
+    .subtitle = Прескочи уводне шпице без притискања дугмета
 prefs-general-language =
     .title = Језик
     .subtitle = Помозите са превођењем на <a href="{ $weblateUrl }">Weblate</a>
     .option-default = Подразумевано по систему ({ $languageId })
 prefs-vp-subs-position =
-    .title = Pozicija titla
-    .subtitle = Gde je 0 vrh ekrana, a 100 dno
+    .title = Положај титла
+    .subtitle = 0 је врх екрана, а 100 је дно
 prefs-vp-subs-scale =
-    .title = Veličina titlova
-    .subtitle = Faktor povećanja veličine teksta titlova
+    .title = Вечина титлова
+    .subtitle = Фактор повећања величине титлова
 prefs-vp-skip-forwards =
     .title = Колико премотати унапред
     .subtitle = Колико секунди премотати унапред одједном
 prefs-vp-on-left-click =
-    .title = Kada se pritisne taster miša
-    .subtitle = Šta će se desiti kada se pritisne taster miša
+    .title = Када се притисне тастер миша
+    .subtitle = Шта да се деси када се притисне леви тастер миша унутар видео плејера
 prefs-vp-subs-font =
-    .title = Font titla
-    .subtitle = Samo podržani fontovi su prikazani
-prefs-vp-other = Ostalo
+    .title = Фонт титлова
+    .subtitle = Приказани су само подржани фонтови
+prefs-vp-other = Остало
 prefs-vp-skip-backwards =
     .title = Колико премотати уназад
     .subtitle = Колико секунди премотати уназад одједном
-prefs-vp-subs-style = Stil titla
+prefs-vp-subs-style = Стил титлова
 prefs-vp-subs-colour =
-    .title = Boja teksta titla
+    .title = Боја текста титлова
 prefs-vp-subs-background-colour =
-    .title = Boja pozadine titla
+    .title = Боја позадине титлова
 prefs-vp-page = Видео плејер
-prefs-vp-plugins = Dodaci
+prefs-vp-plugins = Додаци
 prefs-general-theme =
     .title = Тема
     .option-default = Системски подразумевана
     .option-light = Светла
     .option-dark = Тамна
-prefs-vp-subs-more = Dodatne opcije za titlove
+prefs-vp-subs-more = Додатна подешавања за титлове
 prefs-vp-subs-style-ass-warning =
     Ова подешавања не важе за титлове типа ASS/SSA.
     За ASS/SSA, идите на "{ prefs-vp-subs-more }".
@@ -62,9 +62,9 @@ prefs-vp-subs-more-ass-warning =
 
         Ако желите да промените излгед осталих типова титлова, препоручено је да мењате подешавања у "{ prefs-vp-subs-style }".
 prefs-vp-intro-skipper =
-    .title = Додатак за прескакање шпица
+    .title = Додатак за прескакање уводних шпица (Intro Skipper)
     .subtitle =
-        Додаје дугме за премотавање шпица.
+        Додаје дугме за премотавање уводних шпица.
         Неопходно је да додатак <a href="{ $introSkipperUrl }">Intro Skipper</a> буде инсталиран на вашем серверу.
 prefs-vp-experimental =
     .title = Експериментална подешавања
@@ -77,3 +77,8 @@ prefs-vp-jellyscrub =
         Приказује сличице док је миш изнад траке за премотавање.
         Неопходно је да буде инсталиран додатак <a href="{ $jellyscrubUrl }">Jellyscrub</a> на серверу.
 prefs-vp-hls-playback = Пуштање HLS
+prefs-vp-backend =
+    .title = Библиотека за пуштање снимака
+    .subtitle = Да би промене биле примењене, морате рестартовати { app-name }.
+    .value-mpv = MPV
+    .value-gstreamer = GStreamer
