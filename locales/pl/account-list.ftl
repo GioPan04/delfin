@@ -1,1 +1,12 @@
 account-list-page-title = Konta
+account-list =
+    .title = Zaloguj się do { $serverName }
+    .description = Wybierz konto, którym chcesz się zalogować
+account-list-add-account-button = Dodaj konto
+account-list-add-account-password = Hasło
+account-list-add-account-username = Nazwa użytkownika
+account-list-add-account-title = Dodaj konto
+account-list-add-account-submit-button = Zaloguj
+account-list-empty =
+    .title = Brak dostępnych kont
+    .subtitle = Dodaj konto, by rozpocząć oglądanie
