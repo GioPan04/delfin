@@ -13,3 +13,13 @@ media-details-play-button =
         } S{ $seasonNumber }:E{ $episodeNumber }
     .next-episode = Pusti sledeću epizodu
 media-details-unnamed-season = Sezona bez imena
+media-details-years = { $startYear } – { $endYear }
+    .until-present = { $startYear } – Sada
+    .present = Sada
+media-details-season-tooltip =
+    Niste odgledali { $unplayedItemCount } ove sezone { $unplayedItemCount ->
+        [jednu] epizodu
+       *[other] epizoda
+    }
+    .unknown-item-count = Niste odgledali sve epizode ove sezone
+media-details-episode-list-empty = Nije pronađena ni jedna epizoda ove sezone.
