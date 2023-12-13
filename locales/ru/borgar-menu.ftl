@@ -1,0 +1,11 @@
+borgar-keyboard-shortcuts = Горячие клавиши
+borgar-sign-out-dialog =
+    .heading = Выйти из аккаунта
+    .body = Вы хотите выйти и удалить этот аккаунт из { app-name }?
+    .response-cancel = Отмена
+    .response-sign-out = Выйти
+borgar-sign-out-dialog-remove-server = Удалить этот сервер из { app-name }
+borgar-menu-tooltip = Главное меню
+borgar-preferences = Настройки
+borgar-about = О приложении { app-name }
+borgar-sign-out = Выйти из аккаунта
