@@ -51,7 +51,9 @@ prefs-vp-skip-backwards =
     .title = Čas k přeskočení zpátky
     .subtitle = Počet sekund k přeskočení zpět v čase
 prefs-vp-subs-style = Styl titulků
-prefs-vp-hls-playback = Přehrávání HLS
+prefs-vp-hls-playback =
+    .title = Přehrávání pomocí HLS
+    .subtitle = .title = Toto může rozbít výběr zvukové stopy a stopy titulků.
 prefs-vp-subs-colour =
     .title = Barva textu titulků
 prefs-vp-subs-background-colour =
