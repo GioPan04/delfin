@@ -165,7 +165,8 @@ impl Component for VideoPlayerPreferences {
                     },
 
                     add_row = &adw::SwitchRow {
-                        set_title: tr!("prefs-vp-hls-playback"),
+                        set_title: tr!("prefs-vp-hls-playback.title"),
+                        set_subtitle: tr!("prefs-vp-hls-playback.subtitle"),
                         set_active: video_player_config.hls_playback,
                         connect_active_notify[sender] => move |sr| {
                             sender.input(VideoPlayerPreferencesInput::HlsPlayback(sr.is_active()));

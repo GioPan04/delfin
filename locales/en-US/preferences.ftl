@@ -106,4 +106,6 @@ prefs-vp-backend =
     .subtitle = Requires restarting { app-name }.
     .value-mpv = MPV
     .value-gstreamer = GStreamer
-prefs-vp-hls-playback = HLS playback
+prefs-vp-hls-playback =
+    .title = HLS playback
+    .subtitle = This may break audio and subtitle track selection.
