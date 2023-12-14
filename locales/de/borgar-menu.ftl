@@ -1,0 +1,11 @@
+borgar-keyboard-shortcuts = Tastenkombinationen
+borgar-sign-out-dialog =
+    .heading = Abmelden
+    .body = Möchtest du dich abmelden und dieses Konto von { app-name } entfernen?
+    .response-cancel = Abbrechen
+    .response-sign-out = Abmelden
+borgar-sign-out-dialog-remove-server = Diesen Server von { app-name } entfernen
+borgar-menu-tooltip = Hauptmenü
+borgar-preferences = Einstellungen
+borgar-about = Über { app-name }
+borgar-sign-out = Abmelden
