@@ -20,6 +20,7 @@ use super::LIBRARY_BROKER;
 #[derive(Clone, Copy)]
 pub enum MediaTileDisplay {
     Cover,
+    CoverLarge,
     Wide,
 }
 
@@ -27,6 +28,7 @@ impl MediaTileDisplay {
     pub fn width(&self) -> i32 {
         match self {
             Self::Cover => 133,
+            Self::CoverLarge => 175,
             Self::Wide => 263,
         }
     }
@@ -34,6 +36,7 @@ impl MediaTileDisplay {
     pub fn height(&self) -> i32 {
         match self {
             Self::Cover => 200,
+            Self::CoverLarge => 262,
             Self::Wide => 150,
         }
     }
@@ -159,11 +162,12 @@ impl AsyncComponent for MediaTile {
             },
 
             gtk::Label {
-                set_halign: gtk::Align::Fill,
+                set_halign: gtk::Align::Center,
                 set_justify: gtk::Justification::Center,
                 set_cursor_from_name: Some("pointer"),
                 set_ellipsize: gtk::pango::EllipsizeMode::End,
                 set_max_width_chars: 1,
+                set_width_request: tile_display.width(),
                 #[watch]
                 set_markup: &get_item_label(&model.media),
 
@@ -245,7 +249,9 @@ async fn get_thumbnail(
 ) -> Option<gdk::Texture> {
     let img_url = match tile_display {
         MediaTileDisplay::Wide => api_client.get_parent_or_item_backdrop_url(media),
-        MediaTileDisplay::Cover => api_client.get_parent_or_item_thumbnail_url(media),
+        MediaTileDisplay::Cover | MediaTileDisplay::CoverLarge => {
+            api_client.get_parent_or_item_thumbnail_url(media)
+        }
     };
     let img_url = match img_url {
         Ok(img_url) => img_url,
