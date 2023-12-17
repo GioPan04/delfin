@@ -227,7 +227,7 @@ impl Collection {
         let grid = MediaGrid::builder()
             .launch(MediaGridInit {
                 media: items,
-                media_tile_display: MediaTileDisplay::Cover,
+                media_tile_display: MediaTileDisplay::CoverLarge,
                 api_client: self.api_client.clone(),
             })
             .detach();

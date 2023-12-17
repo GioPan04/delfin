@@ -20,6 +20,7 @@ use super::LIBRARY_BROKER;
 #[derive(Clone, Copy)]
 pub enum MediaTileDisplay {
     Cover,
+    CoverLarge,
     Wide,
 }
 
@@ -27,14 +28,16 @@ impl MediaTileDisplay {
     pub fn width(&self) -> i32 {
         match self {
             Self::Cover => 133,
-            Self::Wide => 263,
+            Self::CoverLarge => 175,
+            Self::Wide => 300,
         }
     }
 
     pub fn height(&self) -> i32 {
         match self {
             Self::Cover => 200,
-            Self::Wide => 150,
+            Self::CoverLarge => 262,
+            Self::Wide => 175,
         }
     }
 }
@@ -81,7 +84,7 @@ impl AsyncComponent for MediaTile {
     view! {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
-            set_halign: gtk::Align::Center,
+            set_halign: gtk::Align::Fill,
             set_valign: gtk::Align::Start,
             set_spacing: 8,
             add_css_class: "media-tile",
@@ -159,11 +162,12 @@ impl AsyncComponent for MediaTile {
             },
 
             gtk::Label {
-                set_halign: gtk::Align::Fill,
+                set_halign: gtk::Align::Center,
                 set_justify: gtk::Justification::Center,
                 set_cursor_from_name: Some("pointer"),
                 set_ellipsize: gtk::pango::EllipsizeMode::End,
                 set_max_width_chars: 1,
+                set_width_request: tile_display.width(),
                 #[watch]
                 set_markup: &get_item_label(&model.media),
 
@@ -245,7 +249,9 @@ async fn get_thumbnail(
 ) -> Option<gdk::Texture> {
     let img_url = match tile_display {
         MediaTileDisplay::Wide => api_client.get_parent_or_item_backdrop_url(media),
-        MediaTileDisplay::Cover => api_client.get_parent_or_item_thumbnail_url(media),
+        MediaTileDisplay::Cover | MediaTileDisplay::CoverLarge => {
+            api_client.get_parent_or_item_thumbnail_url(media)
+        }
     };
     let img_url = match img_url {
         Ok(img_url) => img_url,
@@ -263,5 +269,31 @@ async fn get_thumbnail(
 
     let pixbuf = gdk_pixbuf::Pixbuf::from_read(img_bytes)
         .unwrap_or_else(|_| panic!("Error creating media tile pixbuf: {:#?}", media.id));
-    Some(gdk::Texture::for_pixbuf(&pixbuf))
+
+    // TODO: merge resizing with how it's done for episode list
+
+    let resized = gdk_pixbuf::Pixbuf::new(
+        gdk_pixbuf::Colorspace::Rgb,
+        false,
+        8,
+        tile_display.width(),
+        tile_display.height(),
+    )?;
+
+    let scale = tile_display.height() as f64 / pixbuf.height() as f64;
+
+    pixbuf.scale(
+        &resized,
+        0,
+        0,
+        tile_display.width(),
+        tile_display.height(),
+        0.0,
+        0.0,
+        scale,
+        scale,
+        gdk_pixbuf::InterpType::Bilinear,
+    );
+
+    Some(gdk::Texture::for_pixbuf(&resized))
 }
