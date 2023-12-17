@@ -29,7 +29,7 @@ impl MediaTileDisplay {
         match self {
             Self::Cover => 133,
             Self::CoverLarge => 175,
-            Self::Wide => 263,
+            Self::Wide => 300,
         }
     }
 
@@ -37,7 +37,7 @@ impl MediaTileDisplay {
         match self {
             Self::Cover => 200,
             Self::CoverLarge => 262,
-            Self::Wide => 150,
+            Self::Wide => 175,
         }
     }
 }
@@ -84,7 +84,7 @@ impl AsyncComponent for MediaTile {
     view! {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
-            set_halign: gtk::Align::Center,
+            set_halign: gtk::Align::Fill,
             set_valign: gtk::Align::Start,
             set_spacing: 8,
             add_css_class: "media-tile",
@@ -269,5 +269,31 @@ async fn get_thumbnail(
 
     let pixbuf = gdk_pixbuf::Pixbuf::from_read(img_bytes)
         .unwrap_or_else(|_| panic!("Error creating media tile pixbuf: {:#?}", media.id));
-    Some(gdk::Texture::for_pixbuf(&pixbuf))
+
+    // TODO: merge resizing with how it's done for episode list
+
+    let resized = gdk_pixbuf::Pixbuf::new(
+        gdk_pixbuf::Colorspace::Rgb,
+        false,
+        8,
+        tile_display.width(),
+        tile_display.height(),
+    )?;
+
+    let scale = tile_display.height() as f64 / pixbuf.height() as f64;
+
+    pixbuf.scale(
+        &resized,
+        0,
+        0,
+        tile_display.width(),
+        tile_display.height(),
+        0.0,
+        0.0,
+        scale,
+        scale,
+        gdk_pixbuf::InterpType::Bilinear,
+    );
+
+    Some(gdk::Texture::for_pixbuf(&resized))
 }
