@@ -1,0 +1,12 @@
+server-list-add-server-name = Servernaam
+server-list-page-title = Servers
+server-list-empty =
+    .title = Er zijn geen servers beschikbaar
+    .subtitle = Voeg een server toe om te beginnen met kijken
+server-list-add-server-submit-button = Server toevoegen
+server-list-add-server-button = Server toevoegen
+server-list-add-server-url = Server-url
+server-list-add-server-title = Server toevoegen
+server-list =
+    .title = Kies een server
+    .description = Geef aan welke Jellyfin-server u wilt gebruiken
