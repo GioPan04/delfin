@@ -1,4 +1,5 @@
 library-page-title = Library
+library-search-button = Search library
 library-refresh-button = Refresh library
 library-loading = Loading your library…
 library-offline =
@@ -18,3 +19,6 @@ library-episode-name-with-season-and-episode = S{ $seasonNumber }:E{ $episodeNum
 library-series-and-episode-name = { $seriesName } - { $episodeName }
 library-media-tile-unnamed-item = Unnamed Item
 library-item-count = { $start } - { $end } of { $total }
+library-search-empty =
+    .title = Start typing to search
+    .description = Or, try one of these suggestions:

@@ -8,11 +8,15 @@ mod media_list;
 mod media_tile;
 
 use jellyfin_api::types::BaseItemDto;
-use relm4::{ComponentController, SharedState};
-use std::{collections::HashMap, sync::Arc};
+use relm4::{binding::BoolBinding, ComponentController, RelmObjectExt, SharedState};
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
 use uuid::Uuid;
 
 use adw::prelude::*;
+use gtk::glib;
 use relm4::{adw, gtk, prelude::*, Component, Controller};
 
 use crate::{
@@ -25,6 +29,10 @@ use crate::{
         models::{collection_type::CollectionType, display_preferences::DisplayPreferences},
     },
     media_details::MEDIA_DETAILS_REFRESH_QUEUED,
+    search::{
+        search_bar::SearchBar,
+        search_results::{SearchResults, SearchResultsInput},
+    },
     tr,
     utils::{constants::WIDGET_NONE, message_broker::ResettableMessageBroker},
 };
@@ -49,8 +57,12 @@ pub struct Library {
     borgar_menu: Controller<BorgarMenu>,
     api_client: Arc<ApiClient>,
     state: LibraryState,
+    search_results: Controller<SearchResults>,
     home: Option<Controller<Home>>,
     collections: HashMap<Uuid, AsyncController<Collection>>,
+    searching: BoolBinding,
+    // Store previous view stack child so we can go back from search
+    previous_stack_child: Arc<RwLock<String>>,
 }
 
 #[derive(Debug)]
@@ -60,6 +72,8 @@ pub enum LibraryInput {
     Shown,
     ViewStackChildVisible(String),
     Toast(String),
+    SearchChanged(String),
+    SearchingChanged(bool),
 }
 
 #[derive(Debug)]
@@ -91,21 +105,44 @@ impl Component for Library {
 
                 #[wrap(Some)]
                 set_child = &adw::ToolbarView {
-                    #[name = "header_bar"]
-                    add_top_bar = &adw::HeaderBar {
-                        #[name = "view_switcher"]
-                        #[wrap(Some)]
-                        set_title_widget = &adw::ViewSwitcher {
-                            set_policy: adw::ViewSwitcherPolicy::Wide,
-                            set_stack: Some(&view_stack),
+                    add_top_bar = &gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
+
+                        #[name = "header_bar"]
+                        adw::HeaderBar {
+                            #[name = "view_switcher"]
+                            #[wrap(Some)]
+                            set_title_widget = &adw::ViewSwitcher {
+                                set_policy: adw::ViewSwitcherPolicy::Wide,
+                                set_stack: Some(&view_stack),
+                            },
+
+                            pack_start = &gtk::ToggleButton {
+                                set_icon_name: "loupe",
+                                set_tooltip: tr!("library-search-button"),
+
+                                add_binding: (&model.searching, "active"),
+                            },
+
+                            pack_end = model.borgar_menu.widget(),
+                            pack_end = &gtk::Button::from_icon_name("refresh") {
+                                set_tooltip: tr!("library-refresh-button"),
+                                connect_clicked[sender] => move |_| {
+                                    sender.input(LibraryInput::Refresh);
+                                },
+                            },
                         },
 
-                        pack_end = model.borgar_menu.widget(),
-                        pack_end = &gtk::Button::from_icon_name("refresh") {
-                            set_tooltip: tr!("library-refresh-button"),
-                            connect_clicked[sender] => move |_| {
-                                sender.input(LibraryInput::Refresh);
-                            },
+                        #[name = "search"]
+                        SearchBar {
+                            set_key_capture_widget: Some(root),
+                            add_binding: (&model.searching, "searching"),
+                            connect: ("search", false, glib::clone!(@strong sender => move |values| {
+                                    let text: String = values[1].get().expect("Failed to get search text");
+                                    sender.input(LibraryInput::SearchChanged(text));
+                                    None
+                                })
+                            ),
                         },
                     },
 
@@ -148,14 +185,19 @@ impl Component for Library {
                                     gtk::Box {
                                         set_orientation: gtk::Orientation::Vertical,
 
-                                        #[local_ref]
-                                        view_stack -> adw::ViewStack {
+                                        #[name = "view_stack"]
+                                        adw::ViewStack {
+                                            set_valign: gtk::Align::Fill,
+
+                                            add_named: (model.search_results.widget(), Some("search")),
+
                                             connect_visible_child_notify[sender] => move |stack| {
                                                 if let Some(name) = stack.visible_child_name() {
                                                     sender.input(LibraryInput::ViewStackChildVisible(name.into()));
                                                 }
                                             },
-                                            set_valign: gtk::Align::Fill,
+
+
                                         },
 
                                         #[name = "view_switcher_bar"]
@@ -236,13 +278,36 @@ impl Component for Library {
                 .detach(),
             api_client: Arc::clone(&api_client),
             state: LibraryState::Loading,
+            search_results: SearchResults::builder().launch(api_client).detach(),
             home: None,
             collections: HashMap::default(),
+            searching: BoolBinding::default(),
+            previous_stack_child: Arc::new(RwLock::new("home".into())),
         };
 
-        let view_stack = adw::ViewStack::new();
+        model.searching.connect_value_notify({
+            let sender = sender.clone();
+            move |searching| {
+                sender.input(LibraryInput::SearchingChanged(searching.value()));
+            }
+        });
 
         let widgets = view_output!();
+        let view_stack = &widgets.view_stack;
+
+        view_stack.connect_visible_child_name_notify({
+            let previous_stack_child = model.previous_stack_child.clone();
+            move |view_stack| {
+                if let Some(visible_child_name) = view_stack.visible_child_name() {
+                    let visible_child_name = visible_child_name.to_string();
+                    if visible_child_name != "search"
+                        && visible_child_name != *previous_stack_child.read().unwrap()
+                    {
+                        *previous_stack_child.write().unwrap() = visible_child_name;
+                    }
+                }
+            }
+        });
 
         model.initial_fetch(&sender);
 
@@ -266,6 +331,7 @@ impl Component for Library {
                 let view_stack = &widgets.view_stack;
 
                 self.state = LibraryState::Loading;
+                self.searching.set_value(false);
 
                 // Clear the current set of pages before loading a new one
                 if let Some(home) = self.home.take() {
@@ -294,6 +360,20 @@ impl Component for Library {
             LibraryInput::Toast(message) => {
                 let toast = adw::Toast::new(&message);
                 widgets.toaster.add_toast(toast);
+            }
+            LibraryInput::SearchChanged(search_text) => {
+                self.search_results
+                    .emit(SearchResultsInput::SearchChanged(search_text));
+            }
+            LibraryInput::SearchingChanged(searching) => {
+                if searching {
+                    widgets.view_stack.set_visible_child_name("search");
+                } else {
+                    let previous_stack_child = self.previous_stack_child.read().unwrap();
+                    widgets
+                        .view_stack
+                        .set_visible_child_name(&previous_stack_child);
+                }
             }
         }
 
@@ -402,5 +482,7 @@ impl Library {
 
             self.collections.insert(view.id, collection);
         }
+
+        view_stack.set_visible_child_name("home");
     }
 }
