@@ -6,6 +6,7 @@ mod media_carousel;
 mod media_grid;
 mod media_list;
 mod media_tile;
+mod search;
 
 use jellyfin_api::types::BaseItemDto;
 use relm4::{binding::BoolBinding, ComponentController, RelmObjectExt, SharedState};
@@ -29,10 +30,6 @@ use crate::{
         models::{collection_type::CollectionType, display_preferences::DisplayPreferences},
     },
     media_details::MEDIA_DETAILS_REFRESH_QUEUED,
-    search::{
-        search_bar::SearchBar,
-        search_results::{SearchResults, SearchResultsInput},
-    },
     tr,
     utils::{constants::WIDGET_NONE, message_broker::ResettableMessageBroker},
 };
@@ -40,6 +37,10 @@ use crate::{
 use self::{
     collection::{Collection, CollectionInput},
     home::{Home, HomeInit},
+    search::{
+        search_bar::SearchBar,
+        search_results::{SearchResults, SearchResultsInput},
+    },
 };
 
 pub static LIBRARY_BROKER: ResettableMessageBroker<LibraryInput> = ResettableMessageBroker::new();
