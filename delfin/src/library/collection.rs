@@ -1,27 +1,33 @@
-use std::{cmp, sync::Arc};
+use std::sync::Arc;
 
+use anyhow::Result;
+use async_trait::async_trait;
 use gtk::prelude::*;
 use jellyfin_api::types::BaseItemDto;
 use relm4::prelude::*;
+use tokio::sync::mpsc;
 
 use crate::{
     jellyfin_api::{api::views::UserView, api_client::ApiClient},
     library::{media_grid::MediaGridInit, media_tile::MediaTileDisplay},
-    tr,
     utils::constants::PAGE_MARGIN,
 };
 
-use super::{library_container::LibraryContainer, media_grid::MediaGrid};
+use super::{
+    library_container::LibraryContainer,
+    media_fetcher::{Fetcher, FetcherCount, FetcherDisplay, FetcherState, MediaFetcher},
+    media_grid::MediaGrid,
+};
 
 const ITEMS_PER_PAGE: usize = 24;
 
 pub struct Collection {
     api_client: Arc<ApiClient>,
     view: UserView,
+    fetcher: MediaFetcher<ViewItemsFetcher>,
     grid: Option<Controller<MediaGrid>>,
-    cur_page: usize,
-    total_item_count: usize,
     loading: bool,
+    count: FetcherCount,
 }
 
 #[derive(Debug)]
@@ -29,11 +35,7 @@ pub enum CollectionInput {
     Visible,
     NextPage,
     PrevPage,
-}
-
-#[derive(Debug)]
-pub enum CollectionCommandOutput {
-    PageLoaded(usize, Vec<BaseItemDto>),
+    FetcherStateUpdate(FetcherState),
 }
 
 #[relm4::component(pub async)]
@@ -41,7 +43,7 @@ impl AsyncComponent for Collection {
     type Init = (Arc<ApiClient>, UserView);
     type Input = CollectionInput;
     type Output = ();
-    type CommandOutput = CollectionCommandOutput;
+    type CommandOutput = ();
 
     view! {
         gtk::Box {
@@ -68,11 +70,7 @@ impl AsyncComponent for Collection {
                         set_hexpand: true,
                         set_margin_end: 8,
                         #[watch]
-                        set_label: tr!("library-item-count", {
-                            "start" => model.cur_page * ITEMS_PER_PAGE + 1,
-                            "end" => cmp::min(model.total_item_count, (model.cur_page + 1) * ITEMS_PER_PAGE),
-                            "total" => model.total_item_count,
-                        }),
+                        set_label: &model.count.label(),
                     },
 
                     gtk::Box {
@@ -83,7 +81,7 @@ impl AsyncComponent for Collection {
                             set_icon_name: "left",
                             add_css_class: "flat",
                             #[watch]
-                            set_sensitive: model.cur_page > 0,
+                            set_sensitive: model.fetcher.has_prev(),
                             connect_clicked[sender] => move |_| {
                                 sender.input(CollectionInput::PrevPage);
                             },
@@ -93,7 +91,7 @@ impl AsyncComponent for Collection {
                             set_icon_name: "right",
                             add_css_class: "flat",
                             #[watch]
-                            set_sensitive: (model.cur_page as f32) < (model.total_item_count as f32 / ITEMS_PER_PAGE as f32) - 1.0,
+                            set_sensitive: model.fetcher.has_next(),
                             connect_clicked[sender] => move |_| {
                                 sender.input(CollectionInput::NextPage);
                             },
@@ -125,8 +123,7 @@ impl AsyncComponent for Collection {
                         set_orientation: gtk::Orientation::Vertical,
                         set_spacing: 32,
                         #[watch]
-                        set_visible: model.total_item_count > 0,
-
+                        set_visible: model.count.total > 0,
                     },
                 },
             },
@@ -140,13 +137,33 @@ impl AsyncComponent for Collection {
     ) -> AsyncComponentParts<Self> {
         let (api_client, view) = init;
 
+        let (tx, mut rx) = mpsc::unbounded_channel();
+
+        let fetcher = MediaFetcher::new(
+            Arc::new(ViewItemsFetcher {
+                api_client: api_client.clone(),
+                view: view.clone(),
+            }),
+            tx,
+            ITEMS_PER_PAGE,
+        );
+
+        relm4::spawn({
+            let sender = sender.clone();
+            async move {
+                while let Some(state) = rx.recv().await {
+                    sender.input(CollectionInput::FetcherStateUpdate(state));
+                }
+            }
+        });
+
         let model = Collection {
             api_client,
             view,
+            fetcher,
             grid: None,
-            cur_page: 0,
-            total_item_count: 0,
             loading: true,
+            count: FetcherCount::default(),
         };
 
         let widgets = view_output!();
@@ -166,47 +183,34 @@ impl AsyncComponent for Collection {
 
         match message {
             CollectionInput::Visible => {
-                if self.total_item_count == 0 {
-                    let (items, total_item_count) = self
-                        .api_client
-                        .get_view_items(&self.view, 0, ITEMS_PER_PAGE)
-                        .await
-                        .expect("Error getting view items");
-                    self.total_item_count = total_item_count;
-                    self.display_items(container, scroll, items);
+                if self.count.total == 0 {
+                    self.fetcher.next_page();
                 }
             }
             CollectionInput::NextPage => {
-                self.cur_page += 1;
-                self.load_cur_page(&sender);
+                self.fetcher.next_page();
             }
             CollectionInput::PrevPage => {
-                self.cur_page -= 1;
-                self.load_cur_page(&sender);
+                self.fetcher.prev_page();
             }
-        }
-
-        self.update_view(widgets, sender);
-    }
-
-    async fn update_cmd_with_view(
-        &mut self,
-        widgets: &mut Self::Widgets,
-        message: Self::CommandOutput,
-        sender: AsyncComponentSender<Self>,
-        _root: &Self::Root,
-    ) {
-        let container = &widgets.container;
-        let scroll = &widgets.scroll;
-
-        match message {
-            CollectionCommandOutput::PageLoaded(page, items) => 'msg_block: {
-                if self.cur_page != page {
-                    break 'msg_block;
+            CollectionInput::FetcherStateUpdate(state) => match state {
+                FetcherState::Empty => {
+                    self.loading = true;
                 }
-
-                self.display_items(container, scroll, items);
-            }
+                FetcherState::Loading(count) => {
+                    self.loading = true;
+                    self.count = count;
+                }
+                FetcherState::Ready(FetcherDisplay { items, count }) => {
+                    self.loading = false;
+                    self.display_items(container, scroll, items);
+                    self.count = count;
+                }
+                FetcherState::Error(err) => {
+                    // TODO
+                    println!("Error loading view: {err:#?}");
+                }
+            },
         }
 
         self.update_view(widgets, sender);
@@ -237,20 +241,18 @@ impl Collection {
         self.loading = false;
         scroll.set_vadjustment(gtk::Adjustment::NONE);
     }
+}
 
-    fn load_cur_page(&mut self, sender: &AsyncComponentSender<Self>) {
-        self.loading = true;
-        sender.oneshot_command({
-            let api_client = self.api_client.clone();
-            let view = self.view.clone();
-            let page = self.cur_page;
-            async move {
-                let (items, _) = api_client
-                    .get_view_items(&view, page * ITEMS_PER_PAGE, ITEMS_PER_PAGE)
-                    .await
-                    .expect("Error getting view items");
-                CollectionCommandOutput::PageLoaded(page, items)
-            }
-        });
+struct ViewItemsFetcher {
+    api_client: Arc<ApiClient>,
+    view: UserView,
+}
+
+#[async_trait]
+impl Fetcher for ViewItemsFetcher {
+    async fn fetch(&self, start_index: usize, limit: usize) -> Result<(Vec<BaseItemDto>, usize)> {
+        self.api_client
+            .get_view_items(&self.view, start_index, limit)
+            .await
     }
 }

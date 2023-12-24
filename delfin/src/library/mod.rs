@@ -3,6 +3,7 @@ mod home;
 mod home_sections;
 mod library_container;
 mod media_carousel;
+mod media_fetcher;
 mod media_grid;
 mod media_list;
 mod media_tile;

@@ -10,6 +10,7 @@ gst = ["dep:video_player_gst"]
 
 [dependencies]
 anyhow = "1.0.75"
+async-trait = "0.1.75"
 bytes = "1.5.0"
 chrono = "0.4.31"
 derive_builder = "0.12.0"
