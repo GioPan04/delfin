@@ -9,12 +9,13 @@ use relm4::prelude::*;
 use crate::{
     jellyfin_api::{api::views::UserView, api_client::ApiClient},
     library::media_page::{MediaPage, MediaPageInput},
+    utils::empty_component::EmptyComponent,
 };
 
-use super::media_fetcher::Fetcher;
+use super::{media_fetcher::Fetcher, media_page::MediaPageInit};
 
 pub struct Collection {
-    media_page: Controller<MediaPage<ViewItemsFetcher>>,
+    media_page: Controller<MediaPage<ViewItemsFetcher, EmptyComponent>>,
     initialized: bool,
 }
 
@@ -46,7 +47,13 @@ impl SimpleComponent for Collection {
         };
 
         let model = Collection {
-            media_page: MediaPage::builder().launch((api_client, fetcher)).detach(),
+            media_page: MediaPage::builder()
+                .launch(MediaPageInit {
+                    api_client,
+                    fetcher,
+                    empty_component: None,
+                })
+                .detach(),
             initialized: false,
         };
         root.append(model.media_page.widget());

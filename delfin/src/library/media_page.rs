@@ -17,12 +17,22 @@ use super::{
 
 const ITEMS_PER_PAGE: usize = 24;
 
-pub struct MediaPage<F: Fetcher + Send + Sync + 'static> {
+pub struct MediaPage<F: Fetcher + Send + Sync + 'static, EmptyComponent: Component>
+where
+    <EmptyComponent as Component>::Root: IsA<gtk::Widget>,
+{
     api_client: Arc<ApiClient>,
     fetcher: MediaFetcher<F>,
+    empty_component: Option<Controller<EmptyComponent>>,
     media_grid: Option<Controller<MediaGrid>>,
     state: FetcherState,
     count: Option<FetcherCount>,
+}
+
+pub struct MediaPageInit<F, C: Component> {
+    pub api_client: Arc<ApiClient>,
+    pub fetcher: F,
+    pub empty_component: Option<Controller<C>>,
 }
 
 #[derive(Debug)]
@@ -33,8 +43,12 @@ pub enum MediaPageInput {
 }
 
 #[relm4::component(pub)]
-impl<F: Fetcher + Send + Sync + 'static> Component for MediaPage<F> {
-    type Init = (Arc<ApiClient>, F);
+impl<F: Fetcher + Send + Sync + 'static, EmptyComponent: Component> Component
+    for MediaPage<F, EmptyComponent>
+where
+    <EmptyComponent as Component>::Root: IsA<gtk::Widget>,
+{
+    type Init = MediaPageInit<F, EmptyComponent>;
     type Input = MediaPageInput;
     type Output = ();
     type CommandOutput = ();
@@ -108,6 +122,22 @@ impl<F: Fetcher + Send + Sync + 'static> Component for MediaPage<F> {
                 set_height_request: 32,
             },
 
+            #[template]
+            LibraryContainer {
+                #[watch]
+                set_visible: matches!(model.state, FetcherState::Empty),
+
+                #[name = "empty_container"]
+                gtk::Box {
+                    set_widget_name: "empty_container",
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_spacing: 32,
+
+
+                    append?: model.empty_component.as_ref().map(|c| c.widget()),
+                },
+            },
+
             #[name = "scroll"]
             gtk::ScrolledWindow {
                 set_hexpand: true,
@@ -117,8 +147,9 @@ impl<F: Fetcher + Send + Sync + 'static> Component for MediaPage<F> {
 
                 #[template]
                 LibraryContainer {
-                    #[name = "container"]
+                    #[name = "media_grid_container"]
                     gtk::Box {
+                        set_widget_name: "media_grid_container",
                         set_orientation: gtk::Orientation::Vertical,
                         set_spacing: 32,
                     },
@@ -132,7 +163,11 @@ impl<F: Fetcher + Send + Sync + 'static> Component for MediaPage<F> {
         root: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let (api_client, fetcher) = init;
+        let MediaPageInit {
+            api_client,
+            fetcher,
+            empty_component,
+        } = init;
 
         let (tx, mut rx) = mpsc::unbounded_channel();
 
@@ -150,6 +185,7 @@ impl<F: Fetcher + Send + Sync + 'static> Component for MediaPage<F> {
         let model = MediaPage {
             api_client,
             fetcher,
+            empty_component,
             media_grid: None,
             state: FetcherState::Empty,
             count: None,
@@ -175,12 +211,11 @@ impl<F: Fetcher + Send + Sync + 'static> Component for MediaPage<F> {
                     _ => None,
                 };
 
-                // TODO: handle empty state
                 if let FetcherState::Ready(display) = &state {
-                    let container = &widgets.container;
+                    let media_grid_container = &widgets.media_grid_container;
 
                     if let Some(media_grid) = self.media_grid.take() {
-                        container.remove(media_grid.widget());
+                        media_grid_container.remove(media_grid.widget());
                     }
 
                     let media_grid = MediaGrid::builder()
@@ -190,7 +225,7 @@ impl<F: Fetcher + Send + Sync + 'static> Component for MediaPage<F> {
                             api_client: self.api_client.clone(),
                         })
                         .detach();
-                    container.append(media_grid.widget());
+                    media_grid_container.append(media_grid.widget());
                     self.media_grid = Some(media_grid);
 
                     widgets.scroll.set_vadjustment(gtk::Adjustment::NONE);

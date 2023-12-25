@@ -9,14 +9,14 @@ use crate::{
     jellyfin_api::api_client::ApiClient,
     library::{
         media_fetcher::Fetcher,
-        media_page::{MediaPage, MediaPageInput},
+        media_page::{MediaPage, MediaPageInit, MediaPageInput},
     },
     tr,
 };
 
 pub struct SearchResults {
     api_client: Arc<ApiClient>,
-    media_page: Option<Controller<MediaPage<SearchResultsFetcher>>>,
+    media_page: Option<Controller<MediaPage<SearchResultsFetcher, SearchResultsEmpty>>>,
 }
 
 #[derive(Debug)]
@@ -69,7 +69,11 @@ impl Component for SearchResults {
                 };
 
                 let media_page = MediaPage::builder()
-                    .launch((self.api_client.clone(), fetcher))
+                    .launch(MediaPageInit {
+                        api_client: self.api_client.clone(),
+                        fetcher,
+                        empty_component: Some(SearchResultsEmpty::builder().launch(()).detach()),
+                    })
                     .detach();
 
                 if !search_text.is_empty() {
@@ -104,5 +108,32 @@ impl Fetcher for SearchResultsFetcher {
              "searchText" => self.search_text.clone(),
         })
         .to_string()
+    }
+}
+
+struct SearchResultsEmpty;
+
+#[relm4::component]
+impl SimpleComponent for SearchResultsEmpty {
+    type Init = ();
+    type Input = ();
+    type Output = ();
+
+    view! {
+        adw::StatusPage {
+            set_icon_name: Some("loupe"),
+            set_title: tr!("library-search-empty.title"),
+            set_description: Some(tr!("library-search-empty.description")),
+        }
+    }
+
+    fn init(
+        _init: Self::Init,
+        root: &Self::Root,
+        _sender: ComponentSender<Self>,
+    ) -> ComponentParts<Self> {
+        let model = SearchResultsEmpty;
+        let widgets = view_output!();
+        ComponentParts { model, widgets }
     }
 }
