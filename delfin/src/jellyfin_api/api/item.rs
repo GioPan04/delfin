@@ -1,5 +1,7 @@
-use anyhow::Result;
-use jellyfin_api::types::{BaseItemDto, PlaybackInfoDto, PlaybackInfoResponse};
+use anyhow::{Context, Result};
+use jellyfin_api::types::{
+    BaseItemDto, BaseItemDtoQueryResult, PlaybackInfoDto, PlaybackInfoResponse,
+};
 use uuid::Uuid;
 
 use crate::{
@@ -32,6 +34,34 @@ impl ApiClient {
 
         let res = self.client.get(url).send().await?.json().await?;
         Ok(res)
+    }
+
+    pub async fn search_items(
+        &self,
+        search_term: &str,
+        start_index: usize,
+        limit: usize,
+    ) -> Result<(Vec<BaseItemDto>, usize)> {
+        let mut url = self
+            .root
+            .join(&format!("Users/{}/Items", self.account.id))?;
+        url.query_pairs_mut()
+            .append_pair("SearchTerm", search_term)
+            .append_pair("IncludeItemTypes", "Series,Movie")
+            .append_pair("SortBy", "SortName,ProductionYear")
+            .append_pair("SortOrder", "Ascending")
+            .append_pair("Recursive", "true")
+            .append_pair("StartIndex", &start_index.to_string())
+            .append_pair("Limit", &limit.to_string());
+
+        let res: BaseItemDtoQueryResult = self.client.get(url).send().await?.json().await?;
+
+        let items = res.items.context("No items returned")?;
+        let total_record_count = res
+            .total_record_count
+            .context("Total record count not returned")?;
+
+        Ok((items, total_record_count as usize))
     }
 
     pub async fn get_playback_info(&self, item_id: &Uuid) -> Result<PlaybackInfoResponse> {
