@@ -13,7 +13,7 @@ use tokio::{sync::mpsc::UnboundedSender, task::JoinHandle};
 
 use crate::tr;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct FetcherCount {
     pub start: usize,
     pub end: usize,
@@ -136,6 +136,10 @@ impl<F: Fetcher + Send + Sync + 'static> MediaFetcher<F> {
                 - 1.0
     }
 
+    pub fn title(&self) -> String {
+        self.fetcher.title()
+    }
+
     fn loading_state(&self) -> FetcherState {
         match self.cur_page {
             Some(page) => FetcherState::Loading(FetcherCount::new(
@@ -151,4 +155,6 @@ impl<F: Fetcher + Send + Sync + 'static> MediaFetcher<F> {
 #[async_trait]
 pub trait Fetcher {
     async fn fetch(&self, start_index: usize, limit: usize) -> Result<(Vec<BaseItemDto>, usize)>;
+
+    fn title(&self) -> String;
 }

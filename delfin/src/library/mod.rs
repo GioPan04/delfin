@@ -6,6 +6,7 @@ mod media_carousel;
 mod media_fetcher;
 mod media_grid;
 mod media_list;
+pub mod media_page;
 mod media_tile;
 mod search;
 
@@ -61,7 +62,7 @@ pub struct Library {
     state: LibraryState,
     search_results: Controller<SearchResults>,
     home: Option<Controller<Home>>,
-    collections: HashMap<Uuid, AsyncController<Collection>>,
+    collections: HashMap<Uuid, Controller<Collection>>,
     searching: BoolBinding,
     // Store previous view stack child so we can go back from search
     previous_stack_child: Arc<RwLock<String>>,
