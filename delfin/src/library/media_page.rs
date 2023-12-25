@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use gtk::prelude::*;
+use gtk::{pango, prelude::*};
 use relm4::{gtk, prelude::*};
 use tokio::sync::mpsc;
 
@@ -62,6 +62,7 @@ impl<F: Fetcher + Send + Sync + 'static> Component for MediaPage<F> {
                         set_label: &model.fetcher.title(),
                         add_css_class: "title-1",
                         set_margin_end: 8,
+                        set_ellipsize: pango::EllipsizeMode::End,
                     },
 
                     gtk::Label {
