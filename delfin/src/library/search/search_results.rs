@@ -1,12 +1,21 @@
 use std::sync::Arc;
 
-use relm4::prelude::*;
+use anyhow::Result;
+use async_trait::async_trait;
+use jellyfin_api::types::BaseItemDto;
+use relm4::{gtk::traits::BoxExt, prelude::*};
 
-use crate::{jellyfin_api::api_client::ApiClient, tr};
+use crate::{
+    jellyfin_api::api_client::ApiClient,
+    library::{
+        media_fetcher::Fetcher,
+        media_page::{MediaPage, MediaPageInput},
+    },
+};
 
 pub struct SearchResults {
-    _api_client: Arc<ApiClient>,
-    search_text: String,
+    api_client: Arc<ApiClient>,
+    media_page: Option<Controller<MediaPage<SearchResultsFetcher>>>,
 }
 
 #[derive(Debug)]
@@ -15,17 +24,14 @@ pub enum SearchResultsInput {
 }
 
 #[relm4::component(pub)]
-impl SimpleComponent for SearchResults {
+impl Component for SearchResults {
     type Init = Arc<ApiClient>;
     type Input = SearchResultsInput;
     type Output = ();
+    type CommandOutput = ();
 
     view! {
-        adw::StatusPage {
-            set_icon_name: Some("loupe"),
-            set_title: tr!("library-search-empty.title"),
-            set_description: Some(tr!("library-search-empty.description")),
-        }
+        gtk::Box {}
     }
 
     fn init(
@@ -34,8 +40,8 @@ impl SimpleComponent for SearchResults {
         _sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let model = SearchResults {
-            _api_client: api_client,
-            search_text: String::default(),
+            api_client,
+            media_page: None,
         };
 
         let widgets = view_output!();
@@ -43,11 +49,56 @@ impl SimpleComponent for SearchResults {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+    fn update_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        message: Self::Input,
+        sender: ComponentSender<Self>,
+        root: &Self::Root,
+    ) {
         match message {
             SearchResultsInput::SearchChanged(search_text) => {
-                self.search_text = search_text;
+                if let Some(media_page) = self.media_page.take() {
+                    root.remove(media_page.widget());
+                }
+
+                let fetcher = SearchResultsFetcher {
+                    api_client: self.api_client.clone(),
+                    search_text: search_text.clone(),
+                };
+
+                let media_page = MediaPage::builder()
+                    .launch((self.api_client.clone(), fetcher))
+                    .detach();
+
+                if !search_text.is_empty() {
+                    media_page.emit(MediaPageInput::NextPage);
+                }
+
+                root.append(media_page.widget());
+
+                self.media_page = Some(media_page);
             }
         }
+
+        self.update_view(widgets, sender);
+    }
+}
+
+struct SearchResultsFetcher {
+    api_client: Arc<ApiClient>,
+    search_text: String,
+}
+
+#[async_trait]
+impl Fetcher for SearchResultsFetcher {
+    async fn fetch(&self, start_index: usize, limit: usize) -> Result<(Vec<BaseItemDto>, usize)> {
+        self.api_client
+            .search_items(&self.search_text, start_index, limit)
+            .await
+    }
+
+    fn title(&self) -> String {
+        format!("Results for “{}”", self.search_text)
     }
 }
