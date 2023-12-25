@@ -11,6 +11,7 @@ use crate::{
         media_fetcher::Fetcher,
         media_page::{MediaPage, MediaPageInput},
     },
+    tr,
 };
 
 pub struct SearchResults {
@@ -99,6 +100,9 @@ impl Fetcher for SearchResultsFetcher {
     }
 
     fn title(&self) -> String {
-        format!("Results for “{}”", self.search_text)
+        tr!("library-search-title", {
+             "searchText" => self.search_text.clone(),
+        })
+        .to_string()
     }
 }

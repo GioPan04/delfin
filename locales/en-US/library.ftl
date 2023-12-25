@@ -22,3 +22,4 @@ library-item-count = { $start } - { $end } of { $total }
 library-search-empty =
     .title = Start typing to search
     .description = Or, try one of these suggestions:
+library-search-title = Results for “{ $searchText }”
