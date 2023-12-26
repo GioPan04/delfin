@@ -8,7 +8,7 @@ use relm4::{adw::traits::ActionRowExt, gtk::traits::BoxExt, prelude::*};
 
 use crate::{
     app::{AppInput, APP_BROKER},
-    jellyfin_api::api_client::ApiClient,
+    jellyfin_api::{api::items::GetItemsOptionsBuilder, api_client::ApiClient},
     library::{
         media_fetcher::Fetcher,
         media_page::{MediaPage, MediaPageInit, MediaPageInput},
@@ -105,7 +105,17 @@ struct SearchResultsFetcher {
 impl Fetcher for SearchResultsFetcher {
     async fn fetch(&self, start_index: usize, limit: usize) -> Result<(Vec<BaseItemDto>, usize)> {
         self.api_client
-            .search_items(&self.search_text, start_index, limit)
+            .get_items(
+                &GetItemsOptionsBuilder::default()
+                    .search_term(Some(self.search_text.clone()))
+                    .include_item_types(Some("Series,Movie".to_string()))
+                    .sort_by(Some("SortName,ProductionYear".to_string()))
+                    .sort_order(Some("Ascending".to_string()))
+                    .start_index(Some(start_index))
+                    .limit(Some(limit))
+                    .build()
+                    .unwrap(),
+            )
             .await
     }
 
@@ -163,7 +173,17 @@ impl Component for SearchResultsEmpty {
         let model = SearchResultsEmpty;
 
         sender.oneshot_command(async move {
-            match api_client.get_search_suggestions(3).await {
+            match api_client
+                .get_items(
+                    &GetItemsOptionsBuilder::default()
+                        .limit(Some(3))
+                        .sort_by(Some("Random".to_string()))
+                        .include_item_types(Some("Series,Movie".to_string()))
+                        .build()
+                        .unwrap(),
+                )
+                .await
+            {
                 Ok((items, _)) => SearchResultsEmptyCommandOutput::Suggestions(items),
                 Err(err) => {
                     println!("Error getting search suggestions: {err}");
