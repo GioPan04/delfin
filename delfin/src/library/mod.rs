@@ -70,6 +70,7 @@ pub struct Library {
 
 #[derive(Debug)]
 pub enum LibraryInput {
+    SetLibraryState(LibraryState),
     MediaSelected(BaseItemDto),
     Refresh,
     Shown,
@@ -124,6 +125,8 @@ impl Component for Library {
                                 set_icon_name: "loupe",
                                 set_tooltip: tr!("library-search-button"),
 
+                                #[watch]
+                                set_visible: matches!(model.state, LibraryState::Ready),
                                 add_binding: (&model.searching, "active"),
                             },
 
@@ -138,7 +141,6 @@ impl Component for Library {
 
                         #[name = "search"]
                         SearchBar {
-                            set_key_capture_widget: Some(root),
                             add_binding: (&model.searching, "searching"),
                             connect: ("search", false, glib::clone!(@strong sender => move |values| {
                                     let text: String = values[1].get().expect("Failed to get search text");
@@ -320,9 +322,22 @@ impl Component for Library {
         widgets: &mut Self::Widgets,
         message: Self::Input,
         sender: ComponentSender<Self>,
-        _root: &Self::Root,
+        root: &Self::Root,
     ) {
         match message {
+            LibraryInput::SetLibraryState(state) => {
+                self.state = state;
+
+                let search = &widgets.search;
+                match self.state {
+                    LibraryState::Ready => {
+                        search.set_key_capture_widget(Some(root));
+                    }
+                    _ => {
+                        search.set_key_capture_widget(None::<&gtk::Widget>);
+                    }
+                };
+            }
             LibraryInput::MediaSelected(media) => {
                 sender
                     .output(LibraryOutput::PlayVideo(Box::new(media)))
@@ -331,7 +346,7 @@ impl Component for Library {
             LibraryInput::Refresh => {
                 let view_stack = &widgets.view_stack;
 
-                self.state = LibraryState::Loading;
+                sender.input(LibraryInput::SetLibraryState(LibraryState::Loading));
                 self.searching.set_value(false);
 
                 // Clear the current set of pages before loading a new one
@@ -394,10 +409,10 @@ impl Component for Library {
     ) {
         match message {
             LibraryCommandOutput::LibraryLoaded(user_views, display_preferences) => {
-                self.display_user_views(widgets, &sender, user_views, display_preferences)
+                self.display_user_views(widgets, &sender, user_views, display_preferences);
             }
             LibraryCommandOutput::SetLibraryState(state) => {
-                self.state = state;
+                sender.input(LibraryInput::SetLibraryState(state));
             }
         }
 
@@ -438,13 +453,13 @@ impl Library {
     fn display_user_views(
         &mut self,
         widgets: &mut LibraryWidgets,
-        _sender: &relm4::ComponentSender<Self>,
+        sender: &relm4::ComponentSender<Self>,
         user_views: Vec<UserView>,
         display_preferences: DisplayPreferences,
     ) {
         let view_stack = &widgets.view_stack;
 
-        self.state = LibraryState::Ready;
+        sender.input(LibraryInput::SetLibraryState(LibraryState::Ready));
 
         let home = Home::builder()
             .launch(HomeInit {
