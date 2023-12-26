@@ -1,0 +1,11 @@
+borgar-keyboard-shortcuts = Atalhos de teclado
+borgar-sign-out-dialog =
+    .heading = Desconectar
+    .body = Você deseja se desconectar e remover essa conta do { app-name }?
+    .response-cancel = Cancelar
+    .response-sign-out = Desconectar
+borgar-sign-out-dialog-remove-server = Remover este servidor do { app-name }
+borgar-menu-tooltip = Menu Principal
+borgar-preferences = Preferências
+borgar-about = Sobre o { app-name }
+borgar-sign-out = Desconectar
