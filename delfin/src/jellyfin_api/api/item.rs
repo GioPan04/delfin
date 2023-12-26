@@ -64,6 +64,26 @@ impl ApiClient {
         Ok((items, total_record_count as usize))
     }
 
+    pub async fn get_search_suggestions(&self, limit: usize) -> Result<(Vec<BaseItemDto>, usize)> {
+        let mut url = self
+            .root
+            .join(&format!("Users/{}/Items", self.account.id))?;
+        url.query_pairs_mut()
+            .append_pair("IncludeItemTypes", "Series,Movie")
+            .append_pair("SortBy", "Random")
+            .append_pair("Recursive", "true")
+            .append_pair("Limit", &limit.to_string());
+
+        let res: BaseItemDtoQueryResult = self.client.get(url).send().await?.json().await?;
+
+        let items = res.items.context("No items returned")?;
+        let total_record_count = res
+            .total_record_count
+            .context("Total record count not returned")?;
+
+        Ok((items, total_record_count as usize))
+    }
+
     pub async fn get_playback_info(&self, item_id: &Uuid) -> Result<PlaybackInfoResponse> {
         let mut url = self
             .root

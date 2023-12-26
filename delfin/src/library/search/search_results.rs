@@ -2,10 +2,12 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use async_trait::async_trait;
+use gtk::prelude::*;
 use jellyfin_api::types::BaseItemDto;
-use relm4::{gtk::traits::BoxExt, prelude::*};
+use relm4::{adw::traits::ActionRowExt, gtk::traits::BoxExt, prelude::*};
 
 use crate::{
+    app::{AppInput, APP_BROKER},
     jellyfin_api::api_client::ApiClient,
     library::{
         media_fetcher::Fetcher,
@@ -72,7 +74,11 @@ impl Component for SearchResults {
                     .launch(MediaPageInit {
                         api_client: self.api_client.clone(),
                         fetcher,
-                        empty_component: Some(SearchResultsEmpty::builder().launch(()).detach()),
+                        empty_component: Some(
+                            SearchResultsEmpty::builder()
+                                .launch(self.api_client.clone())
+                                .detach(),
+                        ),
                     })
                     .detach();
 
@@ -113,27 +119,95 @@ impl Fetcher for SearchResultsFetcher {
 
 struct SearchResultsEmpty;
 
+#[derive(Debug)]
+enum SearchResultsEmptyCommandOutput {
+    Suggestions(Vec<BaseItemDto>),
+}
+
 #[relm4::component]
-impl SimpleComponent for SearchResultsEmpty {
-    type Init = ();
+impl Component for SearchResultsEmpty {
+    type Init = Arc<ApiClient>;
     type Input = ();
     type Output = ();
+    type CommandOutput = SearchResultsEmptyCommandOutput;
 
     view! {
-        adw::StatusPage {
-            set_icon_name: Some("loupe"),
-            set_title: tr!("library-search-empty.title"),
-            set_description: Some(tr!("library-search-empty.description")),
+        adw::Clamp {
+            set_maximum_size: 400,
+            gtk::Box {
+                set_orientation: gtk::Orientation::Vertical,
+
+                adw::StatusPage {
+                    set_icon_name: Some("loupe"),
+                    set_title: tr!("library-search-empty.title"),
+                    set_description: Some(tr!("library-search-empty.description")),
+
+                    #[name = "suggestions"]
+                    #[wrap(Some)]
+                    set_child = &gtk::ListBox {
+                        set_visible: false,
+                        add_css_class: "boxed-list",
+                        set_selection_mode: gtk::SelectionMode::None,
+                    },
+                },
+
+            },
         }
     }
 
     fn init(
-        _init: Self::Init,
+        api_client: Self::Init,
         root: &Self::Root,
-        _sender: ComponentSender<Self>,
+        sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let model = SearchResultsEmpty;
+
+        sender.oneshot_command(async move {
+            match api_client.get_search_suggestions(3).await {
+                Ok((items, _)) => SearchResultsEmptyCommandOutput::Suggestions(items),
+                Err(err) => {
+                    println!("Error getting search suggestions: {err}");
+                    SearchResultsEmptyCommandOutput::Suggestions(vec![])
+                }
+            }
+        });
+
         let widgets = view_output!();
+
         ComponentParts { model, widgets }
+    }
+
+    fn update_cmd_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        message: Self::CommandOutput,
+        sender: ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match message {
+            SearchResultsEmptyCommandOutput::Suggestions(items) if !items.is_empty() => {
+                let suggestions = &widgets.suggestions;
+
+                for item in items {
+                    if let Some(name) = &item.name {
+                        let suffix = gtk::Image::from_icon_name("go-next-symbolic");
+                        let row = adw::ActionRow::builder()
+                            .title(name)
+                            .activatable(true)
+                            .build();
+                        row.add_suffix(&suffix);
+                        row.connect_activated(move |_| {
+                            APP_BROKER.send(AppInput::ShowDetails(item.clone()));
+                        });
+                        suggestions.append(&row);
+                    }
+                }
+
+                suggestions.set_visible(true);
+            }
+            _ => {}
+        }
+
+        self.update_view(widgets, sender);
     }
 }
