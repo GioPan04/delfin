@@ -199,8 +199,6 @@ impl Component for Library {
                                                     sender.input(LibraryInput::ViewStackChildVisible(name.into()));
                                                 }
                                             },
-
-
                                         },
 
                                         #[name = "view_switcher_bar"]
@@ -358,6 +356,10 @@ impl Component for Library {
                     if let Some(collection) = self.collections.get(&id) {
                         collection.emit(CollectionInput::Visible);
                     }
+                }
+
+                if name != "search" {
+                    self.searching.set_value(false);
                 }
             }
             LibraryInput::Toast(message) => {
