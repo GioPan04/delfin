@@ -12,3 +12,4 @@ sc-vp-subtitles = Přepnout titulky
 sc-vp-frame-step = Posouvat snímek po snímku
 sc-vp-seek = Posun
 sc-vp-play-pause = Přehrát/pozastavit
+sc-gen-library = Hledat v knihovně
