@@ -2,6 +2,7 @@ pub mod bif;
 pub mod constants;
 pub mod debounce;
 pub mod device_profile;
+pub mod empty_component;
 pub mod item_name;
 pub mod main_window;
 pub mod message_broker;

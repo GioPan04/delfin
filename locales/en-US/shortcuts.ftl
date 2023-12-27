@@ -2,6 +2,7 @@
 # =======
 sc-gen = General
 sc-gen-shortcuts = Show shortcuts
+sc-gen-library = Search library
 # Video Player
 # ============
 sc-vp = Video Player

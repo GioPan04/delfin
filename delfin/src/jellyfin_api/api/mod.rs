@@ -1,6 +1,7 @@
 pub mod display_preferences;
 pub mod intro_skipper;
 pub mod item;
+pub mod items;
 pub mod latest;
 pub mod playstate;
 pub mod shows;
