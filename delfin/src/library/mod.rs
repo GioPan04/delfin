@@ -11,7 +11,11 @@ mod media_tile;
 mod search;
 
 use jellyfin_api::types::BaseItemDto;
-use relm4::{binding::BoolBinding, ComponentController, RelmObjectExt, SharedState};
+use relm4::{
+    actions::{AccelsPlus, RelmAction, RelmActionGroup},
+    binding::BoolBinding,
+    ComponentController, RelmObjectExt, SharedState,
+};
 use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
@@ -23,7 +27,7 @@ use gtk::glib;
 use relm4::{adw, gtk, prelude::*, Component, Controller};
 
 use crate::{
-    app::AppPage,
+    app::{AppInput, AppPage, APP_BROKER},
     borgar::borgar_menu::{BorgarMenu, BorgarMenuAuth},
     config::{Account, Server},
     jellyfin_api::{
@@ -33,7 +37,10 @@ use crate::{
     },
     media_details::MEDIA_DETAILS_REFRESH_QUEUED,
     tr,
-    utils::{constants::WIDGET_NONE, message_broker::ResettableMessageBroker},
+    utils::{
+        constants::WIDGET_NONE, main_window::get_main_window,
+        message_broker::ResettableMessageBroker,
+    },
 };
 
 use self::{
@@ -78,6 +85,7 @@ pub enum LibraryInput {
     Toast(String),
     SearchChanged(String),
     SearchingChanged(bool),
+    ShowSearch,
 }
 
 #[derive(Debug)]
@@ -314,6 +322,23 @@ impl Component for Library {
 
         model.initial_fetch(&sender);
 
+        let app = relm4::main_application();
+        app.set_accelerators_for_action::<SearchAction>(&["<Ctrl>f"]);
+
+        let search_action: RelmAction<SearchAction> = RelmAction::new_stateless({
+            let sender = sender.clone();
+            move |_| {
+                APP_BROKER.send(AppInput::PopToPage(AppPage::Library));
+                sender.input(LibraryInput::ShowSearch);
+            }
+        });
+
+        let mut group = RelmActionGroup::<LibraryActionGroup>::new();
+        group.add_action(search_action);
+        if let Some(main_window) = get_main_window() {
+            group.register_for_widget(main_window);
+        }
+
         relm4::ComponentParts { model, widgets }
     }
 
@@ -393,6 +418,11 @@ impl Component for Library {
                     widgets
                         .view_stack
                         .set_visible_child_name(&previous_stack_child);
+                }
+            }
+            LibraryInput::ShowSearch => {
+                if let LibraryState::Ready = self.state {
+                    self.searching.set_value(true);
                 }
             }
         }
@@ -506,3 +536,6 @@ impl Library {
         view_stack.set_visible_child_name("home");
     }
 }
+
+relm4::new_action_group!(LibraryActionGroup, "library_actions");
+relm4::new_stateless_action!(SearchAction, LibraryActionGroup, "search");
