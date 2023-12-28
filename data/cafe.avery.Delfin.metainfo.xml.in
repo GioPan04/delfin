@@ -85,6 +85,33 @@
   </provides>
 
   <releases>
+    <release version="0.3.0" date="2023-12-27">
+      <description>
+        <p>Happy holidays/new year! This release adds several new features and bugfixes.</p>
+
+        <p>Features:</p>
+        <ul>
+          <li>You can now search your library by pressing the search button, or Ctrl + F</li>
+          <li>Media playback will now be reported over MPRIS, allowing for better integration with
+            your desktop (such as controlling playback with media keys)</li>
+          <li>Idling is now inhibited during playback to prevent your system from locking the screen
+            or going to sleep</li>
+        </ul>
+
+        <p>Changes and bugfixes:</p>
+        <ul>
+          <li>Adjustments to library design</li>
+          <li>A status page is now shown if your server is offline, or if there's an error loading
+            your library</li>
+          <li>Fixed library collections sometimes showing folders and missing nested items</li>
+          <li>The previous window size will be restored when opening the app</li>
+          <li>Translation updates from Weblate - thanks to Codeberg users Fjuro, Filipe Motta,
+            Heimen Stoffels, ThetaDev, yareg, K0RR, nikolar, gloopsies, k1llo, Sergio Varela, and
+            DegradingVagabond!</li>
+        </ul>
+      </description>
+    </release>
+
     <release version="0.2.1" date="2023-12-06">
       <description>
         <p>This release contains minor changes and bug fixes.</p>
