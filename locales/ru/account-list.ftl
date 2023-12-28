@@ -1,0 +1,12 @@
+account-list =
+    .title = Войти в аккаунт на сервере { $serverName }
+    .description = Выберите, в какой аккаунт вы хотите войти
+account-list-add-account-button = Добавить аккаунт
+account-list-add-account-password = Пароль
+account-list-add-account-username = Имя пользователя
+account-list-page-title = Аккаунты
+account-list-add-account-title = Добавить аккаунт
+account-list-add-account-submit-button = Войти
+account-list-empty =
+    .title = Нет доступных аккаунтов
+    .subtitle = Войдите в аккаунт, чтобы начать смотреть

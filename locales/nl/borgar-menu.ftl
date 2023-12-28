@@ -1,0 +1,11 @@
+borgar-keyboard-shortcuts = Sneltoetsen
+borgar-sign-out-dialog =
+    .heading = Uitloggen
+    .body = Weet u zeker dat u wilt uitloggen en het account uit { app-name } wilt verwijderen?
+    .response-cancel = Annuleren
+    .response-sign-out = Uitloggen
+borgar-sign-out-dialog-remove-server = Server verwijderen uit { app-name }
+borgar-menu-tooltip = Hoofdmenu
+borgar-preferences = Voorkeuren
+borgar-about = Over { app-name }
+borgar-sign-out = Uitloggen

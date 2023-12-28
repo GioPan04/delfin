@@ -65,3 +65,20 @@ prefs-vp-intro-skipper =
     .subtitle =
         Паказвае кнопку "Прапусціць застаўку" падчас пачатку эпізода.
         Для гэтага патрабуецца ўсталяванне плагіна <a href="{ $introSkipperUrl }">Intro Skipper</a> на вашым серверы.
+prefs-vp-experimental =
+    .title = Эксперыментальныя параметры
+    .subtitle =
+        Гэтыя параметры могуць быць непрацуючымі або няпоўнымі.
+        Змяняць іх не рэкамендуецца.
+prefs-vp-jellyscrub =
+    .title = Плагін Jellyscrub
+    .subtitle =
+        Паказваць мініяцюры пры навядзенні курсора на шкалу прагрэса відэа.
+        Для гэтага патрабуецца ўсталяванне плагіна <a href="{ $jellyscrubUrl }">Jellyscrub</a> на вашым серверы.
+prefs-vp-other = Іншыя
+prefs-vp-hls-playback = Прайграванне HLS
+prefs-vp-backend =
+    .title = Бэкенд відэапрайгравальніка
+    .subtitle = Патрабуецца перазапуск { app-name }.
+    .value-mpv = MPV
+    .value-gstreamer = GStreamer

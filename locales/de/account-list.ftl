@@ -1,0 +1,12 @@
+account-list-page-title = Konten
+account-list =
+    .title = Anmeldung auf { $serverName }
+    .description = Wähle das Konto, mit dem du dich anmelden möchtest
+account-list-add-account-button = Konto hinzufügen
+account-list-add-account-password = Passwort
+account-list-add-account-username = Benutzername
+account-list-add-account-title = Konto hinzufügen
+account-list-add-account-submit-button = Anmelden
+account-list-empty =
+    .title = Keine Konten verfügbar
+    .subtitle = Füge dein Konto hinzu, um Inhalte anzusehen

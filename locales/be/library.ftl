@@ -1,7 +1,7 @@
 library-refresh-button = Абнавіць бібліятэку
 library-loading = Загрузка вашай бібліятэкі…
 library-page-title = Бібліятэка
-library-page-home-title = Дадому
+library-page-home-title = Хатняя
 library-series-and-episode-name = { $seriesName }-{ $episodeName }
 library-section-title =
     .continue-watching = Працягвайце глядзець

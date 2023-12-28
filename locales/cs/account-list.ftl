@@ -1,0 +1,12 @@
+account-list =
+    .title = Přihlásit se do { $serverName }
+    .description = Vyberte, s kterým účtem se chcete přihlásit
+account-list-add-account-button = Přidat účet
+account-list-add-account-password = Heslo
+account-list-add-account-username = Uživatelské jméno
+account-list-page-title = Účty
+account-list-add-account-title = Přidat účet
+account-list-add-account-submit-button = Přihlásit se
+account-list-empty =
+    .title = Nejsou dostupné žádné účty
+    .subtitle = Přidejte účet, abyste mohli začít sledovat

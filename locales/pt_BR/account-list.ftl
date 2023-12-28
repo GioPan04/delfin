@@ -1,0 +1,12 @@
+account-list =
+    .title = Conectar-se a { $serverName }
+    .description = Selecione com qual conta você gostaria de se conectar
+account-list-add-account-button = Adicione uma conta
+account-list-add-account-password = Senha
+account-list-add-account-username = Nome de usuário
+account-list-page-title = Contas
+account-list-add-account-title = Adicione uma conta
+account-list-add-account-submit-button = Entrar
+account-list-empty =
+    .title = Nenhuma conta disponível
+    .subtitle = Adicione uma conta para começar a assistir

@@ -1,0 +1,11 @@
+borgar-keyboard-shortcuts = Пречице на тастатури
+borgar-sign-out-dialog =
+    .heading = Одјавите се
+    .body = Да ли желите да се одјавите и да обришете налог из { app-name }?
+    .response-cancel = Одустани
+    .response-sign-out = Одјави се
+borgar-sign-out-dialog-remove-server = Обришите овај сервер из { app-name }
+borgar-menu-tooltip = Главни мени
+borgar-preferences = Подешавања
+borgar-about = О { app-name }
+borgar-sign-out = Одјавите се

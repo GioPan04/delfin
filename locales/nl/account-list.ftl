@@ -1,0 +1,12 @@
+account-list-page-title = Accounts
+account-list =
+    .title = Inloggen op { $serverName }
+    .description = Kies het account waarmee je wilt inloggen
+account-list-add-account-button = Account toevoegen
+account-list-add-account-title = Account toevoegen
+account-list-empty =
+    .title = Er zijn geen accounts beschikbaar
+    .subtitle = Voeg een account toe om te gaan kijken
+account-list-add-account-password = Wachtwoord
+account-list-add-account-username = Gebruikersnaam
+account-list-add-account-submit-button = Inloggen

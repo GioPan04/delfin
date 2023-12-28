@@ -1,0 +1,12 @@
+server-list-add-server-name = Nome do servidor
+server-list-page-title = Servidores
+server-list-empty =
+    .title = Nenhum Servidor Disponível
+    .subtitle = Adicione um servidor para começar a assistir
+server-list-add-server-submit-button = Adicionar servidor
+server-list-add-server-button = Adicione um servidor
+server-list-add-server-url = URL do servidor
+server-list-add-server-title = Adicione um servidor
+server-list =
+    .title = Selecione um servidor
+    .description = Escolha qual servidor Jellyfin você gostaria de utilizar
