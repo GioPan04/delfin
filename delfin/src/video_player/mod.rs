@@ -7,6 +7,7 @@ mod session;
 mod skip_intro;
 
 use crate::config::video_player_config::{VideoPlayerConfig, VideoPlayerOnLeftClick};
+use crate::utils::inhibit::InhibitCookie;
 use crate::video_player::keybindings::keybindings_controller;
 use std::cell::RefCell;
 use std::sync::atomic::{self, AtomicBool};
@@ -62,6 +63,7 @@ pub struct VideoPlayer {
     revealer_reveal_child: bool,
     session_playback_reporter: SessionPlaybackReporter,
     mpris_playback_reporter: Option<MprisPlaybackReporter>,
+    inhibit_cookie: Option<InhibitCookie>,
     player_state: PlayerState,
     next: Option<BaseItemDto>,
 
@@ -237,6 +239,7 @@ impl Component for VideoPlayer {
             revealer_reveal_child: show_controls,
             session_playback_reporter: SessionPlaybackReporter::default(),
             mpris_playback_reporter: None,
+            inhibit_cookie: None,
             player_state: PlayerState::Loading,
             next: None,
 
@@ -328,6 +331,8 @@ impl Component for VideoPlayer {
                 widgets.toaster.add_toast(toast);
             }
             VideoPlayerInput::PlayVideo(api_client, item) => {
+                self.inhibit_cookie = InhibitCookie::new().ok();
+
                 self.set_player_state(PlayerState::Loading);
                 self.next = None;
                 self.hiding.store(false, atomic::Ordering::Relaxed);
@@ -418,6 +423,8 @@ impl Component for VideoPlayer {
                 sender.output(VideoPlayerOutput::NavigateBack).unwrap();
             }
             VideoPlayerInput::StopPlayer => {
+                self.inhibit_cookie = None;
+
                 self.hiding.store(true, atomic::Ordering::Relaxed);
 
                 self.backend.borrow_mut().stop();

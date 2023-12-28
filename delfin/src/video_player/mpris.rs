@@ -15,6 +15,7 @@ use uuid::Uuid;
 use crate::{
     app::{AppInput, APP_BROKER},
     jellyfin_api::api_client::ApiClient,
+    meson_config::APP_ID,
     utils::item_name::ItemName,
     video_player::controls::next_prev_episode::{
         NextPrevEpisodeInput, NEXT_EPISODE_BROKER, PREV_EPISODE_BROKER,
@@ -53,7 +54,7 @@ impl MprisPlaybackReporter {
         video_player: Arc<RefCell<dyn VideoPlayerBackend>>,
     ) -> Self {
         let config = PlatformConfig {
-            dbus_name: "delfin",
+            dbus_name: APP_ID,
             display_name: "Delfin",
             // Will need to pass a window handle for Windows support
             hwnd: None,
