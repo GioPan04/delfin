@@ -91,23 +91,25 @@
 
         <p>Features:</p>
         <ul>
-          <li>You can now search your library by pressing the search button, or Ctrl + F</li>
+          <li>You can now search your library by pressing the search button, or Ctrl + F (#6)</li>
           <li>Media playback will now be reported over MPRIS, allowing for better integration with
-            your desktop (such as controlling playback with media keys)</li>
+            your desktop (such as controlling playback with media keys) (#34)</li>
           <li>Idling is now inhibited during playback to prevent your system from locking the screen
-            or going to sleep</li>
+            or going to sleep (#35)</li>
         </ul>
 
         <p>Changes and bugfixes:</p>
         <ul>
           <li>Adjustments to library design</li>
           <li>A status page is now shown if your server is offline, or if there's an error loading
-            your library</li>
-          <li>Fixed library collections sometimes showing folders and missing nested items</li>
-          <li>The previous window size will be restored when opening the app</li>
+            your library (#19)</li>
+          <li>Fixed library collections sometimes showing folders and missing nested items (#38)</li>
+          <li>The previous window size will be restored when opening the app (#24)</li>
           <li>Translation updates from Weblate - thanks to Codeberg users Fjuro, Filipe Motta,
             Heimen Stoffels, ThetaDev, yareg, K0RR, nikolar, gloopsies, k1llo, Sergio Varela, and
-            DegradingVagabond!</li>
+            DegradingVagabond! (#36)</li>
+          <li>Updated Flatpak dependencies to fix issue where some audio/video codecs did not play
+            (#23)</li>
         </ul>
       </description>
     </release>
