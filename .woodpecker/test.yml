@@ -1,0 +1,19 @@
+steps:
+  test:
+    image: archlinux:base-devel
+    commands:
+      - pacman -Syu --noconfirm
+      - pacman -S --noconfirm
+        clang
+        git
+        gtk4
+        libadwaita
+        meson
+        mold
+        mpv
+        ninja
+        rustup
+      - meson setup build
+      - cd build
+      - meson compile
+      - cargo test
