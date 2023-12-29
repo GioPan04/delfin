@@ -1,5 +1,7 @@
 use std::{
     cmp,
+    future::Future,
+    marker::Send,
     sync::{
         atomic::{AtomicUsize, Ordering},
         Arc,
@@ -7,7 +9,6 @@ use std::{
 };
 
 use anyhow::{Error, Result};
-use async_trait::async_trait;
 use jellyfin_api::types::BaseItemDto;
 use tokio::{sync::mpsc::UnboundedSender, task::JoinHandle};
 
@@ -152,9 +153,12 @@ impl<F: Fetcher + Send + Sync + 'static> MediaFetcher<F> {
     }
 }
 
-#[async_trait]
 pub trait Fetcher {
-    async fn fetch(&self, start_index: usize, limit: usize) -> Result<(Vec<BaseItemDto>, usize)>;
+    fn fetch(
+        &self,
+        start_index: usize,
+        limit: usize,
+    ) -> impl Future<Output = Result<(Vec<BaseItemDto>, usize)>> + Send;
 
     fn title(&self) -> String;
 }

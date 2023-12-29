@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use anyhow::Result;
-use async_trait::async_trait;
 use gtk::prelude::*;
 use jellyfin_api::types::BaseItemDto;
 use relm4::{adw::traits::ActionRowExt, gtk::traits::BoxExt, prelude::*};
@@ -101,7 +100,6 @@ struct SearchResultsFetcher {
     search_text: String,
 }
 
-#[async_trait]
 impl Fetcher for SearchResultsFetcher {
     async fn fetch(&self, start_index: usize, limit: usize) -> Result<(Vec<BaseItemDto>, usize)> {
         self.api_client
