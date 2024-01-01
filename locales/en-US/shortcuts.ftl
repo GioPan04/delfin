@@ -3,6 +3,7 @@
 sc-gen = General
 sc-gen-shortcuts = Show shortcuts
 sc-gen-library = Search library
+sc-gen-close-window = Close window
 # Video Player
 # ============
 sc-vp = Video Player

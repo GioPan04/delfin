@@ -42,6 +42,7 @@ impl Component for AddServerDialog {
 
     view! {
         adw::Window {
+            set_application: Some(&relm4::main_application()),
             set_title: Some(tr!("server-list-add-server-title")),
             set_modal: true,
             set_visible: true,

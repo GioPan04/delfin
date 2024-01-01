@@ -165,8 +165,9 @@ impl Component for App {
 
         let widgets = view_output!();
 
-        relm4::main_application()
-            .set_accels_for_action("win.show-help-overlay", &["<Ctrl>question"]);
+        let app = relm4::main_application();
+        app.set_accels_for_action("win.show-help-overlay", &["<Ctrl>question"]);
+        app.set_accels_for_action("window.close", &["<Ctrl>w"]);
 
         ComponentParts { model, widgets }
     }

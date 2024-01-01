@@ -23,6 +23,7 @@ impl SimpleComponent for Preferences {
 
     view! {
         adw::PreferencesWindow {
+            set_application: Some(&relm4::main_application()),
             set_visible: true,
             set_modal: true,
             set_title: Some(tr!("prefs-window-title")),
