@@ -17,8 +17,25 @@
             </child>
             <child>
               <object class="GtkShortcutsShortcut">
+                <property name="accelerator">&lt;Ctrl&gt;w</property>
+                <property name="title">{{ tr(key="sc-gen-close-window") }}</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="accelerator">&lt;Ctrl&gt;q</property>
+                <property name="title">{{ tr(key="sc-gen-quit") }}</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkShortcutsGroup">
+            <property name="title">{{ tr(key="sc-lib") }}</property>
+            <child>
+              <object class="GtkShortcutsShortcut">
                 <property name="accelerator">&lt;Ctrl&gt;f</property>
-                <property name="title">{{ tr(key="sc-gen-library") }}</property>
+                <property name="title">{{ tr(key="sc-lib-search") }}</property>
               </object>
             </child>
           </object>

@@ -1,7 +1,11 @@
 use adw::prelude::*;
 use gtk::glib;
 use jellyfin_api::types::BaseItemDto;
-use relm4::{prelude::*, MessageBroker};
+use relm4::{
+    actions::{AccelsPlus, RelmAction, RelmActionGroup},
+    prelude::*,
+    MessageBroker,
+};
 use std::{
     cell::OnceCell,
     sync::{Arc, RwLock},
@@ -165,8 +169,7 @@ impl Component for App {
 
         let widgets = view_output!();
 
-        relm4::main_application()
-            .set_accels_for_action("win.show-help-overlay", &["<Ctrl>question"]);
+        model.register_actions();
 
         ComponentParts { model, widgets }
     }
@@ -266,6 +269,24 @@ impl Component for App {
     }
 }
 
+impl App {
+    fn register_actions(&self) {
+        let app = relm4::main_application();
+        app.set_accels_for_action("win.show-help-overlay", &["<Ctrl>question"]);
+        app.set_accels_for_action("window.close", &["<Ctrl>w"]);
+
+        let mut group = RelmActionGroup::<AppActionGroup>::new();
+
+        let quit_action: RelmAction<QuitAction> = RelmAction::new_stateless(|_| {
+            relm4::main_application().quit();
+        });
+        app.set_accelerators_for_action::<QuitAction>(&["<Ctrl>q"]);
+
+        group.add_action(quit_action);
+        group.register_for_main_application();
+    }
+}
+
 fn keyboard_shortcuts() -> gtk::ShortcutsWindow {
     gtk::Builder::from_string(&tera_tr(include_str!("../../data/ui/shortcuts.ui")).unwrap())
         .object::<gtk::ShortcutsWindow>("shortcuts")
@@ -297,3 +318,6 @@ fn convert_library_output(output: LibraryOutput) -> AppInput {
         LibraryOutput::PlayVideo(media) => AppInput::PlayVideo(*media),
     }
 }
+
+relm4::new_action_group!(AppActionGroup, "app");
+relm4::new_stateless_action!(QuitAction, AppActionGroup, "quit");

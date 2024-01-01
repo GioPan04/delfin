@@ -52,6 +52,7 @@ impl Component for AddAccountDialog {
 
     view! {
         adw::Window {
+            set_application: Some(&relm4::main_application()),
             set_title: Some(tr!("account-list-add-account-title")),
             set_modal: true,
             set_visible: true,
