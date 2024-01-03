@@ -12,3 +12,9 @@ sc-vp-subtitles = Włącz napisy
 sc-vp-frame-step = Przewiń klatka po klatce
 sc-vp-seek = Przewiń
 sc-vp-play-pause = Odtwórz/Wstrzymaj
+sc-gen-close-window = Zamknij okno
+sc-lib-search = Wyszukaj w bibliotece
+sc-gen-quit = Wyjdź
+# Library
+# =======
+sc-lib = Biblioteka
