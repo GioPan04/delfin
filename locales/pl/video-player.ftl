@@ -49,3 +49,4 @@ vp-backend-mpv-track-name =
 vp-next-up-action =
     .play = Odtwórz teraz
     .hide = Ukryj
+vp-unnamed-item = Nienazwany element
