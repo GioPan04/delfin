@@ -58,26 +58,28 @@ impl ApiClient {
         Ok((items, total_record_count as usize))
     }
 
-    pub async fn get_view_items(
+    pub async fn get_collection_items(
         &self,
-        view: &UserView,
+        collection: &BaseItemDto,
         start_index: usize,
         limit: usize,
     ) -> Result<(Vec<BaseItemDto>, usize)> {
+        let collection_type = CollectionType::from(collection.collection_type.clone());
+
         let mut url = self
             .root
             .join(&format!("Users/{}/Items", self.account.id))
             .unwrap();
 
         url.query_pairs_mut()
-            .append_pair("ParentId", &view.id.to_string())
+            .append_pair("ParentId", &collection.id.unwrap().to_string())
             .append_pair("SortBy", "SortName,ProductionYear")
             .append_pair("SortOrder", "Ascending")
             .append_pair("Recursive", "true")
             .append_pair("StartIndex", &start_index.to_string())
             .append_pair("Limit", &limit.to_string());
 
-        if let Some(item_type) = view.collection_type.item_type() {
+        if let Some(item_type) = collection_type.item_type() {
             url.query_pairs_mut()
                 .append_pair("IncludeItemTypes", &item_type.to_string());
         }

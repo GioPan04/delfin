@@ -17,11 +17,7 @@ use relm4::{
     binding::BoolBinding,
     ComponentController, RelmObjectExt, SharedState,
 };
-use std::{
-    collections::HashMap,
-    sync::{Arc, RwLock},
-};
-use uuid::Uuid;
+use std::sync::{Arc, RwLock};
 
 use adw::prelude::*;
 use gtk::glib;
@@ -32,9 +28,8 @@ use crate::{
     borgar::borgar_menu::{BorgarMenu, BorgarMenuAuth},
     config::{Account, Server},
     jellyfin_api::{
-        api::views::UserView,
-        api_client::ApiClient,
-        models::{collection_type::CollectionType, display_preferences::DisplayPreferences},
+        api::views::UserView, api_client::ApiClient,
+        models::display_preferences::DisplayPreferences,
     },
     media_details::MEDIA_DETAILS_REFRESH_QUEUED,
     tr,
@@ -45,7 +40,7 @@ use crate::{
 };
 
 use self::{
-    collection::{Collection, CollectionInput},
+    collection::Collection,
     collections::Collections,
     home::{Home, HomeInit},
     search::{
@@ -71,8 +66,8 @@ pub struct Library {
     state: LibraryState,
     search_results: Controller<SearchResults>,
     home: Option<Controller<Home>>,
-    collections_view: Option<Controller<Collections>>,
-    collections: HashMap<Uuid, Controller<Collection>>,
+    collections: Option<Controller<Collections>>,
+    collection: Option<Controller<Collection>>,
     searching: BoolBinding,
     // Store previous view stack child so we can go back from search
     previous_stack_child: Arc<RwLock<String>>,
@@ -88,6 +83,7 @@ pub enum LibraryInput {
     SearchChanged(String),
     SearchingChanged(bool),
     ShowSearch,
+    CollectionSelected(BaseItemDto),
 }
 
 #[derive(Debug)]
@@ -293,8 +289,8 @@ impl Component for Library {
             state: LibraryState::Loading,
             search_results: SearchResults::builder().launch(api_client).detach(),
             home: None,
-            collections_view: None,
-            collections: HashMap::default(),
+            collections: None,
+            collection: None,
             searching: BoolBinding::default(),
             previous_stack_child: Arc::new(RwLock::new("home".into())),
         };
@@ -376,8 +372,8 @@ impl Component for Library {
                 if let Some(home) = self.home.take() {
                     view_stack.remove(home.widget());
                 }
-                for (_id, collection) in self.collections.drain() {
-                    view_stack.remove(collection.widget());
+                if let Some(collections) = self.collections.take() {
+                    view_stack.remove(collections.widget());
                 }
 
                 self.initial_fetch(&sender);
@@ -390,12 +386,6 @@ impl Component for Library {
                 *LIBRARY_REFRESH_QUEUED.write() = false;
             }
             LibraryInput::ViewStackChildVisible(name) => {
-                if let Ok(id) = Uuid::parse_str(&name) {
-                    if let Some(collection) = self.collections.get(&id) {
-                        collection.emit(CollectionInput::Visible);
-                    }
-                }
-
                 if name != "search" {
                     self.searching.set_value(false);
                 }
@@ -422,6 +412,19 @@ impl Component for Library {
                 if let LibraryState::Ready = self.state {
                     self.searching.set_value(true);
                 }
+            }
+            LibraryInput::CollectionSelected(collection) => {
+                let view_stack = &widgets.view_stack;
+                if let Some(collection) = self.collection.take() {
+                    view_stack.remove(collection.widget());
+                }
+
+                let collection = Collection::builder()
+                    .launch((self.api_client.clone(), collection))
+                    .detach();
+                view_stack.add(collection.widget());
+                view_stack.set_visible_child(collection.widget());
+                self.collection = Some(collection);
             }
         }
 
@@ -520,33 +523,6 @@ impl Library {
         );
         self.home = Some(home);
 
-        let user_views: Vec<&UserView> = user_views
-            .iter()
-            .filter(|view| {
-                matches!(
-                    view.collection_type,
-                    CollectionType::Movies | CollectionType::TvShows
-                )
-            })
-            .collect();
-
-        // TODO: handle overflow when user has too many collections
-        // For now we limit them to 5, user can change order in Jellyfin settings
-        for &view in user_views.iter().take(5) {
-            let collection = Collection::builder()
-                .launch((self.api_client.clone(), view.clone()))
-                .detach();
-
-            view_stack.add_titled_with_icon(
-                collection.widget(),
-                Some(&view.id.to_string()),
-                &view.name.clone(),
-                &view.collection_type.icon(),
-            );
-
-            self.collections.insert(view.id, collection);
-        }
-
         view_stack.set_visible_child_name("home");
 
         let collections = Collections::builder()
@@ -560,7 +536,7 @@ impl Library {
             "library",
         );
 
-        self.collections_view = Some(collections);
+        self.collections = Some(collections);
     }
 }
 

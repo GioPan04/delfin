@@ -6,27 +6,24 @@ use jellyfin_api::types::BaseItemDto;
 use relm4::prelude::*;
 
 use crate::{
-    jellyfin_api::{api::views::UserView, api_client::ApiClient},
-    library::media_page::{MediaPage, MediaPageInput},
+    jellyfin_api::api_client::ApiClient,
+    library::{
+        media_page::{MediaPage, MediaPageInput},
+        media_tile::MediaTileDisplay,
+    },
     utils::empty_component::EmptyComponent,
 };
 
 use super::{media_fetcher::Fetcher, media_page::MediaPageInit};
 
 pub struct Collection {
-    media_page: Controller<MediaPage<ViewItemsFetcher, EmptyComponent>>,
-    initialized: bool,
-}
-
-#[derive(Debug)]
-pub enum CollectionInput {
-    Visible,
+    media_page: Controller<MediaPage<CollectionItemsFetcher, EmptyComponent>>,
 }
 
 #[relm4::component(pub)]
 impl SimpleComponent for Collection {
-    type Init = (Arc<ApiClient>, UserView);
-    type Input = CollectionInput;
+    type Init = (Arc<ApiClient>, BaseItemDto);
+    type Input = ();
     type Output = ();
 
     view! {
@@ -38,11 +35,11 @@ impl SimpleComponent for Collection {
         root: &Self::Root,
         _sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let (api_client, view) = init;
+        let (api_client, collection) = init;
 
-        let fetcher = ViewItemsFetcher {
+        let fetcher = CollectionItemsFetcher {
             api_client: api_client.clone(),
-            view,
+            collection,
         };
 
         let model = Collection {
@@ -51,42 +48,37 @@ impl SimpleComponent for Collection {
                     api_client,
                     fetcher,
                     empty_component: None,
-                    media_tile_display: None,
+                    media_tile_display: Some(MediaTileDisplay::CoverLarge),
                 })
                 .detach(),
-            initialized: false,
         };
         root.append(model.media_page.widget());
+
+        model.media_page.emit(MediaPageInput::NextPage);
 
         let widgets = view_output!();
 
         ComponentParts { model, widgets }
     }
-
-    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
-        match message {
-            CollectionInput::Visible if !self.initialized => {
-                self.initialized = true;
-                self.media_page.emit(MediaPageInput::NextPage);
-            }
-            _ => {}
-        }
-    }
 }
 
-struct ViewItemsFetcher {
+struct CollectionItemsFetcher {
     api_client: Arc<ApiClient>,
-    view: UserView,
+    collection: BaseItemDto,
 }
 
-impl Fetcher for ViewItemsFetcher {
+impl Fetcher for CollectionItemsFetcher {
     async fn fetch(&self, start_index: usize, limit: usize) -> Result<(Vec<BaseItemDto>, usize)> {
         self.api_client
-            .get_view_items(&self.view, start_index, limit)
+            .get_collection_items(&self.collection, start_index, limit)
             .await
     }
 
     fn title(&self) -> String {
-        self.view.name.clone()
+        self.collection
+            .name
+            .as_ref()
+            .unwrap_or(&String::default())
+            .clone()
     }
 }
