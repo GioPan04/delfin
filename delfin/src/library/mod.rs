@@ -81,7 +81,6 @@ pub struct Library {
 #[derive(Debug)]
 pub enum LibraryInput {
     SetLibraryState(LibraryState),
-    MediaSelected(BaseItemDto),
     Refresh,
     Shown,
     ViewStackChildVisible(String),
@@ -366,11 +365,6 @@ impl Component for Library {
                         search.set_key_capture_widget(None::<&gtk::Widget>);
                     }
                 };
-            }
-            LibraryInput::MediaSelected(media) => {
-                sender
-                    .output(LibraryOutput::PlayVideo(Box::new(media)))
-                    .unwrap();
             }
             LibraryInput::Refresh => {
                 let view_stack = &widgets.view_stack;
