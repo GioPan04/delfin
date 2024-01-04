@@ -222,7 +222,7 @@ impl AsyncComponent for MediaTile {
             MediaTileInput::Play => {
                 match self.media.type_ {
                     Some(BaseItemKind::CollectionFolder) => {
-                        LIBRARY_BROKER.send(LibraryInput::CollectionSelected(self.media.clone()));
+                        APP_BROKER.send(AppInput::ShowCollection(self.media.clone()));
                     }
                     _ => {
                         match get_next_playable_media(self.api_client.clone(), self.media.clone())
@@ -234,21 +234,14 @@ impl AsyncComponent for MediaTile {
                                 if let Some(name) = self.media.name.as_ref() {
                                     message += &format!(" for {name}");
                                 }
-                                LIBRARY_BROKER.send(super::LibraryInput::Toast(message))
+                                LIBRARY_BROKER.send(LibraryInput::Toast(message))
                             }
                         };
                     }
                 };
             }
             MediaTileInput::ShowDetails => {
-                match self.media.type_ {
-                    Some(BaseItemKind::CollectionFolder) => {
-                        LIBRARY_BROKER.send(LibraryInput::CollectionSelected(self.media.clone()));
-                    }
-                    _ => {
-                        APP_BROKER.send(AppInput::ShowDetails(self.media.clone()));
-                    }
-                };
+                APP_BROKER.send(AppInput::ShowDetails(self.media.clone()));
             }
         }
     }

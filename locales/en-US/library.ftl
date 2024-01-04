@@ -23,3 +23,5 @@ library-search-empty =
     .title = Start typing to search
     .description = Or, try one of these suggestions:
 library-search-title = Results for “{ $searchText }”
+library-unnamed-collection = Unnamed Collection
+library-collection-refresh-button = Refresh collection

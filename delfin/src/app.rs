@@ -16,7 +16,7 @@ use crate::{
     config,
     globals::CONFIG,
     jellyfin_api::api_client::ApiClient,
-    library::{Library, LibraryOutput, LIBRARY_BROKER},
+    library::{collection::Collection, Library, LibraryOutput, LIBRARY_BROKER},
     locales::tera_tr,
     media_details::MediaDetails,
     meson_config::APP_ID,
@@ -60,6 +60,7 @@ pub struct App {
     account_list: Controller<AccountList>,
     library: Option<Controller<Library>>,
     media_details: Option<Controller<MediaDetails>>,
+    collection: Option<Controller<Collection>>,
     video_player: OnceCell<Controller<VideoPlayer>>,
     server: Option<config::Server>,
     account: Option<config::Account>,
@@ -73,6 +74,7 @@ pub enum AppInput {
     ServerSelected(config::Server),
     AccountSelected(config::Server, config::Account),
     ShowDetails(BaseItemDto),
+    ShowCollection(BaseItemDto),
     PlayVideo(BaseItemDto),
     SignOut,
     SetThemeDark(bool),
@@ -162,6 +164,7 @@ impl Component for App {
             account_list,
             library: None,
             media_details: None,
+            collection: None,
             video_player: OnceCell::new(),
             server: None,
             account: None,
@@ -226,6 +229,22 @@ impl Component for App {
                         .detach();
                     navigation.push(media_details.widget());
                     self.media_details = Some(media_details);
+                }
+            }
+            AppInput::ShowCollection(collection) => {
+                if let (Some(api_client), Some(server), Some(account)) =
+                    (&self.api_client, &self.server, &self.account)
+                {
+                    let collection = Collection::builder()
+                        .launch((
+                            api_client.clone(),
+                            collection,
+                            server.clone(),
+                            account.clone(),
+                        ))
+                        .detach();
+                    navigation.push(collection.widget());
+                    self.collection = Some(collection);
                 }
             }
             AppInput::PlayVideo(item) => {

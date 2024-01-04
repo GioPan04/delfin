@@ -1,4 +1,4 @@
-mod collection;
+pub mod collection;
 pub mod collections;
 mod home;
 mod home_sections;
@@ -40,7 +40,6 @@ use crate::{
 };
 
 use self::{
-    collection::Collection,
     collections::Collections,
     home::{Home, HomeInit},
     search::{
@@ -67,7 +66,6 @@ pub struct Library {
     search_results: Controller<SearchResults>,
     home: Option<Controller<Home>>,
     collections: Option<Controller<Collections>>,
-    collection: Option<Controller<Collection>>,
     searching: BoolBinding,
     // Store previous view stack child so we can go back from search
     previous_stack_child: Arc<RwLock<String>>,
@@ -83,7 +81,6 @@ pub enum LibraryInput {
     SearchChanged(String),
     SearchingChanged(bool),
     ShowSearch,
-    CollectionSelected(BaseItemDto),
 }
 
 #[derive(Debug)]
@@ -290,7 +287,6 @@ impl Component for Library {
             search_results: SearchResults::builder().launch(api_client).detach(),
             home: None,
             collections: None,
-            collection: None,
             searching: BoolBinding::default(),
             previous_stack_child: Arc::new(RwLock::new("home".into())),
         };
@@ -412,19 +408,6 @@ impl Component for Library {
                 if let LibraryState::Ready = self.state {
                     self.searching.set_value(true);
                 }
-            }
-            LibraryInput::CollectionSelected(collection) => {
-                let view_stack = &widgets.view_stack;
-                if let Some(collection) = self.collection.take() {
-                    view_stack.remove(collection.widget());
-                }
-
-                let collection = Collection::builder()
-                    .launch((self.api_client.clone(), collection))
-                    .detach();
-                view_stack.add(collection.widget());
-                view_stack.set_visible_child(collection.widget());
-                self.collection = Some(collection);
             }
         }
 
