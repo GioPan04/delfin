@@ -28,18 +28,34 @@ impl TryFrom<BaseItemDto> for UserView {
 }
 
 impl ApiClient {
-    pub async fn get_user_views(&self) -> Result<Vec<UserView>> {
-        let url = self
+    pub async fn get_user_views(
+        &self,
+        start_index: Option<usize>,
+        limit: Option<usize>,
+    ) -> Result<(Vec<BaseItemDto>, usize)> {
+        let mut url = self
             .root
             .join(&format!("Users/{}/Views", self.account.id))
             .unwrap();
+
+        {
+            let mut query_pairs = url.query_pairs_mut();
+            if let Some(start_index) = start_index {
+                query_pairs.append_pair("StartIndex", &start_index.to_string());
+            }
+            if let Some(limit) = limit {
+                query_pairs.append_pair("Limit", &limit.to_string());
+            }
+        }
+
         let res: BaseItemDtoQueryResult = self.client.get(url).send().await?.json().await?;
 
-        let items = res.items.ok_or(anyhow::anyhow!("No items returned"))?;
-        items
-            .iter()
-            .map(|item| UserView::try_from(item.clone()))
-            .collect()
+        let items = res.items.context("No items returned")?;
+        let total_record_count = res
+            .total_record_count
+            .context("Total record count not returned")?;
+
+        Ok((items, total_record_count as usize))
     }
 
     pub async fn get_view_items(

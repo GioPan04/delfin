@@ -78,6 +78,7 @@ impl Component for SearchResults {
                                 .launch(self.api_client.clone())
                                 .detach(),
                         ),
+                        media_tile_display: None,
                     })
                     .detach();
 

@@ -1,4 +1,5 @@
 mod collection;
+pub mod collections;
 mod home;
 mod home_sections;
 mod library_container;
@@ -45,6 +46,7 @@ use crate::{
 
 use self::{
     collection::{Collection, CollectionInput},
+    collections::Collections,
     home::{Home, HomeInit},
     search::{
         search_bar::SearchBar,
@@ -69,6 +71,7 @@ pub struct Library {
     state: LibraryState,
     search_results: Controller<SearchResults>,
     home: Option<Controller<Home>>,
+    collections_view: Option<Controller<Collections>>,
     collections: HashMap<Uuid, Controller<Collection>>,
     searching: BoolBinding,
     // Store previous view stack child so we can go back from search
@@ -291,6 +294,7 @@ impl Component for Library {
             state: LibraryState::Loading,
             search_results: SearchResults::builder().launch(api_client).detach(),
             home: None,
+            collections_view: None,
             collections: HashMap::default(),
             searching: BoolBinding::default(),
             previous_stack_child: Arc::new(RwLock::new("home".into())),
@@ -462,13 +466,29 @@ impl Library {
                 }
             }
 
-            match tokio::try_join!(async { api_client.get_user_views().await }, async {
-                api_client
-                    // We might eventually want client-specific settings, but for
-                    // now use the Jellyfin ("emby") client settings
-                    .get_user_display_preferences("emby")
-                    .await
-            }) {
+            match tokio::try_join!(
+                async {
+                    api_client
+                        .get_user_views(None, None)
+                        .await
+                        .map(|(items, _)| {
+                            items
+                                .iter()
+                                .map(|item| {
+                                    UserView::try_from(item.clone())
+                                        .expect("Failed to parse user view")
+                                })
+                                .collect()
+                        })
+                },
+                async {
+                    api_client
+                        // We might eventually want client-specific settings, but for
+                        // now use the Jellyfin ("emby") client settings
+                        .get_user_display_preferences("emby")
+                        .await
+                }
+            ) {
                 Ok((user_views, display_preferences)) => {
                     LibraryCommandOutput::LibraryLoaded(user_views, display_preferences)
                 }
@@ -534,6 +554,19 @@ impl Library {
         }
 
         view_stack.set_visible_child_name("home");
+
+        let collections = Collections::builder()
+            .launch(self.api_client.clone())
+            .detach();
+
+        view_stack.add_titled_with_icon(
+            collections.widget(),
+            Some("collections"),
+            "Collections",
+            "library",
+        );
+
+        self.collections_view = Some(collections);
     }
 }
 

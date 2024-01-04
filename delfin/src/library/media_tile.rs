@@ -1,7 +1,7 @@
 use std::{collections::VecDeque, sync::Arc};
 
 use gdk::Texture;
-use jellyfin_api::types::BaseItemDto;
+use jellyfin_api::types::{BaseItemDto, BaseItemKind};
 use relm4::{
     gtk::{self, gdk, gdk_pixbuf, glib::markup_escape_text, prelude::*},
     prelude::{AsyncComponent, AsyncComponentParts},
@@ -22,6 +22,7 @@ pub enum MediaTileDisplay {
     Cover,
     CoverLarge,
     Wide,
+    CollectionWide,
 }
 
 impl MediaTileDisplay {
@@ -30,6 +31,7 @@ impl MediaTileDisplay {
             Self::Cover => 133,
             Self::CoverLarge => 175,
             Self::Wide => 300,
+            Self::CollectionWide => 300,
         }
     }
 
@@ -38,6 +40,7 @@ impl MediaTileDisplay {
             Self::Cover => 200,
             Self::CoverLarge => 262,
             Self::Wide => 175,
+            Self::CollectionWide => 175,
         }
     }
 }
@@ -107,8 +110,10 @@ impl AsyncComponent for MediaTile {
                 },
 
                 add_controller = gtk::EventControllerMotion {
-                    connect_enter[root] => move |_, _, _| {
-                        root.add_css_class("hover");
+                    connect_enter[root, media] => move |_, _, _| {
+                        if !matches!(media.type_, Some(BaseItemKind::CollectionFolder)) {
+                            root.add_css_class("hover");
+                        }
                     },
                     connect_leave[root] => move |_| {
                         root.remove_css_class("hover");
@@ -214,14 +219,23 @@ impl AsyncComponent for MediaTile {
     ) {
         match message {
             MediaTileInput::Play => {
-                match get_next_playable_media(self.api_client.clone(), self.media.clone()).await {
-                    Some(media) => APP_BROKER.send(AppInput::PlayVideo(media)),
+                match self.media.type_ {
+                    Some(BaseItemKind::CollectionFolder) => {
+                        todo!();
+                    }
                     _ => {
-                        let mut message = "No playable media found".to_string();
-                        if let Some(name) = self.media.name.as_ref() {
-                            message += &format!(" for {name}");
-                        }
-                        LIBRARY_BROKER.send(super::LibraryInput::Toast(message))
+                        match get_next_playable_media(self.api_client.clone(), self.media.clone())
+                            .await
+                        {
+                            Some(media) => APP_BROKER.send(AppInput::PlayVideo(media)),
+                            _ => {
+                                let mut message = "No playable media found".to_string();
+                                if let Some(name) = self.media.name.as_ref() {
+                                    message += &format!(" for {name}");
+                                }
+                                LIBRARY_BROKER.send(super::LibraryInput::Toast(message))
+                            }
+                        };
                     }
                 };
             }
@@ -252,6 +266,7 @@ async fn get_thumbnail(
         MediaTileDisplay::Cover | MediaTileDisplay::CoverLarge => {
             api_client.get_parent_or_item_thumbnail_url(media)
         }
+        MediaTileDisplay::CollectionWide => api_client.get_collection_thumbnail_url(media),
     };
     let img_url = match img_url {
         Ok(img_url) => img_url,
@@ -274,7 +289,7 @@ async fn get_thumbnail(
 
     let resized = gdk_pixbuf::Pixbuf::new(
         gdk_pixbuf::Colorspace::Rgb,
-        false,
+        true,
         8,
         tile_display.width(),
         tile_display.height(),

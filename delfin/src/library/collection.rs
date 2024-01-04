@@ -51,6 +51,7 @@ impl SimpleComponent for Collection {
                     api_client,
                     fetcher,
                     empty_component: None,
+                    media_tile_display: None,
                 })
                 .detach(),
             initialized: false,
