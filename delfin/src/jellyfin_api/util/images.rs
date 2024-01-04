@@ -42,8 +42,8 @@ impl ApiClient {
 
         let mut url = self.root.join(&format!("Items/{item_id}/Images/Primary"))?;
         url.query_pairs_mut()
-            .append_pair("fillWidth", "350")
-            .append_pair("quality", "96");
+            .append_pair("fillWidth", "700")
+            .append_pair("quality", "100");
 
         Ok(url.to_string())
     }
