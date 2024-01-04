@@ -6,7 +6,7 @@ use jellyfin_api::types::BaseItemDto;
 use relm4::prelude::*;
 
 use crate::{
-    jellyfin_api::api_client::ApiClient,
+    jellyfin_api::{api_client::ApiClient, models::collection_type::CollectionType},
     library::{
         media_page::{MediaPageInit, MediaPageInput},
         media_tile::MediaTileDisplay,
@@ -66,9 +66,21 @@ struct CollectionsFetcher {
 
 impl Fetcher for CollectionsFetcher {
     async fn fetch(&self, start_index: usize, limit: usize) -> Result<(Vec<BaseItemDto>, usize)> {
-        self.api_client
+        let (collections, total) = self
+            .api_client
             .get_user_views(Some(start_index), Some(limit))
-            .await
+            .await?;
+        let collections = collections
+            .into_iter()
+            .filter(|collection| {
+                matches!(
+                    collection.collection_type.clone().into(),
+                    CollectionType::Movies | CollectionType::TvShows
+                )
+            })
+            .collect();
+        // TODO: numbering will be off
+        Ok((collections, total))
     }
 
     fn title(&self) -> String {
