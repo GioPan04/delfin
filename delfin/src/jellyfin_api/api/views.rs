@@ -1,38 +1,17 @@
-use anyhow::{bail, Context, Ok, Result};
+use anyhow::{Context, Ok, Result};
 use jellyfin_api::types::{BaseItemDto, BaseItemDtoQueryResult};
-use uuid::Uuid;
 
-use crate::jellyfin_api::{api_client::ApiClient, models::collection_type::CollectionType};
-
-#[derive(Clone, Debug)]
-pub struct UserView {
-    pub id: Uuid,
-    pub name: String,
-    pub collection_type: CollectionType,
-}
-
-impl TryFrom<BaseItemDto> for UserView {
-    type Error = anyhow::Error;
-
-    fn try_from(value: BaseItemDto) -> std::result::Result<Self, Self::Error> {
-        if let (Some(id), Some(name)) = (value.id, value.name.clone()) {
-            return Ok(Self {
-                id,
-                name,
-                collection_type: value.collection_type.into(),
-            });
-        }
-
-        bail!("UserView was missing required properties: {value:#?}");
-    }
-}
+use crate::jellyfin_api::{
+    api_client::ApiClient,
+    models::{collection_type::CollectionType, user_view::UserView},
+};
 
 impl ApiClient {
     pub async fn get_user_views(
         &self,
         start_index: Option<usize>,
         limit: Option<usize>,
-    ) -> Result<(Vec<BaseItemDto>, usize)> {
+    ) -> Result<(Vec<UserView>, usize)> {
         let mut url = self
             .root
             .join(&format!("Users/{}/Views", self.account.id))
@@ -55,7 +34,10 @@ impl ApiClient {
             .total_record_count
             .context("Total record count not returned")?;
 
-        Ok((items, total_record_count as usize))
+        let items: Result<Vec<UserView>, _> =
+            items.into_iter().map(|item| item.try_into()).collect();
+
+        Ok((items?, total_record_count as usize))
     }
 
     pub async fn get_collection_items(

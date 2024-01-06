@@ -74,10 +74,11 @@ impl Fetcher for CollectionsFetcher {
             .into_iter()
             .filter(|collection| {
                 matches!(
-                    collection.collection_type.clone().into(),
+                    collection.collection_type(),
                     CollectionType::Movies | CollectionType::TvShows
                 )
             })
+            .map(|view| view.into())
             .collect();
         // TODO: numbering will be off
         Ok((collections, total))

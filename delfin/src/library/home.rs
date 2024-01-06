@@ -5,9 +5,9 @@ use relm4::{
     gtk, prelude::*, Component, ComponentParts, ComponentSender, Controller, SimpleComponent,
 };
 
-use crate::jellyfin_api::api::views::UserView;
 use crate::jellyfin_api::api_client::ApiClient;
 use crate::jellyfin_api::models::display_preferences::{DisplayPreferences, HomeSection};
+use crate::jellyfin_api::models::user_view::UserView;
 
 use super::home_sections::continue_watching::HomeSectionContinueWatching;
 use super::home_sections::latest::HomeSectionLatest;

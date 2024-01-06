@@ -28,8 +28,8 @@ use crate::{
     borgar::borgar_menu::{BorgarMenu, BorgarMenuAuth},
     config::{Account, Server},
     jellyfin_api::{
-        api::views::UserView, api_client::ApiClient,
-        models::display_preferences::DisplayPreferences,
+        api_client::ApiClient,
+        models::{display_preferences::DisplayPreferences, user_view::UserView},
     },
     media_details::MEDIA_DETAILS_REFRESH_QUEUED,
     tr,
@@ -447,20 +447,7 @@ impl Library {
             }
 
             match tokio::try_join!(
-                async {
-                    api_client
-                        .get_user_views(None, None)
-                        .await
-                        .map(|(items, _)| {
-                            items
-                                .iter()
-                                .map(|item| {
-                                    UserView::try_from(item.clone())
-                                        .expect("Failed to parse user view")
-                                })
-                                .collect()
-                        })
-                },
+                async { api_client.get_user_views(None, None).await },
                 async {
                     api_client
                         // We might eventually want client-specific settings, but for
@@ -470,7 +457,7 @@ impl Library {
                 }
             ) {
                 Ok((user_views, display_preferences)) => {
-                    LibraryCommandOutput::LibraryLoaded(user_views, display_preferences)
+                    LibraryCommandOutput::LibraryLoaded(user_views.0, display_preferences)
                 }
                 Err(err) => {
                     println!("Error loading library: {err}");
