@@ -241,7 +241,14 @@ impl AsyncComponent for MediaTile {
                 };
             }
             MediaTileInput::ShowDetails => {
-                APP_BROKER.send(AppInput::ShowDetails(self.media.clone()));
+                match self.media.type_ {
+                    Some(BaseItemKind::CollectionFolder) => {
+                        APP_BROKER.send(AppInput::ShowCollection(self.media.clone()));
+                    }
+                    _ => {
+                        APP_BROKER.send(AppInput::ShowDetails(self.media.clone()));
+                    }
+                };
             }
         }
     }
