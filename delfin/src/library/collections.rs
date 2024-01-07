@@ -6,7 +6,7 @@ use jellyfin_api::types::BaseItemDto;
 use relm4::prelude::*;
 
 use crate::{
-    jellyfin_api::{api_client::ApiClient, models::collection_type::CollectionType},
+    jellyfin_api::{api_client::ApiClient, models::user_view::FilterSupported},
     library::{
         media_page::{MediaPageInit, MediaPageInput},
         media_tile::MediaTileDisplay,
@@ -71,13 +71,8 @@ impl Fetcher for CollectionsFetcher {
             .get_user_views(Some(start_index), Some(limit))
             .await?;
         let collections = collections
+            .filter_supported()
             .into_iter()
-            .filter(|collection| {
-                matches!(
-                    collection.collection_type(),
-                    CollectionType::Movies | CollectionType::TvShows
-                )
-            })
             .map(|view| view.into())
             .collect();
         // TODO: numbering will be off

@@ -42,3 +42,20 @@ impl From<UserView> for BaseItemDto {
         val.0
     }
 }
+
+pub trait FilterSupported {
+    fn filter_supported(self) -> Self;
+}
+
+impl FilterSupported for Vec<UserView> {
+    fn filter_supported(self) -> Self {
+        self.into_iter()
+            .filter(|view| {
+                matches!(
+                    view.collection_type(),
+                    CollectionType::Movies | CollectionType::TvShows
+                )
+            })
+            .collect()
+    }
+}

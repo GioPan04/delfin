@@ -8,7 +8,9 @@ use relm4::{
 };
 use uuid::Uuid;
 
-use crate::jellyfin_api::{api::latest::GetNextUpOptions, api_client::ApiClient};
+use crate::jellyfin_api::{
+    api::latest::GetNextUpOptions, api_client::ApiClient, models::user_view::UserView,
+};
 
 use super::{
     media_carousel::{MediaCarousel, MediaCarouselInit},
@@ -20,11 +22,12 @@ enum MediaListContents {
     Carousel(Controller<MediaCarousel>),
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub enum MediaListType {
     ContinueWatching,
     Latest(MediaListTypeLatestParams),
     NextUp,
+    MyMedia(Vec<UserView>),
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -78,7 +81,7 @@ impl MediaList {
         sender: &AsyncComponentSender<Self>,
     ) -> Self {
         let api_client = Arc::clone(&init.api_client);
-        let list_type = init.list_type;
+        let list_type = &init.list_type;
         let label = init.label.clone();
 
         let media = match list_type {
@@ -94,16 +97,21 @@ impl MediaList {
                 .get_next_up(GetNextUpOptions::default())
                 .await
                 .expect("Error getting continue watching."),
+
+            MediaListType::MyMedia(media) => {
+                media.clone().into_iter().map(|view| view.into()).collect()
+            }
         };
         if media.is_empty() {
             sender
-                .output(MediaListOutput::Empty(get_view_id(&list_type)))
+                .output(MediaListOutput::Empty(get_view_id(list_type)))
                 .unwrap();
         }
 
         let media_tile_display = match list_type {
             MediaListType::ContinueWatching | MediaListType::NextUp => MediaTileDisplay::Wide,
             MediaListType::Latest(_) => MediaTileDisplay::Cover,
+            MediaListType::MyMedia(_) => MediaTileDisplay::CollectionWide,
         };
 
         let contents = {
@@ -127,7 +135,7 @@ impl MediaList {
 
 fn get_view_id(list_type: &MediaListType) -> Option<Uuid> {
     match list_type {
-        MediaListType::ContinueWatching | MediaListType::NextUp => None,
+        MediaListType::ContinueWatching | MediaListType::NextUp | MediaListType::MyMedia(_) => None,
         MediaListType::Latest(params) => Some(params.view_id),
     }
 }

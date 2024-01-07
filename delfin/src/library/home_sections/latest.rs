@@ -11,7 +11,10 @@ use uuid::Uuid;
 use crate::{
     jellyfin_api::{
         api_client::ApiClient,
-        models::{collection_type::CollectionType, user_view::UserView},
+        models::{
+            collection_type::CollectionType,
+            user_view::{FilterSupported, UserView},
+        },
     },
     library::media_list::{
         MediaList, MediaListInit, MediaListOutput, MediaListType, MediaListTypeLatestParams,
@@ -57,15 +60,7 @@ impl Component for HomeSectionLatest {
 
         let widgets = view_output!();
 
-        let user_views: Vec<&UserView> = user_views
-            .iter()
-            .filter(|view| {
-                matches!(
-                    view.collection_type(),
-                    CollectionType::Movies | CollectionType::TvShows
-                )
-            })
-            .collect();
+        let user_views = user_views.filter_supported();
 
         for view in user_views {
             let row = LatestRow::builder()

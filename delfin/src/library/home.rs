@@ -11,6 +11,7 @@ use crate::jellyfin_api::models::user_view::UserView;
 
 use super::home_sections::continue_watching::HomeSectionContinueWatching;
 use super::home_sections::latest::HomeSectionLatest;
+use super::home_sections::my_media::HomeSectionMyMedia;
 use super::home_sections::next_up::HomeSectionNextUp;
 use super::library_container::LibraryContainer;
 
@@ -18,17 +19,12 @@ enum HomeSectionController {
     ContinueWatching(Controller<HomeSectionContinueWatching>),
     Latest(Controller<HomeSectionLatest>),
     NextUp(Controller<HomeSectionNextUp>),
+    MyMedia(Controller<HomeSectionMyMedia>),
 }
 
 pub struct Home {
-    _sections: Vec<HomeSectionController>,
+    sections: Vec<HomeSectionController>,
 }
-
-#[derive(Debug)]
-pub enum HomeInput {}
-
-#[derive(Debug)]
-pub enum HomeOutput {}
 
 pub struct HomeInit {
     pub api_client: Arc<ApiClient>,
@@ -38,9 +34,9 @@ pub struct HomeInit {
 
 #[relm4::component(pub)]
 impl SimpleComponent for Home {
-    type Input = HomeInput;
-    type Output = HomeOutput;
     type Init = HomeInit;
+    type Input = ();
+    type Output = ();
 
     view! {
         gtk::ScrolledWindow {
@@ -63,7 +59,7 @@ impl SimpleComponent for Home {
         root: &Self::Root,
         _sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let mut model = Home { _sections: vec![] };
+        let mut model = Home { sections: vec![] };
 
         let widgets = view_output!();
         let sections_container = &widgets.sections_container;
@@ -94,7 +90,7 @@ impl Home {
                         .launch(api_client.clone())
                         .detach();
                     sections_container.append(section.widget());
-                    self._sections
+                    self.sections
                         .push(HomeSectionController::ContinueWatching(section));
                 }
                 HomeSection::LatestMedia => {
@@ -102,14 +98,21 @@ impl Home {
                         .launch((api_client.clone(), user_views.clone()))
                         .detach();
                     sections_container.append(section.widget());
-                    self._sections.push(HomeSectionController::Latest(section));
+                    self.sections.push(HomeSectionController::Latest(section));
                 }
                 HomeSection::NextUp => {
                     let section = HomeSectionNextUp::builder()
                         .launch(api_client.clone())
                         .detach();
                     sections_container.append(section.widget());
-                    self._sections.push(HomeSectionController::NextUp(section));
+                    self.sections.push(HomeSectionController::NextUp(section));
+                }
+                HomeSection::MyMedia => {
+                    let section = HomeSectionMyMedia::builder()
+                        .launch((api_client.clone(), user_views.clone()))
+                        .detach();
+                    sections_container.append(section.widget());
+                    self.sections.push(HomeSectionController::MyMedia(section));
                 }
                 _ => {}
             }
