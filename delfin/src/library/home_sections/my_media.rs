@@ -16,9 +16,15 @@ pub struct HomeSectionMyMedia {
     media_list: AsyncController<MediaList>,
 }
 
+pub struct HomeSectionMyMediaInit {
+    pub api_client: Arc<ApiClient>,
+    pub user_views: Vec<UserView>,
+    pub small: bool,
+}
+
 #[relm4::component(pub)]
 impl Component for HomeSectionMyMedia {
-    type Init = (Arc<ApiClient>, Vec<UserView>);
+    type Init = HomeSectionMyMediaInit;
     type Input = MediaListOutput;
     type Output = ();
     type CommandOutput = ();
@@ -37,14 +43,18 @@ impl Component for HomeSectionMyMedia {
         root: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let (api_client, user_views) = init;
+        let HomeSectionMyMediaInit {
+            api_client,
+            user_views,
+            small,
+        } = init;
 
         let user_views = user_views.filter_supported();
 
         let media_list = MediaList::builder()
             .launch(MediaListInit {
                 api_client,
-                list_type: MediaListType::MyMedia(user_views),
+                list_type: MediaListType::MyMedia { user_views, small },
                 label: tr!("library-section-title.my-media").to_string(),
             })
             .forward(sender.input_sender(), |m| m);

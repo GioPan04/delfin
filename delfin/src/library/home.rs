@@ -11,7 +11,7 @@ use crate::jellyfin_api::models::user_view::UserView;
 
 use super::home_sections::continue_watching::HomeSectionContinueWatching;
 use super::home_sections::latest::HomeSectionLatest;
-use super::home_sections::my_media::HomeSectionMyMedia;
+use super::home_sections::my_media::{HomeSectionMyMedia, HomeSectionMyMediaInit};
 use super::home_sections::next_up::HomeSectionNextUp;
 use super::library_container::LibraryContainer;
 
@@ -107,9 +107,13 @@ impl Home {
                     sections_container.append(section.widget());
                     self.sections.push(HomeSectionController::NextUp(section));
                 }
-                HomeSection::MyMedia => {
+                HomeSection::MyMedia | HomeSection::MyMediaSmall => {
                     let section = HomeSectionMyMedia::builder()
-                        .launch((api_client.clone(), user_views.clone()))
+                        .launch(HomeSectionMyMediaInit {
+                            api_client: api_client.clone(),
+                            user_views: user_views.clone(),
+                            small: matches!(section, HomeSection::MyMediaSmall),
+                        })
                         .detach();
                     sections_container.append(section.widget());
                     self.sections.push(HomeSectionController::MyMedia(section));

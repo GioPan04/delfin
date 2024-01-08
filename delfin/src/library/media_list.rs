@@ -27,7 +27,10 @@ pub enum MediaListType {
     ContinueWatching,
     Latest(MediaListTypeLatestParams),
     NextUp,
-    MyMedia(Vec<UserView>),
+    MyMedia {
+        user_views: Vec<UserView>,
+        small: bool,
+    },
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -98,9 +101,14 @@ impl MediaList {
                 .await
                 .expect("Error getting continue watching."),
 
-            MediaListType::MyMedia(media) => {
-                media.clone().into_iter().map(|view| view.into()).collect()
-            }
+            MediaListType::MyMedia {
+                user_views,
+                small: _,
+            } => user_views
+                .clone()
+                .into_iter()
+                .map(|view| view.into())
+                .collect(),
         };
         if media.is_empty() {
             sender
@@ -111,7 +119,8 @@ impl MediaList {
         let media_tile_display = match list_type {
             MediaListType::ContinueWatching | MediaListType::NextUp => MediaTileDisplay::Wide,
             MediaListType::Latest(_) => MediaTileDisplay::Cover,
-            MediaListType::MyMedia(_) => MediaTileDisplay::CollectionWide,
+            MediaListType::MyMedia { small, .. } if *small => MediaTileDisplay::Cover,
+            MediaListType::MyMedia { .. } => MediaTileDisplay::CollectionWide,
         };
 
         let contents = {
@@ -135,7 +144,9 @@ impl MediaList {
 
 fn get_view_id(list_type: &MediaListType) -> Option<Uuid> {
     match list_type {
-        MediaListType::ContinueWatching | MediaListType::NextUp | MediaListType::MyMedia(_) => None,
+        MediaListType::ContinueWatching | MediaListType::NextUp | MediaListType::MyMedia { .. } => {
+            None
+        }
         MediaListType::Latest(params) => Some(params.view_id),
     }
 }
