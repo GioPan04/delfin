@@ -20,8 +20,6 @@ jellyfin_api = "10.8.10-2"
 relm4 = { workspace = true }
 relm4-icons = { version = "0.7.0-alpha.2", features = [
   "check-round-outline",
-  "video-clip-multiple-filled",
-  "play-multiple-filled",
   "tag-multiple-filled",
   "home-filled",
   "closed-captioning",
