@@ -8,10 +8,12 @@ use relm4::{
 };
 use uuid::Uuid;
 
-use crate::jellyfin_api::{api::latest::GetNextUpOptions, api_client::ApiClient};
+use crate::jellyfin_api::{
+    api::latest::GetNextUpOptions, api_client::ApiClient, models::user_view::UserView,
+};
 
 use super::{
-    media_carousel::{MediaCarousel, MediaCarouselInit},
+    media_carousel::{MediaCarousel, MediaCarouselInit, MediaCarouselType},
     media_tile::MediaTileDisplay,
 };
 
@@ -20,11 +22,15 @@ enum MediaListContents {
     Carousel(Controller<MediaCarousel>),
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub enum MediaListType {
     ContinueWatching,
     Latest(MediaListTypeLatestParams),
     NextUp,
+    MyMedia {
+        user_views: Vec<UserView>,
+        small: bool,
+    },
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -78,7 +84,7 @@ impl MediaList {
         sender: &AsyncComponentSender<Self>,
     ) -> Self {
         let api_client = Arc::clone(&init.api_client);
-        let list_type = init.list_type;
+        let list_type = &init.list_type;
         let label = init.label.clone();
 
         let media = match list_type {
@@ -94,16 +100,32 @@ impl MediaList {
                 .get_next_up(GetNextUpOptions::default())
                 .await
                 .expect("Error getting continue watching."),
+
+            MediaListType::MyMedia {
+                user_views,
+                small: _,
+            } => user_views
+                .clone()
+                .into_iter()
+                .map(|view| view.into())
+                .collect(),
         };
         if media.is_empty() {
             sender
-                .output(MediaListOutput::Empty(get_view_id(&list_type)))
+                .output(MediaListOutput::Empty(get_view_id(list_type)))
                 .unwrap();
         }
 
         let media_tile_display = match list_type {
             MediaListType::ContinueWatching | MediaListType::NextUp => MediaTileDisplay::Wide,
             MediaListType::Latest(_) => MediaTileDisplay::Cover,
+            MediaListType::MyMedia { small, .. } if *small => MediaTileDisplay::Buttons,
+            MediaListType::MyMedia { .. } => MediaTileDisplay::CollectionWide,
+        };
+
+        let carousel_type = match list_type {
+            MediaListType::MyMedia { small, .. } if *small => MediaCarouselType::Buttons,
+            _ => MediaCarouselType::Tiles,
         };
 
         let contents = {
@@ -111,6 +133,7 @@ impl MediaList {
                 .launch(MediaCarouselInit {
                     media,
                     media_tile_display,
+                    carousel_type,
                     api_client,
                     label,
                 })
@@ -127,7 +150,9 @@ impl MediaList {
 
 fn get_view_id(list_type: &MediaListType) -> Option<Uuid> {
     match list_type {
-        MediaListType::ContinueWatching | MediaListType::NextUp => None,
+        MediaListType::ContinueWatching | MediaListType::NextUp | MediaListType::MyMedia { .. } => {
+            None
+        }
         MediaListType::Latest(params) => Some(params.view_id),
     }
 }
