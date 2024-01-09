@@ -11,6 +11,7 @@ use crate::{
     library::{
         media_fetcher::Fetcher,
         media_page::{MediaPage, MediaPageInit, MediaPageInput},
+        media_tile::MediaTileDisplay,
     },
     tr,
 };
@@ -78,6 +79,7 @@ impl Component for SearchResults {
                                 .launch(self.api_client.clone())
                                 .detach(),
                         ),
+                        media_tile_display: Some(MediaTileDisplay::CoverLarge),
                     })
                     .detach();
 

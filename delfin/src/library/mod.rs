@@ -1,7 +1,9 @@
-mod collection;
+pub mod collection;
+pub mod collections;
 mod home;
 mod home_sections;
 mod library_container;
+mod media_button;
 mod media_carousel;
 mod media_fetcher;
 mod media_grid;
@@ -16,11 +18,7 @@ use relm4::{
     binding::BoolBinding,
     ComponentController, RelmObjectExt, SharedState,
 };
-use std::{
-    collections::HashMap,
-    sync::{Arc, RwLock},
-};
-use uuid::Uuid;
+use std::sync::{Arc, RwLock};
 
 use adw::prelude::*;
 use gtk::glib;
@@ -31,9 +29,8 @@ use crate::{
     borgar::borgar_menu::{BorgarMenu, BorgarMenuAuth},
     config::{Account, Server},
     jellyfin_api::{
-        api::views::UserView,
         api_client::ApiClient,
-        models::{collection_type::CollectionType, display_preferences::DisplayPreferences},
+        models::{display_preferences::DisplayPreferences, user_view::UserView},
     },
     media_details::MEDIA_DETAILS_REFRESH_QUEUED,
     tr,
@@ -44,7 +41,7 @@ use crate::{
 };
 
 use self::{
-    collection::{Collection, CollectionInput},
+    collections::Collections,
     home::{Home, HomeInit},
     search::{
         search_bar::SearchBar,
@@ -69,7 +66,7 @@ pub struct Library {
     state: LibraryState,
     search_results: Controller<SearchResults>,
     home: Option<Controller<Home>>,
-    collections: HashMap<Uuid, Controller<Collection>>,
+    collections: Option<Controller<Collections>>,
     searching: BoolBinding,
     // Store previous view stack child so we can go back from search
     previous_stack_child: Arc<RwLock<String>>,
@@ -78,7 +75,6 @@ pub struct Library {
 #[derive(Debug)]
 pub enum LibraryInput {
     SetLibraryState(LibraryState),
-    MediaSelected(BaseItemDto),
     Refresh,
     Shown,
     ViewStackChildVisible(String),
@@ -291,7 +287,7 @@ impl Component for Library {
             state: LibraryState::Loading,
             search_results: SearchResults::builder().launch(api_client).detach(),
             home: None,
-            collections: HashMap::default(),
+            collections: None,
             searching: BoolBinding::default(),
             previous_stack_child: Arc::new(RwLock::new("home".into())),
         };
@@ -363,11 +359,6 @@ impl Component for Library {
                     }
                 };
             }
-            LibraryInput::MediaSelected(media) => {
-                sender
-                    .output(LibraryOutput::PlayVideo(Box::new(media)))
-                    .unwrap();
-            }
             LibraryInput::Refresh => {
                 let view_stack = &widgets.view_stack;
 
@@ -378,8 +369,8 @@ impl Component for Library {
                 if let Some(home) = self.home.take() {
                     view_stack.remove(home.widget());
                 }
-                for (_id, collection) in self.collections.drain() {
-                    view_stack.remove(collection.widget());
+                if let Some(collections) = self.collections.take() {
+                    view_stack.remove(collections.widget());
                 }
 
                 self.initial_fetch(&sender);
@@ -392,12 +383,6 @@ impl Component for Library {
                 *LIBRARY_REFRESH_QUEUED.write() = false;
             }
             LibraryInput::ViewStackChildVisible(name) => {
-                if let Ok(id) = Uuid::parse_str(&name) {
-                    if let Some(collection) = self.collections.get(&id) {
-                        collection.emit(CollectionInput::Visible);
-                    }
-                }
-
                 if name != "search" {
                     self.searching.set_value(false);
                 }
@@ -462,15 +447,18 @@ impl Library {
                 }
             }
 
-            match tokio::try_join!(async { api_client.get_user_views().await }, async {
-                api_client
-                    // We might eventually want client-specific settings, but for
-                    // now use the Jellyfin ("emby") client settings
-                    .get_user_display_preferences("emby")
-                    .await
-            }) {
+            match tokio::try_join!(
+                async { api_client.get_user_views(None, None).await },
+                async {
+                    api_client
+                        // We might eventually want client-specific settings, but for
+                        // now use the Jellyfin ("emby") client settings
+                        .get_user_display_preferences("emby")
+                        .await
+                }
+            ) {
                 Ok((user_views, display_preferences)) => {
-                    LibraryCommandOutput::LibraryLoaded(user_views, display_preferences)
+                    LibraryCommandOutput::LibraryLoaded(user_views.0, display_preferences)
                 }
                 Err(err) => {
                     println!("Error loading library: {err}");
@@ -506,34 +494,20 @@ impl Library {
         );
         self.home = Some(home);
 
-        let user_views: Vec<&UserView> = user_views
-            .iter()
-            .filter(|view| {
-                matches!(
-                    view.collection_type,
-                    CollectionType::Movies | CollectionType::TvShows
-                )
-            })
-            .collect();
-
-        // TODO: handle overflow when user has too many collections
-        // For now we limit them to 5, user can change order in Jellyfin settings
-        for &view in user_views.iter().take(5) {
-            let collection = Collection::builder()
-                .launch((self.api_client.clone(), view.clone()))
-                .detach();
-
-            view_stack.add_titled_with_icon(
-                collection.widget(),
-                Some(&view.id.to_string()),
-                &view.name.clone(),
-                &view.collection_type.icon(),
-            );
-
-            self.collections.insert(view.id, collection);
-        }
-
         view_stack.set_visible_child_name("home");
+
+        let collections = Collections::builder()
+            .launch(self.api_client.clone())
+            .detach();
+
+        view_stack.add_titled_with_icon(
+            collections.widget(),
+            Some("collections"),
+            "Collections",
+            "library",
+        );
+
+        self.collections = Some(collections);
     }
 }
 

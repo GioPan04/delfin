@@ -10,7 +10,11 @@ use uuid::Uuid;
 
 use crate::{
     jellyfin_api::{
-        api::views::UserView, api_client::ApiClient, models::collection_type::CollectionType,
+        api_client::ApiClient,
+        models::{
+            collection_type::CollectionType,
+            user_view::{FilterSupported, UserView},
+        },
     },
     library::media_list::{
         MediaList, MediaListInit, MediaListOutput, MediaListType, MediaListTypeLatestParams,
@@ -56,22 +60,14 @@ impl Component for HomeSectionLatest {
 
         let widgets = view_output!();
 
-        let user_views: Vec<&UserView> = user_views
-            .iter()
-            .filter(|view| {
-                matches!(
-                    view.collection_type,
-                    CollectionType::Movies | CollectionType::TvShows
-                )
-            })
-            .collect();
+        let user_views = user_views.filter_supported();
 
         for view in user_views {
             let row = LatestRow::builder()
                 .launch((api_client.clone(), view.clone()))
                 .forward(sender.input_sender(), identity);
             root.append(row.widget());
-            model.rows.insert(view.id.to_string(), row);
+            model.rows.insert(view.id().to_string(), row);
         }
 
         ComponentParts { model, widgets }
@@ -124,7 +120,7 @@ impl SimpleComponent for LatestRow {
 
         let widgets = view_output!();
 
-        let title_text = match view.collection_type {
+        let title_text = match view.collection_type() {
             CollectionType::Movies => tr!("library-section-title.latest-movies").to_string(),
             CollectionType::TvShows => tr!("library-section-title.latest-shows").to_string(),
             CollectionType::Music => tr!("library-section-title.latest-music").to_string(),
@@ -137,7 +133,7 @@ impl SimpleComponent for LatestRow {
         let media_list = MediaList::builder()
             .launch(MediaListInit {
                 api_client,
-                list_type: MediaListType::Latest(MediaListTypeLatestParams { view_id: view.id }),
+                list_type: MediaListType::Latest(MediaListTypeLatestParams { view_id: view.id() }),
                 label: title_text.to_string(),
             })
             .forward(sender.input_sender(), |o| o.into());

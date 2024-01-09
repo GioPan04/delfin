@@ -25,6 +25,7 @@ where
     fetcher: MediaFetcher<F>,
     empty_component: Option<Controller<EmptyComponent>>,
     media_grid: Option<Controller<MediaGrid>>,
+    media_tile_display: MediaTileDisplay,
     state: FetcherState,
     count: Option<FetcherCount>,
 }
@@ -33,6 +34,7 @@ pub struct MediaPageInit<F, C: Component> {
     pub api_client: Arc<ApiClient>,
     pub fetcher: F,
     pub empty_component: Option<Controller<C>>,
+    pub media_tile_display: Option<MediaTileDisplay>,
 }
 
 #[derive(Debug)]
@@ -167,6 +169,7 @@ where
             api_client,
             fetcher,
             empty_component,
+            media_tile_display,
         } = init;
 
         let (tx, mut rx) = mpsc::unbounded_channel();
@@ -187,6 +190,7 @@ where
             fetcher,
             empty_component,
             media_grid: None,
+            media_tile_display: media_tile_display.unwrap_or(MediaTileDisplay::Wide),
             state: FetcherState::Empty,
             count: None,
         };
@@ -221,7 +225,7 @@ where
                     let media_grid = MediaGrid::builder()
                         .launch(MediaGridInit {
                             media: display.items.clone(),
-                            media_tile_display: MediaTileDisplay::CoverLarge,
+                            media_tile_display: self.media_tile_display,
                             api_client: self.api_client.clone(),
                         })
                         .detach();
