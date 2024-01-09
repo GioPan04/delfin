@@ -42,9 +42,9 @@ impl Display for CollectionType {
 impl CollectionType {
     pub fn icon(&self) -> String {
         match self {
-            Self::Movies => "video-clip-multiple-filled",
-            Self::TvShows => "video-clip-multiple-filled",
-            Self::Music => "play-multiple-filled",
+            Self::Movies => "movies-and-tv-filled",
+            Self::TvShows => "tv-filled",
+            Self::Music => "music-note-2-filled",
             Self::Playlists => "tag-multiple-filled",
             Self::Other => "folder-filled",
         }
