@@ -1,0 +1,11 @@
+borgar-keyboard-shortcuts = Gyorsbillentyűk
+borgar-sign-out-dialog =
+    .heading = Kijelentkezés
+    .body = Biztosan ki akarsz jelentkezni és törölni a felhasználót a { app-name }-ből?
+    .response-cancel = Mégse
+    .response-sign-out = Kijelentkezés
+borgar-sign-out-dialog-remove-server = Szerver törlése a { app-name }-ből
+borgar-menu-tooltip = Főmenü
+borgar-preferences = Beállítások
+borgar-about = A { app-name } névjegye
+borgar-sign-out = Kijelentkezés
