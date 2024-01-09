@@ -1,0 +1,66 @@
+prefs-vp-on-left-click-options =
+    .play-pause = Lejátszás/szünet
+    .toggle-controls = Irányító felület mutatása/elrejtése
+prefs-vp-experimental =
+    .title = Kísérleti beállítások
+    .subtitle =
+        Ezek a beállítások hibásak vagy befejezetlenek lehetnek.
+        Módosításuk nem ajánlott.
+prefs-vp-interface = Kezelőfelület
+prefs-general-page = Általános
+prefs-skip-amount = { $seconds } másodperc
+prefs-window-title = Beállítások
+prefs-vp-subs = Feliratok
+prefs-general-language =
+    .title = Nyelv
+    .subtitle = Segíts a fordításban a <a href="{ $weblateUrl }">Weblate</a>-en
+    .option-default = Alapértelmezett ({ $languageId })
+prefs-vp-subs-position =
+    .title = Feliratok pozíciója
+    .subtitle = A 0 a képernyő teteje és 100 az alja
+prefs-vp-subs-scale =
+    .title = Feliratok nagyítási mértéke
+    .subtitle = Méretezési szorzó a feliratok szövegéhez
+prefs-vp-skip-forwards =
+    .title = Előreugrás hossza
+    .subtitle = Hány másodpercet tekerjen előre egyszerre
+prefs-vp-subs-style-ass-warning =
+    Ezek a beállítások nem módosítják az ASS/SSA feliratokat.
+    Az ASS/SSA feliratokhoz lásd: "{ prefs-vp-subs-more }".
+prefs-vp-on-left-click =
+    .title = Egérkattintáskor
+    .subtitle = Mi történjen bal egérgombbal kattintás után a videólejátszóban
+prefs-vp-subs-font =
+    .title = Betűtipus
+    .subtitle = Csak támogatott betűtipusok vannak a listán
+prefs-vp-other = Egyéb
+prefs-vp-skip-backwards =
+    .title = Visszaugrás hossza
+    .subtitle = Hány másodpercet tekerjen vissza egyszerre
+prefs-vp-subs-style = Feliratok stílusa
+prefs-vp-hls-playback =
+    .title = HLS lejátszás
+    .subtitle = Hang- és feliratsávok választása lehetséges, hogy nem működik
+prefs-vp-subs-colour =
+    .title = A szöveg színe
+prefs-vp-subs-background-colour =
+    .title = Háttérszín
+prefs-vp-page = Videó lejátszó
+prefs-vp-subs-reset =
+    .label = Visszaállítás
+    .tooltip = Alapértelmezett beállítások visszaállítása
+prefs-vp-plugins = Bővítmények
+prefs-general-theme =
+    .title = Téma
+    .option-default = Alapértelmezett
+    .option-light = Világos
+    .option-dark = Sötét
+prefs-vp-subs-more-ass-warning =
+    .title = Ezek a beállítások hatással vannak az ASS/SSA feliratokra!
+    .subtitle =
+        Az ASS/SSA feliratok gyakran tartalmaznak speciális stílusokat és pozíciókat. Ezek a
+        beállítások hibás megjelenítést okozhatnak az ASS/SSA feliratoknál.
+
+        Ha csak egyéb formátumú feliratok kinézetét szeretnéd módosítani, akkor ajánlott hogy
+        csak a "{ prefs-vp-subs-style }" menü alatti beállításokat módosítsd.
+prefs-vp-subs-more = További beállítások
