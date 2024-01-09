@@ -23,6 +23,7 @@ pub enum MediaTileDisplay {
     CoverLarge,
     Wide,
     CollectionWide,
+    Buttons,
 }
 
 impl MediaTileDisplay {
@@ -32,6 +33,7 @@ impl MediaTileDisplay {
             Self::CoverLarge => 175,
             Self::Wide => 300,
             Self::CollectionWide => 300,
+            Self::Buttons => 300,
         }
     }
 
@@ -41,6 +43,7 @@ impl MediaTileDisplay {
             Self::CoverLarge => 262,
             Self::Wide => 175,
             Self::CollectionWide => 175,
+            Self::Buttons => 0,
         }
     }
 }
@@ -277,7 +280,9 @@ async fn get_thumbnail(
         MediaTileDisplay::Cover | MediaTileDisplay::CoverLarge => {
             api_client.get_parent_or_item_thumbnail_url(media)
         }
-        MediaTileDisplay::CollectionWide => api_client.get_collection_thumbnail_url(media),
+        MediaTileDisplay::CollectionWide | MediaTileDisplay::Buttons => {
+            api_client.get_collection_thumbnail_url(media)
+        }
     };
     let img_url = match img_url {
         Ok(img_url) => img_url,

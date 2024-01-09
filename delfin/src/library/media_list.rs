@@ -13,7 +13,7 @@ use crate::jellyfin_api::{
 };
 
 use super::{
-    media_carousel::{MediaCarousel, MediaCarouselInit},
+    media_carousel::{MediaCarousel, MediaCarouselInit, MediaCarouselType},
     media_tile::MediaTileDisplay,
 };
 
@@ -119,8 +119,13 @@ impl MediaList {
         let media_tile_display = match list_type {
             MediaListType::ContinueWatching | MediaListType::NextUp => MediaTileDisplay::Wide,
             MediaListType::Latest(_) => MediaTileDisplay::Cover,
-            MediaListType::MyMedia { small, .. } if *small => MediaTileDisplay::Cover,
+            MediaListType::MyMedia { small, .. } if *small => MediaTileDisplay::Buttons,
             MediaListType::MyMedia { .. } => MediaTileDisplay::CollectionWide,
+        };
+
+        let carousel_type = match list_type {
+            MediaListType::MyMedia { small, .. } if *small => MediaCarouselType::Buttons,
+            _ => MediaCarouselType::Tiles,
         };
 
         let contents = {
@@ -128,6 +133,7 @@ impl MediaList {
                 .launch(MediaCarouselInit {
                     media,
                     media_tile_display,
+                    carousel_type,
                     api_client,
                     label,
                 })

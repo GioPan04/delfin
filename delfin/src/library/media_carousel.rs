@@ -7,19 +7,42 @@ use relm4::{prelude::*, ComponentParts};
 
 use crate::{globals::SHIFT_STATE, jellyfin_api::api_client::ApiClient};
 
-use super::media_tile::{MediaTile, MediaTileDisplay};
+use super::{
+    media_button::MediaButton,
+    media_tile::{MediaTile, MediaTileDisplay},
+};
 
 const MIN_PADDING: i32 = 24;
 
+pub(crate) enum MediaCarouselItem {
+    Tile(AsyncController<MediaTile>),
+    Button(Controller<MediaButton>),
+}
+
+impl MediaCarouselItem {
+    fn widget(&self) -> &gtk::Widget {
+        match self {
+            MediaCarouselItem::Tile(media_tile) => media_tile.widget().upcast_ref(),
+            MediaCarouselItem::Button(media_button) => media_button.widget().upcast_ref(),
+        }
+    }
+}
+
+pub(crate) enum MediaCarouselType {
+    Tiles,
+    Buttons,
+}
+
 pub(crate) struct MediaCarousel {
     media_tile_display: MediaTileDisplay,
-    media_tiles: Vec<AsyncController<MediaTile>>,
+    media_tiles: Vec<MediaCarouselItem>,
     pages: Vec<gtk::Box>,
 }
 
 pub(crate) struct MediaCarouselInit {
     pub(crate) media: Vec<BaseItemDto>,
     pub(crate) media_tile_display: MediaTileDisplay,
+    pub(crate) carousel_type: MediaCarouselType,
     pub(crate) api_client: Arc<ApiClient>,
     pub(crate) label: String,
 }
@@ -142,15 +165,23 @@ impl Component for MediaCarousel {
             api_client,
             media,
             media_tile_display,
+            carousel_type,
             label,
         } = init;
 
-        let media_tiles: Vec<AsyncController<MediaTile>> = media
+        let media_tiles = media
             .iter()
-            .map(|media| {
-                MediaTile::builder()
-                    .launch((media.clone(), media_tile_display, api_client.clone()))
-                    .detach()
+            .map(|media| match carousel_type {
+                MediaCarouselType::Tiles => MediaCarouselItem::Tile(
+                    MediaTile::builder()
+                        .launch((media.clone(), media_tile_display, api_client.clone()))
+                        .detach(),
+                ),
+                MediaCarouselType::Buttons => MediaCarouselItem::Button(
+                    MediaButton::builder()
+                        .launch((media.clone(), media_tile_display))
+                        .detach(),
+                ),
             })
             .collect();
 
@@ -192,7 +223,7 @@ impl Component for MediaCarousel {
                 }
                 self.pages.clear();
 
-                let media_tile_chunks: Vec<&[AsyncController<MediaTile>]> =
+                let media_tile_chunks: Vec<&[MediaCarouselItem]> =
                     self.media_tiles.chunks(tiles_per_page as usize).collect();
 
                 for chunk in media_tile_chunks {

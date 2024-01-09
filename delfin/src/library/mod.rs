@@ -3,6 +3,7 @@ pub mod collections;
 mod home;
 mod home_sections;
 mod library_container;
+mod media_button;
 mod media_carousel;
 mod media_fetcher;
 mod media_grid;
