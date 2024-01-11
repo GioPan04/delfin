@@ -1,4 +1,6 @@
 pub mod general;
+mod migrate;
+mod versions;
 pub mod video_player_config;
 
 use std::{fs, path::PathBuf};
@@ -8,15 +10,18 @@ use serde::{Deserialize, Serialize};
 use unic_langid::LanguageIdentifier;
 use uuid::Uuid;
 
-use self::{general::GeneralConfig, video_player_config::VideoPlayerConfig};
+use self::{
+    general::GeneralConfig, migrate::ConfigVersions, video_player_config::VideoPlayerConfig,
+};
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Config {
+    version: usize,
+
     pub language: Option<LanguageIdentifier>,
     #[serde(default)]
     pub window: Window,
 
-    pub device_id: String,
     pub servers: Vec<Server>,
 
     #[serde(default)]
@@ -29,9 +34,9 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
+            version: 2,
             language: None,
             window: Window::default(),
-            device_id: Uuid::new_v4().to_string(),
             servers: Vec::default(),
             general: GeneralConfig::default(),
             video_player: VideoPlayerConfig::default(),
@@ -46,7 +51,8 @@ impl Config {
             None => return Ok(Self::default()),
         };
         let config = fs::read_to_string(config_file)?;
-        Ok(toml::from_str(&config)?)
+        let config_version = ConfigVersions::new(&config)?;
+        Ok(config_version.into())
     }
 
     pub fn save(&self) -> Result<()> {
@@ -97,7 +103,7 @@ fn get_config_file_exists() -> Option<PathBuf> {
     Some(config_file)
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq)]
 pub struct Server {
     pub id: String,
     pub url: String,
@@ -105,15 +111,16 @@ pub struct Server {
     pub accounts: Vec<Account>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct Account {
     pub id: String,
     pub username: String,
     // TODO: move to keyring
     pub access_token: String,
+    pub device_id: Uuid,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct Window {
     pub width: usize,
     pub height: usize,

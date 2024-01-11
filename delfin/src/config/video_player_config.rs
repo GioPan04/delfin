@@ -10,7 +10,7 @@ use crate::{
     },
 };
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
 pub enum VideoPlayerBackendPreference {
     Mpv,
     Gst,
@@ -36,7 +36,7 @@ impl From<VideoPlayerBackendPreference> for Arc<RefCell<dyn VideoPlayerBackend>>
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(default)]
 pub struct VideoPlayerConfig {
     pub position_update_frequency: usize,

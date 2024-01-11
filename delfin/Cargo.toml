@@ -66,3 +66,6 @@ whoami = { version = "1.4.1", default-features = false }
 [build-dependencies]
 grass = "0.13.1"
 regex = "1.9.5"
+
+[dev-dependencies]
+pretty_assertions = "1.4.0"

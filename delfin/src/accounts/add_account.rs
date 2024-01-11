@@ -1,5 +1,6 @@
 use adw::prelude::*;
 use relm4::{adw, gtk, prelude::*, Component, ComponentParts};
+use uuid::Uuid;
 
 use crate::{
     config::Server,
@@ -17,7 +18,7 @@ enum ValidationState {
 #[derive(Default)]
 pub struct AddAccountDialog {
     server: Server,
-    device_id: String,
+    device_id: Uuid,
     toaster: adw::ToastOverlay,
     username: String,
     password: String,
@@ -45,7 +46,7 @@ pub enum AddAccountCommandOutput {
 
 #[relm4::component(pub)]
 impl Component for AddAccountDialog {
-    type Init = (Server, String);
+    type Init = Server;
     type Input = AddAccountInput;
     type Output = AddAccountOutput;
     type CommandOutput = AddAccountCommandOutput;
@@ -113,13 +114,13 @@ impl Component for AddAccountDialog {
     }
 
     fn init(
-        init: Self::Init,
+        server: Self::Init,
         root: &Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = AddAccountDialog {
-            server: init.0,
-            device_id: init.1,
+            server,
+            device_id: Uuid::new_v4(),
             toaster: adw::ToastOverlay::new(),
             username: String::new(),
             password: String::new(),
@@ -143,7 +144,7 @@ impl Component for AddAccountDialog {
             AddAccountInput::SignIn => {
                 self.valid = ValidationState::Loading;
                 let url = self.server.url.clone();
-                let device_id = self.device_id.clone();
+                let device_id = self.device_id;
                 let username = self.username.clone();
                 let password = self.password.clone();
                 sender.oneshot_command(async move {

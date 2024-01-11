@@ -148,20 +148,15 @@ impl Component for AccountList {
                 sender.input(AccountListInput::ReloadAccounts);
             }
             AccountListInput::AddAccount => {
-                let config = CONFIG.read();
                 self.add_account_dialog = Some(
                     AddAccountDialog::builder()
                         .transient_for(root)
-                        .launch((self.server.clone(), config.device_id.clone()))
+                        .launch(self.server.clone())
                         .forward(sender.input_sender(), convert_add_account_output),
                 );
             }
             AccountListInput::AccountAdded(auth_info) => {
-                let account = Account {
-                    id: auth_info.user.id,
-                    username: auth_info.user.name,
-                    access_token: auth_info.access_token,
-                };
+                let account: Account = auth_info.into();
                 self.accounts
                     .guard()
                     .push_front((self.server.url.clone(), account.clone()));
@@ -202,5 +197,16 @@ fn convert_add_account_output(output: AddAccountOutput) -> AccountListInput {
 fn convert_account_list_item_output(output: AccountListItemOutput) -> AccountListInput {
     match output {
         AccountListItemOutput::AccountSelected(index) => AccountListInput::AcountSelected(index),
+    }
+}
+
+impl From<AuthenticateByNameRes> for Account {
+    fn from(val: AuthenticateByNameRes) -> Self {
+        Account {
+            id: val.user.id,
+            username: val.user.name,
+            access_token: val.access_token,
+            device_id: val.session_info.device_id,
+        }
     }
 }

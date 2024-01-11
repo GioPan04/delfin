@@ -21,9 +21,7 @@ pub struct ApiClient {
 
 impl ApiClient {
     pub fn new(config: Arc<RwLock<Config>>, server: &Server, account: &Account) -> ApiClient {
-        let device_id = config.read().unwrap().device_id.clone();
-
-        let auth_header = get_auth_header(&device_id, Some(&account.access_token));
+        let auth_header = get_auth_header(&account.device_id, Some(&account.access_token));
 
         let mut headers = HeaderMap::new();
         headers.insert(reqwest::header::AUTHORIZATION, auth_header.parse().unwrap());
