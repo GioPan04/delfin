@@ -103,7 +103,7 @@ impl SimpleComponent for GeneralPreferences {
 
         match message {
             GeneralPreferencesInput::Language(language) => {
-                config.language = language
+                config.general.language = language
                     .map(|l| LanguageIdentifier::from_str(&l).expect("Error setting language"));
             }
             GeneralPreferencesInput::ThemeChanged(theme) => {
@@ -116,7 +116,7 @@ impl SimpleComponent for GeneralPreferences {
 }
 
 fn get_selected_language(language: &adw::ComboRow, config: Config) -> u32 {
-    match config.language {
+    match config.general.language {
         // First item is system default
         None => 0,
         Some(selected_language) => {

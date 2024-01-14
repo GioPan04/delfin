@@ -7,7 +7,6 @@ use std::{fs, path::PathBuf};
 
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
-use unic_langid::LanguageIdentifier;
 use uuid::Uuid;
 
 use self::{
@@ -17,29 +16,23 @@ use self::{
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 pub struct Config {
     version: usize,
-
-    pub language: Option<LanguageIdentifier>,
     #[serde(default)]
     pub window: Window,
-
-    pub servers: Vec<Server>,
-
     #[serde(default)]
     pub general: GeneralConfig,
-
     #[serde(default)]
     pub video_player: VideoPlayerConfig,
+    pub servers: Vec<Server>,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
             version: 2,
-            language: None,
             window: Window::default(),
-            servers: Vec::default(),
             general: GeneralConfig::default(),
             video_player: VideoPlayerConfig::default(),
+            servers: Vec::default(),
         }
     }
 }

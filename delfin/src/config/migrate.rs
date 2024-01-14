@@ -113,6 +113,7 @@ italic = false
         let config: Config = config_version.into();
 
         let expected = Config {
+            version: 2,
             window: Window {
                 width: 967,
                 height: 670,
@@ -142,7 +143,10 @@ italic = false
                     }],
                 },
             ],
-            general: GeneralConfig { theme: Theme::Dark },
+            general: GeneralConfig {
+                language: None,
+                theme: Theme::Dark,
+            },
             video_player: VideoPlayerConfig {
                 volume: 0.0,
                 muted: true,
@@ -150,7 +154,6 @@ italic = false
                 on_left_click: VideoPlayerOnLeftClick::ToggleControls,
                 ..Default::default()
             },
-            ..Default::default()
         };
 
         assert_eq!(config, expected);

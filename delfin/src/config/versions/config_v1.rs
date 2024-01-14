@@ -182,7 +182,6 @@ impl Migrate<Config> for ConfigV1 {
 
         Config {
             version: 2,
-            language: self.language,
             window: Window {
                 width: self.window.width,
                 height: self.window.height,
@@ -190,6 +189,7 @@ impl Migrate<Config> for ConfigV1 {
             },
             servers,
             general: GeneralConfig {
+                language: self.language,
                 theme: match self.general.theme {
                     Theme::Light => config::general::Theme::Light,
                     Theme::Dark => config::general::Theme::Dark,
