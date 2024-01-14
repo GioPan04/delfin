@@ -25,6 +25,7 @@ lazy_static! {
 pub fn current_language() -> LanguageIdentifier {
     CONFIG
         .read()
+        .general
         .language
         .clone()
         .unwrap_or(DEFAULT_LANGUAGE.clone())

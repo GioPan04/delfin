@@ -1,6 +1,8 @@
+use uuid::Uuid;
+
 const CLIENT_NAME: &str = "Delfin";
 
-pub fn get_auth_header(device_id: &str, access_token: Option<&str>) -> String {
+pub fn get_auth_header(device_id: &Uuid, access_token: Option<&str>) -> String {
     let device = whoami::devicename();
     let version = env!("CARGO_PKG_VERSION");
 

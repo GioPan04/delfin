@@ -4,7 +4,7 @@ use crate::{config::Config, utils::shift_state::ShiftState};
 
 pub static CONFIG: Lazy<SharedState<Config>> = Lazy::new(|| {
     let state = SharedState::new();
-    *state.write() = Config::new().expect("Error loading config.");
+    *state.write() = Config::new().expect("Failed to load config");
     state
 });
 

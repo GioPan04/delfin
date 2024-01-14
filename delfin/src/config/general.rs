@@ -1,7 +1,8 @@
 use relm4::adw;
 use serde::{Deserialize, Serialize};
+use unic_langid::LanguageIdentifier;
 
-#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub enum Theme {
     #[default]
     Default,
@@ -19,10 +20,11 @@ impl From<Theme> for adw::ColorScheme {
     }
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub struct GeneralConfig {
+    pub language: Option<LanguageIdentifier>,
     #[serde(default)]
-    theme: Theme,
+    pub theme: Theme,
 }
 
 impl GeneralConfig {

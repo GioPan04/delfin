@@ -3,6 +3,7 @@ use std::collections::VecDeque;
 use anyhow::Result;
 use reqwest::{StatusCode, Url};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::jellyfin_api::{
     api_client::ApiClient,
@@ -24,6 +25,7 @@ pub struct AuthenticateByNameRes {
     pub user: AuthenticateByNameResUser,
     pub access_token: String,
     pub server_id: String,
+    pub session_info: AuthenticateByNameResSessionInfo,
 }
 
 #[derive(Debug, Deserialize)]
@@ -33,9 +35,15 @@ pub struct AuthenticateByNameResUser {
     pub name: String,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct AuthenticateByNameResSessionInfo {
+    pub device_id: Uuid,
+}
+
 pub async fn authenticate_by_name(
     url: &str,
-    device_id: &str,
+    device_id: &Uuid,
     username: &str,
     password: &str,
 ) -> Result<AuthenticateByNameRes> {
