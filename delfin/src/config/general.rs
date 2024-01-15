@@ -2,20 +2,46 @@ use relm4::adw;
 use serde::{Deserialize, Serialize};
 use unic_langid::LanguageIdentifier;
 
-#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq)]
-pub enum Theme {
-    #[default]
-    Default,
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
+enum InnerTheme {
     Light,
     Dark,
 }
 
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq)]
+#[serde(transparent)]
+pub struct Theme(Option<InnerTheme>);
+
+pub static THEME_LIGHT: Theme = Theme(Some(InnerTheme::Light));
+pub static THEME_DARK: Theme = Theme(Some(InnerTheme::Dark));
+
+impl From<Theme> for u32 {
+    fn from(value: Theme) -> Self {
+        match value.0 {
+            None => 0,
+            Some(InnerTheme::Light) => 1,
+            Some(InnerTheme::Dark) => 2,
+        }
+    }
+}
+
+impl From<u32> for Theme {
+    fn from(value: u32) -> Self {
+        match value {
+            0 => Theme(None),
+            1 => THEME_LIGHT,
+            2 => THEME_DARK,
+            _ => unreachable!("theme index {value} does not exist"),
+        }
+    }
+}
+
 impl From<Theme> for adw::ColorScheme {
     fn from(val: Theme) -> Self {
-        match val {
-            Theme::Default => adw::ColorScheme::Default,
-            Theme::Light => adw::ColorScheme::ForceLight,
-            Theme::Dark => adw::ColorScheme::ForceDark,
+        match val.0 {
+            None => adw::ColorScheme::Default,
+            Some(InnerTheme::Light) => adw::ColorScheme::ForceLight,
+            Some(InnerTheme::Dark) => adw::ColorScheme::ForceDark,
         }
     }
 }
@@ -23,7 +49,6 @@ impl From<Theme> for adw::ColorScheme {
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub struct GeneralConfig {
     pub language: Option<LanguageIdentifier>,
-    #[serde(default)]
     pub theme: Theme,
 }
 

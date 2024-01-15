@@ -139,24 +139,3 @@ fn get_selected_language(language: &adw::ComboRow, config: Config) -> u32 {
         }
     }
 }
-
-impl From<Theme> for u32 {
-    fn from(value: Theme) -> Self {
-        match value {
-            Theme::Default => 0,
-            Theme::Light => 1,
-            Theme::Dark => 2,
-        }
-    }
-}
-
-impl From<u32> for Theme {
-    fn from(value: u32) -> Self {
-        match value {
-            0 => Theme::Default,
-            1 => Theme::Light,
-            2 => Theme::Dark,
-            _ => unreachable!(),
-        }
-    }
-}

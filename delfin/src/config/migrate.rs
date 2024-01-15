@@ -39,7 +39,7 @@ mod tests {
     use uuid::uuid;
 
     use crate::config::{
-        general::{GeneralConfig, Theme},
+        general::{GeneralConfig, THEME_DARK},
         video_player_config::{VideoPlayerConfig, VideoPlayerOnLeftClick, VideoPlayerSkipAmount},
         Account, Server, Window,
     };
@@ -145,7 +145,7 @@ italic = false
             ],
             general: GeneralConfig {
                 language: None,
-                theme: Theme::Dark,
+                theme: THEME_DARK,
             },
             video_player: VideoPlayerConfig {
                 volume: 0.0,
