@@ -191,9 +191,9 @@ impl Migrate<Config> for ConfigV1 {
             general: GeneralConfig {
                 language: self.language,
                 theme: match self.general.theme {
-                    Theme::Light => config::general::Theme::Light,
-                    Theme::Dark => config::general::Theme::Dark,
-                    Theme::Default => config::general::Theme::Default,
+                    Theme::Light => config::general::THEME_LIGHT,
+                    Theme::Dark => config::general::THEME_DARK,
+                    Theme::Default => config::general::Theme::default(),
                 },
             },
             video_player: VideoPlayerConfig {

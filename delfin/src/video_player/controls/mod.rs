@@ -105,7 +105,7 @@ impl SimpleComponent for VideoPlayerControls {
             set_valign: gtk::Align::End,
 
             add_controller = gtk::GestureClick {
-                connect_pressed[sender] => move |_, _, _, _| {
+                connect_released[sender] => move |_, _, _, _| {
                     sender.input(VideoPlayerControlsInput::RevealerClicked);
                 },
             },
