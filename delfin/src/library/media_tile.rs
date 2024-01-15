@@ -108,7 +108,7 @@ impl AsyncComponent for MediaTile {
 
 
                 add_controller = gtk::GestureClick {
-                    connect_pressed[sender] => move |_, _, _, _| {
+                    connect_released[sender] => move |_, _, _, _| {
                         sender.input(MediaTileInput::Play);
                     },
                 },
@@ -181,7 +181,7 @@ impl AsyncComponent for MediaTile {
                 set_markup: &get_item_label(&model.media),
 
                 add_controller = gtk::GestureClick {
-                    connect_pressed[sender] => move |_, _, _, _| {
+                    connect_released[sender] => move |_, _, _, _| {
                         sender.input(MediaTileInput::ShowDetails);
                     },
                 },

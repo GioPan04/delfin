@@ -140,7 +140,7 @@ impl Component for VideoPlayer {
                     #[local_ref]
                     video_player -> gtk::Widget {
                         add_controller = gtk::GestureClick {
-                            connect_pressed[sender] => move |_, n_press, _, _| {
+                            connect_released[sender] => move |_, n_press, _, _| {
                                 sender.input(VideoPlayerInput::MouseClick(n_press));
                             },
                         },
