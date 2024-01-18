@@ -23,3 +23,5 @@ library-page-title = Könyvtár
 library-episode-name-with-season-and-episode = S{ $seasonNumber }:E{ $episodeNumber } - { $episodeName }
 library-search-button = Keresés a könyvtárban
 library-page-home-title = Kezdőlap
+library-media-tile-unnamed-item = Névtelen elem
+library-collection-refresh-button = Gyűjtemény frissítése
