@@ -16,7 +16,9 @@ use crate::{
 };
 
 use super::{
-    display_years::DisplayYears, media_details_header::MediaDetailsHeader, seasons::Seasons,
+    display_years::DisplayYears,
+    media_details_header::MediaDetailsHeader,
+    seasons::{Seasons, SeasonsOutput},
 };
 
 pub struct MediaDetailsContents {
@@ -25,11 +27,13 @@ pub struct MediaDetailsContents {
     series_id: Option<Uuid>,
     header: OnceCell<Controller<MediaDetailsHeader>>,
     seasons: Option<AsyncController<Seasons>>,
+    selected_season_index: Option<usize>,
 }
 
 #[derive(Debug)]
 pub enum MediaDetailsContentsInput {
     RefreshSeasons,
+    SetSelectedSeasonIndex(usize),
 }
 
 #[relm4::component(pub async)]
@@ -92,7 +96,7 @@ impl AsyncComponent for MediaDetailsContents {
     async fn init(
         init: Self::Init,
         root: Self::Root,
-        _sender: AsyncComponentSender<Self>,
+        sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
         let (api_client, media) = init;
 
@@ -115,6 +119,7 @@ impl AsyncComponent for MediaDetailsContents {
             series_id,
             header: OnceCell::new(),
             seasons: None,
+            selected_season_index: None,
         };
 
         let widgets = view_output!();
@@ -133,7 +138,7 @@ impl AsyncComponent for MediaDetailsContents {
 
         model.add_info(info_box);
 
-        model.load_seasons(container);
+        model.load_seasons(&sender, container);
 
         AsyncComponentParts { model, widgets }
     }
@@ -147,7 +152,10 @@ impl AsyncComponent for MediaDetailsContents {
     ) {
         match message {
             MediaDetailsContentsInput::RefreshSeasons => {
-                self.load_seasons(&widgets.container);
+                self.load_seasons(&sender, &widgets.container);
+            }
+            MediaDetailsContentsInput::SetSelectedSeasonIndex(selected_season_index) => {
+                self.selected_season_index = Some(selected_season_index);
             }
         }
         self.update_view(widgets, sender);
@@ -155,7 +163,7 @@ impl AsyncComponent for MediaDetailsContents {
 }
 
 impl MediaDetailsContents {
-    fn load_seasons(&mut self, container: &gtk::Box) {
+    fn load_seasons(&mut self, sender: &AsyncComponentSender<Self>, container: &gtk::Box) {
         if let Some(seasons) = self.seasons.take() {
             container.remove(seasons.widget());
         }
@@ -165,8 +173,9 @@ impl MediaDetailsContents {
                 .launch(SeasonsInit {
                     api_client: self.api_client.clone(),
                     series_id,
+                    initial_selected_season_index: self.selected_season_index,
                 })
-                .detach();
+                .forward(sender.input_sender(), |m| m.into());
             container.append(seasons.widget());
             self.seasons = Some(seasons);
         }
@@ -229,6 +238,16 @@ impl MediaDetailsContents {
             // Show full list in tooltip in case any were truncated
             genres_label.set_tooltip_text(Some(genres.to_vec().join(", ").as_str()));
             info_box.append(genres_label);
+        }
+    }
+}
+
+impl From<SeasonsOutput> for MediaDetailsContentsInput {
+    fn from(val: SeasonsOutput) -> Self {
+        match val {
+            SeasonsOutput::SeasonSelected(selected_season_index) => {
+                MediaDetailsContentsInput::SetSelectedSeasonIndex(selected_season_index)
+            }
         }
     }
 }

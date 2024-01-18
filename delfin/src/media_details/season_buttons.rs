@@ -10,7 +10,7 @@ pub(crate) struct SeasonButtons;
 
 #[relm4::component(pub(crate))]
 impl SimpleComponent for SeasonButtons {
-    type Init = Vec<BaseItemDto>;
+    type Init = (Vec<BaseItemDto>, usize);
     type Input = ();
     type Output = SeasonsInput;
 
@@ -23,10 +23,12 @@ impl SimpleComponent for SeasonButtons {
     }
 
     fn init(
-        seasons: Self::Init,
+        init: Self::Init,
         seasons_box: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
+        let (seasons, initial_selected_season_index) = init;
+
         let model = SeasonButtons;
 
         let widgets = view_output!();
@@ -40,15 +42,16 @@ impl SimpleComponent for SeasonButtons {
             }
         };
 
-        // First button will be active and is used to group remaining buttons
+        // First button will is used to group remaining buttons
         let first_btn = create_season_btn(&seasons[0]);
-        first_btn.set_active(true);
+        first_btn.set_active(initial_selected_season_index == 0);
         first_btn.connect_toggled(btn_toggle_handler(0));
         seasons_box.append(&first_btn);
 
         for (index, season) in seasons.iter().enumerate().skip(1) {
             let season_btn = create_season_btn(season);
             season_btn.set_group(Some(&first_btn));
+            season_btn.set_active(initial_selected_season_index == index);
             season_btn.connect_toggled(btn_toggle_handler(index));
             seasons_box.append(&season_btn);
         }
