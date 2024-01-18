@@ -1,9 +1,10 @@
 use adw::prelude::*;
 use relm4::{factory::FactoryVecDeque, prelude::*};
+use uuid::Uuid;
 
 use crate::{
     borgar::borgar_menu::BorgarMenu,
-    config::{Account, Server},
+    config::{general::MostRecentLogin, Account, Server},
     globals::CONFIG,
     jellyfin_api::api::user::AuthenticateByNameRes,
     tr,
@@ -172,10 +173,23 @@ impl Component for AccountList {
             }
             AccountListInput::AcountSelected(index) => {
                 let index = index.current_index();
-                let config = CONFIG.read();
-                let server = config.servers.iter().find(|s| s.id == self.server.id);
+                let mut config = CONFIG.write();
+
+                let server = config
+                    .servers
+                    .clone()
+                    .into_iter()
+                    .find(|s| s.id == self.server.id);
+
                 if let Some(server) = server {
                     let account = &server.accounts[index];
+
+                    config.general.most_recent_login = Some(MostRecentLogin {
+                        server_id: Uuid::parse_str(&server.id).unwrap(),
+                        account_id: Uuid::parse_str(&account.id).unwrap(),
+                    });
+                    config.save().expect("Failed to update previous login");
+
                     sender
                         .output(AccountListOutput::AccountSelected(
                             server.clone(),
