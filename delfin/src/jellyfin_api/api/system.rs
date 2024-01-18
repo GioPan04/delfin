@@ -1,5 +1,6 @@
 use anyhow::Result;
 use serde::Deserialize;
+use uuid::Uuid;
 
 use crate::jellyfin_api::{
     api_client::ApiClient, unauthed_client::get_unauthed_client, util::url::httpify,
@@ -8,7 +9,7 @@ use crate::jellyfin_api::{
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PublicServerInfo {
-    pub id: String,
+    pub id: Uuid,
     pub server_name: String,
 }
 

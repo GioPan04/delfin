@@ -121,22 +121,22 @@ italic = false
             },
             servers: vec![
                 Server {
-                    id: "bed62d7911b34d1eb185cb33a41d889b".into(),
+                    id: uuid!("bed62d7911b34d1eb185cb33a41d889b"),
                     url: "https://jellyfin.localhost".into(),
                     name: "localhost".into(),
                     accounts: vec![Account {
-                        id: "88c09387ec04412fa2365004d6d06869".into(),
+                        id: uuid!("88c09387ec04412fa2365004d6d06869"),
                         username: "foo".into(),
                         access_token: "ad5348ff6a304ce59404d1c99d5d1afc".into(),
                         device_id: uuid!("ecd59636-b66e-4bff-a721-1d29fd7437fe"),
                     }],
                 },
                 Server {
-                    id: "28a2bc08c2424460a493030e5048d1f6".into(),
+                    id: uuid!("28a2bc08c2424460a493030e5048d1f6"),
                     url: "http://localhost:1234".into(),
                     name: "thingy".into(),
                     accounts: vec![Account {
-                        id: "90d328046d474a9dbe9a34ff04daa582".into(),
+                        id: uuid!("90d328046d474a9dbe9a34ff04daa582"),
                         username: "bar".into(),
                         access_token: "f07087a794044a2db1c66614dad03327".into(),
                         device_id: uuid!("ecd59636-b66e-4bff-a721-1d29fd7437fe"),

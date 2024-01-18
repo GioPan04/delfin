@@ -1,6 +1,5 @@
 use adw::prelude::*;
 use relm4::{factory::FactoryVecDeque, prelude::*};
-use uuid::Uuid;
 
 use crate::{
     borgar::borgar_menu::BorgarMenu,
@@ -185,8 +184,8 @@ impl Component for AccountList {
                     let account = &server.accounts[index];
 
                     config.general.most_recent_login = Some(MostRecentLogin {
-                        server_id: Uuid::parse_str(&server.id).unwrap(),
-                        account_id: Uuid::parse_str(&account.id).unwrap(),
+                        server_id: server.id,
+                        account_id: account.id,
                     });
                     config.save().expect("Failed to update previous login");
 

@@ -10,7 +10,7 @@ impl ApiClient {
         let mut url = self.root.join(&format!("Shows/{series_id}/Seasons"))?;
 
         url.query_pairs_mut()
-            .append_pair("userId", &self.account.id);
+            .append_pair("userId", &self.account.id.to_string());
 
         let res: BaseItemDtoQueryResult = self.client.get(url).send().await?.json().await?;
 
@@ -48,7 +48,7 @@ impl ApiClient {
         let mut url = self.root.join(&format!("Shows/{series_id}/Episodes"))?;
 
         url.query_pairs_mut()
-            .append_pair("userId", &self.account.id)
+            .append_pair("userId", &self.account.id.to_string())
             .append_pair("fields", "Overview");
 
         if let Some(season_id) = season_id {

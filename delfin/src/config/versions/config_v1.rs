@@ -163,14 +163,14 @@ impl Migrate<Config> for ConfigV1 {
             .servers
             .into_iter()
             .map(|server| Server {
-                id: server.id,
+                id: Uuid::parse_str(&server.id).expect("Failed to migrate server ID"),
                 url: server.url,
                 name: server.name,
                 accounts: server
                     .accounts
                     .into_iter()
                     .map(|account| Account {
-                        id: account.id,
+                        id: Uuid::parse_str(&account.id).expect("Failed to migrate account ID"),
                         username: account.username,
                         access_token: account.access_token,
                         device_id: Uuid::parse_str(&self.device_id)

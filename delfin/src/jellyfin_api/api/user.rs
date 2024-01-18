@@ -24,14 +24,14 @@ struct AuthenticateByNameReqBody {
 pub struct AuthenticateByNameRes {
     pub user: AuthenticateByNameResUser,
     pub access_token: String,
-    pub server_id: String,
+    pub server_id: Uuid,
     pub session_info: AuthenticateByNameResSessionInfo,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct AuthenticateByNameResUser {
-    pub id: String,
+    pub id: Uuid,
     pub name: String,
 }
 
@@ -75,7 +75,7 @@ pub async fn authenticate_by_name(
     }
 }
 
-pub async fn get_user_avatar(url: &str, user_id: &str) -> Result<VecDeque<u8>> {
+pub async fn get_user_avatar(url: &str, user_id: &Uuid) -> Result<VecDeque<u8>> {
     let client = get_unauthed_client();
 
     let url = httpify(url);

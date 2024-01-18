@@ -10,7 +10,7 @@ impl ApiClient {
         let mut url = self.root.join("DisplayPreferences/usersettings")?;
 
         url.query_pairs_mut()
-            .append_pair("userId", &self.account.id)
+            .append_pair("userId", &self.account.id.to_string())
             .append_pair("client", client);
 
         let res: DisplayPreferencesRaw = self.client.get(url).send().await?.json().await?;

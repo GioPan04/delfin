@@ -98,7 +98,7 @@ fn get_config_file_exists() -> Option<PathBuf> {
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq)]
 pub struct Server {
-    pub id: String,
+    pub id: Uuid,
     pub url: String,
     pub name: String,
     pub accounts: Vec<Account>,
@@ -106,7 +106,7 @@ pub struct Server {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct Account {
-    pub id: String,
+    pub id: Uuid,
     pub username: String,
     // TODO: move to keyring
     pub access_token: String,

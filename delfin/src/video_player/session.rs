@@ -74,7 +74,7 @@ fn start_session_reporting(
                             let api_client = api_client.clone();
                             async move {
                                 if (api_client
-                                    .report_playback_progress("timeupdate", &item_id, position)
+                                    .report_playback_progress("timeupdate", item_id, position)
                                     .await)
                                     .is_err()
                                 {
