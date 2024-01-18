@@ -1,6 +1,7 @@
 use relm4::adw;
 use serde::{Deserialize, Serialize};
 use unic_langid::LanguageIdentifier;
+use uuid::Uuid;
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
 enum InnerTheme {
@@ -46,10 +47,17 @@ impl From<Theme> for adw::ColorScheme {
     }
 }
 
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq)]
+pub struct MostRecentLogin {
+    pub server_id: Uuid,
+    pub account_id: Uuid,
+}
+
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub struct GeneralConfig {
     pub language: Option<LanguageIdentifier>,
     pub theme: Theme,
+    pub most_recent_login: Option<MostRecentLogin>,
 }
 
 impl GeneralConfig {

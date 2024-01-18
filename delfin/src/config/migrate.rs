@@ -146,6 +146,7 @@ italic = false
             general: GeneralConfig {
                 language: None,
                 theme: THEME_DARK,
+                most_recent_login: None,
             },
             video_player: VideoPlayerConfig {
                 volume: 0.0,

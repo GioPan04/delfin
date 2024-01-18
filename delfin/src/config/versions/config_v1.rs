@@ -195,6 +195,7 @@ impl Migrate<Config> for ConfigV1 {
                     Theme::Dark => config::general::THEME_DARK,
                     Theme::Default => config::general::Theme::default(),
                 },
+                ..Default::default()
             },
             video_player: VideoPlayerConfig {
                 position_update_frequency: self.video_player.position_update_frequency,
