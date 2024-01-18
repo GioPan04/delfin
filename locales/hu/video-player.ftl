@@ -23,4 +23,19 @@ vp-skip-forwards-backwards-tooltip =
         [forwards] Előreugrás
        *[backwards] Hátraugrás
     } { $seconds } másodpercet
-vp-subtitle-track-menu = Feliratok
+vp-subtitle-track-menu = Felirat
+vp-no-subtitles-available = Nincs elérhető felirat.
+vp-next-prev-episode-tooltip =
+    { $direction ->
+        [next] Következő
+       *[previous] Előző
+    } epizód
+vp-fullscreen-tooltip =
+    { $enter ->
+        [true] Teljes képernyő
+       *[false] Kilépés a teljes képernyőből
+    }
+vp-next-up-starting = A következő epizód { $remaining } másodperc múlva indul
+vp-next-up-action =
+    .play = Lejátszás most
+    .hide = Elrejtés
