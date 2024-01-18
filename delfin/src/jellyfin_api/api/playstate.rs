@@ -16,6 +16,7 @@ pub struct ReportPlaybackProgressReq {
     pub event_name: String,
     pub item_id: Uuid,
     pub position_ticks: usize,
+    pub is_paused: bool,
 }
 
 #[derive(Serialize)]
@@ -43,6 +44,7 @@ impl ApiClient {
         event_name: &str,
         item_id: Uuid,
         position_secs: usize,
+        is_paused: bool,
     ) -> Result<()> {
         let url = self.root.join("Sessions/Playing/Progress").unwrap();
 
@@ -52,6 +54,7 @@ impl ApiClient {
                 event_name: event_name.into(),
                 item_id,
                 position_ticks: seconds_to_ticks(position_secs),
+                is_paused,
             })
             .send()
             .await?;
