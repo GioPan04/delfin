@@ -40,7 +40,7 @@ impl ApiClient {
             .join(&format!("Items/{item_id}/PlaybackInfo"))
             .unwrap();
         url.query_pairs_mut()
-            .append_pair("userId", &self.account.id);
+            .append_pair("userId", &self.account.id.to_string());
 
         let body: PlaybackInfoDto = PlaybackInfoDto::builder()
             .device_profile(Some(DEVICE_PROFILE_DIRECT_PLAY.clone()))

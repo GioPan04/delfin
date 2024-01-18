@@ -9,6 +9,7 @@ use relm4::{
     prelude::{DynamicIndex, FactoryComponent},
     FactorySender,
 };
+use uuid::Uuid;
 
 use crate::{config::Account, jellyfin_api::api::user::get_user_avatar};
 
@@ -65,7 +66,7 @@ impl FactoryComponent for AccountListItem {
     ) -> Self {
         let (url, account) = init;
 
-        try_load_avatar(sender, &url, &account.id);
+        try_load_avatar(sender, &url, account.id);
 
         Self {
             account,
@@ -80,9 +81,8 @@ impl FactoryComponent for AccountListItem {
     }
 }
 
-fn try_load_avatar(sender: FactorySender<AccountListItem>, server_url: &str, account_id: &str) {
+fn try_load_avatar(sender: FactorySender<AccountListItem>, server_url: &str, account_id: Uuid) {
     let server_url = server_url.to_string();
-    let account_id = account_id.to_string();
     sender.oneshot_command(async move {
         // This errors if the user doesn't have an avatar image set
         if let Ok(avatar_bytes) = get_user_avatar(&server_url, &account_id).await {

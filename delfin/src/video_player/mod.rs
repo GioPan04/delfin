@@ -360,10 +360,7 @@ impl Component for VideoPlayer {
                     relm4::spawn({
                         let api_client = api_client.clone();
                         async move {
-                            api_client
-                                .report_playback_started(&item_id.to_string())
-                                .await
-                                .unwrap();
+                            api_client.report_playback_started(item_id).await.unwrap();
                         }
                     });
 
@@ -441,7 +438,7 @@ impl Component for VideoPlayer {
                             let item_id = media.id.unwrap();
                             async move {
                                 api_client
-                                    .report_playback_stopped(&item_id, position)
+                                    .report_playback_stopped(item_id, position)
                                     .await
                                     .unwrap();
                                 *LIBRARY_REFRESH_QUEUED.write() = true;

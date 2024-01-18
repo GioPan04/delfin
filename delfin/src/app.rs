@@ -10,7 +10,6 @@ use std::{
     cell::OnceCell,
     sync::{Arc, RwLock},
 };
-use uuid::Uuid;
 
 use crate::{
     accounts::account_list::{AccountList, AccountListInput, AccountListOutput},
@@ -180,17 +179,13 @@ impl Component for App {
             account_id,
         }) = config.general.most_recent_login
         {
-            if let Some(server) = config
-                .servers
-                .iter()
-                .find(|server| Uuid::parse_str(&server.id).unwrap() == server_id)
-            {
+            if let Some(server) = config.servers.iter().find(|server| server.id == server_id) {
                 sender.input(AppInput::ServerSelected(server.clone()));
 
                 if let Some(account) = server
                     .accounts
                     .iter()
-                    .find(|account| Uuid::parse_str(&account.id).unwrap() == account_id)
+                    .find(|account| account.id == account_id)
                 {
                     sender.input(AppInput::AccountSelected(server.clone(), account.clone()));
                 }

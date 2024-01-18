@@ -3,11 +3,12 @@ use relm4::{
     adw, gtk,
     prelude::{DynamicIndex, FactoryComponent},
 };
+use uuid::Uuid;
 
 use crate::config;
 
 pub struct ServerListItem {
-    pub id: String,
+    pub id: Uuid,
     pub url: String,
     pub name: String,
 }
