@@ -71,6 +71,7 @@ impl Component for Subtitles {
             set_icon_name: "closed-captioning",
             set_menu_model: Some(&model.menu),
             set_focus_on_click: false,
+            set_direction: gtk::ArrowType::Up,
             #[watch]
             set_tooltip_text: Some(tr!(
                 "vp-subtitle-track-tooltip",
