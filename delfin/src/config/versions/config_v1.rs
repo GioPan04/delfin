@@ -242,6 +242,7 @@ impl Migrate<Config> for ConfigV1 {
                 intro_skipper: self.video_player.intro_skipper,
                 intro_skipper_auto_skip: self.video_player.intro_skipper_auto_skip,
                 jellyscrub: self.video_player.jellyscrub,
+                ..Default::default()
             },
         }
     }

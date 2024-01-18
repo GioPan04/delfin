@@ -7,6 +7,8 @@ use gtk::{gdk, gdk_pixbuf, graphene, prelude::*};
 use relm4::prelude::*;
 
 use crate::{
+    config::video_player_config::DurationDisplay,
+    globals::CONFIG,
     tr,
     utils::{bif::Thumbnail, message_broker::ResettableMessageBroker},
     video_player::backends::VideoPlayerBackend,
@@ -16,21 +18,6 @@ const TIMESTAMP_WIDTH: i32 = 80;
 
 pub(crate) static SCRUBBER_BROKER: ResettableMessageBroker<ScrubberInput> =
     ResettableMessageBroker::new();
-
-#[derive(Clone, Copy, Debug)]
-enum DurationDisplay {
-    Total,
-    Remaining,
-}
-
-impl DurationDisplay {
-    fn toggle(&self) -> Self {
-        match self {
-            Self::Total => Self::Remaining,
-            Self::Remaining => Self::Total,
-        }
-    }
-}
 
 struct ScrubberPopover {
     position: f64,
@@ -63,6 +50,7 @@ pub enum ScrubberInput {
     ScrubberMouseHover(f64),
     ScrubberMouseLeave,
     LoadedThumbnails(Option<Vec<Thumbnail>>),
+    DurationDisplayUpdated(DurationDisplay),
 }
 
 #[relm4::component(pub(crate))]
@@ -202,11 +190,13 @@ impl Component for Scrubber {
             loading: true,
             position: 0,
             duration: 0,
-            duration_display: DurationDisplay::Total,
+            duration_display: CONFIG.read().video_player.duration_display,
             scrubbing: false,
             popover: None,
             thumbnails: None,
         };
+
+        model.subscribe_to_config(&sender);
 
         let widgets = view_output!();
 
@@ -241,7 +231,13 @@ impl Component for Scrubber {
                 self.loading = false;
             }
             ScrubberInput::ToggleDurationDisplay => {
-                self.duration_display = self.duration_display.toggle();
+                let mut config = CONFIG.write();
+                config.video_player.duration_display =
+                    config.video_player.duration_display.toggle();
+                config.save().expect("Failed to save duration display");
+            }
+            ScrubberInput::DurationDisplayUpdated(duration_display) => {
+                self.duration_display = duration_display;
             }
             ScrubberInput::SetScrubbing(scrubbing) => {
                 self.scrubbing = scrubbing;
@@ -310,6 +306,12 @@ impl Scrubber {
             }
         };
         Some(Texture::for_pixbuf(&pixbuf))
+    }
+
+    fn subscribe_to_config(&self, sender: &ComponentSender<Self>) {
+        CONFIG.subscribe(sender.input_sender(), |config| {
+            ScrubberInput::DurationDisplayUpdated(config.video_player.duration_display)
+        });
     }
 }
 

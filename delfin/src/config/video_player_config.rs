@@ -10,32 +10,6 @@ use crate::{
     },
 };
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
-pub enum VideoPlayerBackendPreference {
-    Mpv,
-    Gst,
-}
-
-impl From<VideoPlayerBackendPreference> for Arc<RefCell<dyn VideoPlayerBackend>> {
-    fn from(val: VideoPlayerBackendPreference) -> Self {
-        match val {
-            VideoPlayerBackendPreference::Mpv => Arc::<RefCell<VideoPlayerBackendMpv>>::default(),
-            VideoPlayerBackendPreference::Gst => {
-                #[cfg(feature = "gst")]
-                {
-                    Arc::<RefCell<crate::video_player::backends::gst::VideoPlayerBackendGst>>::default()
-                }
-
-                #[cfg(not(feature = "gst"))]
-                {
-                    println!("GStreamer backend not available, falling back to MPV backend");
-                    Arc::<RefCell<VideoPlayerBackendMpv>>::default()
-                }
-            }
-        }
-    }
-}
-
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
 #[serde(default)]
 pub struct VideoPlayerConfig {
@@ -46,6 +20,7 @@ pub struct VideoPlayerConfig {
     pub skip_backwards_amount: VideoPlayerSkipAmount,
     pub skip_forwards_amount: VideoPlayerSkipAmount,
     pub on_left_click: VideoPlayerOnLeftClick,
+    pub duration_display: DurationDisplay,
 
     #[serde(serialize_with = "round_one_place")]
     pub subtitle_scale: f64,
@@ -71,7 +46,8 @@ impl Default for VideoPlayerConfig {
 
             skip_backwards_amount: VideoPlayerSkipAmount::Ten,
             skip_forwards_amount: VideoPlayerSkipAmount::Thirty,
-            on_left_click: VideoPlayerOnLeftClick::PlayPause,
+            on_left_click: VideoPlayerOnLeftClick::default(),
+            duration_display: DurationDisplay::default(),
 
             subtitle_scale: 1.0,
             subtitle_colour: "#FFFFFFFF".into(),
@@ -79,7 +55,7 @@ impl Default for VideoPlayerConfig {
             subtitle_position: 100,
             subtitle_font: VideoPlayerSubtitleFont::default(),
 
-            backend: VideoPlayerBackendPreference::Mpv,
+            backend: VideoPlayerBackendPreference::default(),
             hls_playback: false,
             intro_skipper: true,
             intro_skipper_auto_skip: true,
@@ -101,8 +77,52 @@ impl From<VideoPlayerSkipAmount> for Duration {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq, Clone, Copy)]
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq, Clone, Copy)]
 pub enum VideoPlayerOnLeftClick {
+    #[default]
     PlayPause,
     ToggleControls,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize, Clone, Copy, PartialEq)]
+pub enum VideoPlayerBackendPreference {
+    #[default]
+    Mpv,
+    Gst,
+}
+
+impl From<VideoPlayerBackendPreference> for Arc<RefCell<dyn VideoPlayerBackend>> {
+    fn from(val: VideoPlayerBackendPreference) -> Self {
+        match val {
+            VideoPlayerBackendPreference::Mpv => Arc::<RefCell<VideoPlayerBackendMpv>>::default(),
+            VideoPlayerBackendPreference::Gst => {
+                #[cfg(feature = "gst")]
+                {
+                    Arc::<RefCell<crate::video_player::backends::gst::VideoPlayerBackendGst>>::default()
+                }
+
+                #[cfg(not(feature = "gst"))]
+                {
+                    println!("GStreamer backend not available, falling back to MPV backend");
+                    Arc::<RefCell<VideoPlayerBackendMpv>>::default()
+                }
+            }
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq)]
+pub enum DurationDisplay {
+    #[default]
+    Total,
+    Remaining,
+}
+
+impl DurationDisplay {
+    pub fn toggle(&self) -> Self {
+        match self {
+            Self::Total => Self::Remaining,
+            Self::Remaining => Self::Total,
+        }
+    }
 }
