@@ -26,6 +26,7 @@ pub struct Seasons {
 pub struct SeasonsInit {
     pub api_client: Arc<ApiClient>,
     pub series_id: Uuid,
+    pub initial_selected_season_index: Option<usize>,
 }
 
 #[derive(Debug)]
@@ -33,11 +34,16 @@ pub enum SeasonsInput {
     SeasonActivated(usize),
 }
 
+#[derive(Debug)]
+pub enum SeasonsOutput {
+    SeasonSelected(usize),
+}
+
 #[relm4::component(pub async)]
 impl AsyncComponent for Seasons {
     type Init = SeasonsInit;
     type Input = SeasonsInput;
-    type Output = ();
+    type Output = SeasonsOutput;
     type CommandOutput = ();
 
     view! {
@@ -74,6 +80,7 @@ impl AsyncComponent for Seasons {
         let SeasonsInit {
             api_client,
             series_id,
+            initial_selected_season_index,
         } = init;
 
         let widgets = view_output!();
@@ -93,14 +100,18 @@ impl AsyncComponent for Seasons {
             return AsyncComponentParts { model, widgets };
         }
 
+        let initial_selected_season_index = match initial_selected_season_index {
+            Some(season) if season < model.seasons.len() => season,
+            _ => 0,
+        };
+
         let season_buttons = SeasonButtons::builder()
-            .launch(model.seasons.clone())
+            .launch((model.seasons.clone(), initial_selected_season_index))
             .forward(sender.input_sender(), |e| e);
         root.append(season_buttons.widget());
         model.season_buttons = Some(season_buttons);
 
-        // Load first season by default
-        sender.input(SeasonsInput::SeasonActivated(0));
+        sender.input(SeasonsInput::SeasonActivated(initial_selected_season_index));
 
         AsyncComponentParts { model, widgets }
     }
@@ -108,7 +119,7 @@ impl AsyncComponent for Seasons {
     async fn update(
         &mut self,
         msg: Self::Input,
-        _sender: AsyncComponentSender<Self>,
+        sender: AsyncComponentSender<Self>,
         root: &Self::Root,
     ) {
         match msg {
@@ -128,6 +139,8 @@ impl AsyncComponent for Seasons {
                     .detach();
                 root.append(episodes.widget());
                 self.episodes = Some(episodes);
+
+                sender.output(SeasonsOutput::SeasonSelected(index)).unwrap();
             }
         }
     }
