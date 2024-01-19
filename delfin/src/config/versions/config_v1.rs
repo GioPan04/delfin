@@ -157,7 +157,10 @@ impl Default for VideoPlayerConfig {
 
 impl Migrate<Config> for ConfigV1 {
     fn migrate(self) -> Config {
-        use config::{Account, GeneralConfig, Server, VideoPlayerConfig, Window};
+        use config::{
+            video_player_config::VideoPlayerSubtitlesConfig, Account, GeneralConfig, Server,
+            VideoPlayerConfig, Window,
+        };
 
         let servers = self
             .servers
@@ -225,11 +228,13 @@ impl Migrate<Config> for ConfigV1 {
                         config::video_player_config::VideoPlayerOnLeftClick::ToggleControls
                     }
                 },
-                subtitle_scale: self.video_player.subtitle_scale,
-                subtitle_colour: self.video_player.subtitle_colour,
-                subtitle_background_colour: self.video_player.subtitle_background_colour,
-                subtitle_position: self.video_player.subtitle_position,
-                subtitle_font: self.video_player.subtitle_font,
+                subtitles: VideoPlayerSubtitlesConfig {
+                    scale: self.video_player.subtitle_scale,
+                    colour: self.video_player.subtitle_colour,
+                    background_colour: self.video_player.subtitle_background_colour,
+                    position: self.video_player.subtitle_position,
+                    font: self.video_player.subtitle_font,
+                },
                 backend: match self.video_player.backend {
                     VideoPlayerBackendPreference::Mpv => {
                         config::video_player_config::VideoPlayerBackendPreference::Mpv

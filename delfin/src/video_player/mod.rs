@@ -571,33 +571,35 @@ impl VideoPlayer {
 
     fn configure_player(&self, video_player_config: &VideoPlayerConfig) {
         let player = self.backend.borrow();
-        player.set_subtitle_scale(video_player_config.subtitle_scale);
+        player.set_subtitle_scale(video_player_config.subtitles.scale);
         player.set_subtitle_colour(
             video_player_config
-                .subtitle_colour
+                .subtitles
+                .colour
                 .clone()
                 .try_into()
                 .unwrap_or_else(|_| {
                     panic!(
                         "Error setting subtitle colour: {}",
-                        video_player_config.subtitle_colour
+                        video_player_config.subtitles.colour
                     )
                 }),
         );
         player.set_subtitle_background_colour(
             video_player_config
-                .subtitle_background_colour
+                .subtitles
+                .background_colour
                 .clone()
                 .try_into()
                 .unwrap_or_else(|_| {
                     panic!(
                         "Error setting subtitle background colour: {}",
-                        video_player_config.subtitle_background_colour
+                        video_player_config.subtitles.background_colour
                     )
                 }),
         );
-        player.set_subtitle_position(video_player_config.subtitle_position);
-        player.set_subtitle_font(&video_player_config.subtitle_font);
+        player.set_subtitle_position(video_player_config.subtitles.position);
+        player.set_subtitle_font(&video_player_config.subtitles.font);
     }
 
     fn set_player_state(&mut self, new_state: PlayerState) {

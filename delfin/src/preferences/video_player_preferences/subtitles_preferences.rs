@@ -60,7 +60,7 @@ impl SimpleComponent for SubtitlesPreferences {
 
                     add_suffix = &gtk::Label {
                         #[watch]
-                        set_label: &model.video_player_config.subtitle_colour,
+                        set_label: &model.video_player_config.subtitles.colour,
                     },
 
                     add_suffix = &gtk::ColorDialogButton {
@@ -68,8 +68,8 @@ impl SimpleComponent for SubtitlesPreferences {
                         set_dialog = &gtk::ColorDialog,
                         #[watch]
                         #[block_signal(colour_change_handler)]
-                        set_rgba: &gdk::RGBA::parse(model.video_player_config.subtitle_colour.clone())
-                            .unwrap_or_else(|_| panic!("Error parsing colour: {}", model.video_player_config.subtitle_colour.clone())),
+                        set_rgba: &gdk::RGBA::parse(model.video_player_config.subtitles.colour.clone())
+                            .unwrap_or_else(|_| panic!("Error parsing colour: {}", model.video_player_config.subtitles.colour.clone())),
                         connect_rgba_notify[sender] => move |btn| {
                             sender.input(SubtitlesPreferencesInput::SubtitleColour(btn.rgba().into()));
                         } @colour_change_handler,
@@ -81,7 +81,7 @@ impl SimpleComponent for SubtitlesPreferences {
 
                     add_suffix = &gtk::Label {
                         #[watch]
-                        set_label: &model.video_player_config.subtitle_background_colour,
+                        set_label: &model.video_player_config.subtitles.background_colour,
                     },
 
                     add_suffix = &gtk::ColorDialogButton {
@@ -89,8 +89,8 @@ impl SimpleComponent for SubtitlesPreferences {
                         set_dialog = &gtk::ColorDialog,
                         #[watch]
                         #[block_signal(background_colour_change_handler)]
-                        set_rgba: &gdk::RGBA::parse(model.video_player_config.subtitle_background_colour.clone())
-                            .unwrap_or_else(|_| panic!("Error parsing colour: {}", model.video_player_config.subtitle_background_colour.clone())),
+                        set_rgba: &gdk::RGBA::parse(model.video_player_config.subtitles.background_colour.clone())
+                            .unwrap_or_else(|_| panic!("Error parsing colour: {}", model.video_player_config.subtitles.background_colour.clone())),
                         connect_rgba_notify[sender] => move |btn| {
                             sender.input(SubtitlesPreferencesInput::SubtitleBackgroundColour(btn.rgba().into()));
                         } @background_colour_change_handler,
@@ -106,7 +106,7 @@ impl SimpleComponent for SubtitlesPreferences {
 
                         #[watch]
                         #[block_signal(subtitle_font_change_handler)]
-                        set_font_desc: &model.video_player_config.subtitle_font.clone().into(),
+                        set_font_desc: &model.video_player_config.subtitles.font.clone().into(),
                         set_use_font: true,
                         set_dialog = &gtk::FontDialog {
                             set_filter: Some(&model.font_filter()),
@@ -144,7 +144,7 @@ impl SimpleComponent for SubtitlesPreferences {
 
                 add_row = &adw::SpinRow::new(
                     Some(&gtk::Adjustment::new(
-                        model.video_player_config.subtitle_scale,
+                        model.video_player_config.subtitles.scale,
                         0.0, 100.0, 0.1, 1.0, 0.0,
                     )),
                     // Climb rate
@@ -157,7 +157,7 @@ impl SimpleComponent for SubtitlesPreferences {
 
                     #[watch]
                     #[block_signal(subtitle_scale_change_handler)]
-                    set_value: model.video_player_config.subtitle_scale,
+                    set_value: model.video_player_config.subtitles.scale,
                     connect_changed[sender] => move |spinrow| {
                         sender.input(SubtitlesPreferencesInput::SubtitleScale(spinrow.value()));
                     } @subtitle_scale_change_handler,
@@ -166,7 +166,7 @@ impl SimpleComponent for SubtitlesPreferences {
 
                 add_row = &adw::SpinRow::new(
                     Some(&gtk::Adjustment::new(
-                        model.video_player_config.subtitle_position as f64,
+                        model.video_player_config.subtitles.position as f64,
                         0.0, 150.0, 1.0, 1.0, 0.0,
                     )),
                     // Climb rate
@@ -179,7 +179,7 @@ impl SimpleComponent for SubtitlesPreferences {
 
                     #[watch]
                     #[block_signal(subtitle_position_change_handler)]
-                    set_value: model.video_player_config.subtitle_position as f64,
+                    set_value: model.video_player_config.subtitles.position as f64,
                     connect_changed[sender] => move |spinrow| {
                         sender.input(SubtitlesPreferencesInput::SubtitlePosition(spinrow.value()));
                     } @subtitle_position_change_handler,
@@ -220,26 +220,27 @@ impl SimpleComponent for SubtitlesPreferences {
             }
             SubtitlesPreferencesInput::Reset => {
                 let default = VideoPlayerConfig::default();
-                config.video_player.subtitle_scale = default.subtitle_scale;
-                config.video_player.subtitle_colour = default.subtitle_colour;
-                config.video_player.subtitle_background_colour = default.subtitle_background_colour;
-                config.video_player.subtitle_position = default.subtitle_position;
-                config.video_player.subtitle_font = default.subtitle_font;
+                config.video_player.subtitles.scale = default.subtitles.scale;
+                config.video_player.subtitles.colour = default.subtitles.colour;
+                config.video_player.subtitles.background_colour =
+                    default.subtitles.background_colour;
+                config.video_player.subtitles.position = default.subtitles.position;
+                config.video_player.subtitles.font = default.subtitles.font;
             }
-            SubtitlesPreferencesInput::SubtitleScale(subtitle_scale) => {
-                config.video_player.subtitle_scale = subtitle_scale;
+            SubtitlesPreferencesInput::SubtitleScale(scale) => {
+                config.video_player.subtitles.scale = scale;
             }
             SubtitlesPreferencesInput::SubtitleColour(colour) => {
-                config.video_player.subtitle_colour = colour.to_hex();
+                config.video_player.subtitles.colour = colour.to_hex();
             }
             SubtitlesPreferencesInput::SubtitleBackgroundColour(background_colour) => {
-                config.video_player.subtitle_background_colour = background_colour.to_hex();
+                config.video_player.subtitles.background_colour = background_colour.to_hex();
             }
             SubtitlesPreferencesInput::SubtitlePosition(position) => {
-                config.video_player.subtitle_position = position as u32;
+                config.video_player.subtitles.position = position as u32;
             }
             SubtitlesPreferencesInput::SubtitleFont(font) => {
-                config.video_player.subtitle_font = font;
+                config.video_player.subtitles.font = font;
             }
         }
 
@@ -252,12 +253,12 @@ impl SubtitlesPreferences {
         let default = VideoPlayerConfig::default();
         let video_player_config = &self.video_player_config;
 
-        (video_player_config.subtitle_scale != default.subtitle_scale)
-            || (video_player_config.subtitle_colour != default.subtitle_colour)
-            || (video_player_config.subtitle_background_colour
-                != default.subtitle_background_colour)
-            || (video_player_config.subtitle_position != default.subtitle_position)
-            || (video_player_config.subtitle_font != default.subtitle_font)
+        (video_player_config.subtitles.scale != default.subtitles.scale)
+            || (video_player_config.subtitles.colour != default.subtitles.colour)
+            || (video_player_config.subtitles.background_colour
+                != default.subtitles.background_colour)
+            || (video_player_config.subtitles.position != default.subtitles.position)
+            || (video_player_config.subtitles.font != default.subtitles.font)
     }
 
     fn font_filter(&self) -> CustomFilter {

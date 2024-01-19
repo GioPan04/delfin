@@ -22,12 +22,7 @@ pub struct VideoPlayerConfig {
     pub on_left_click: VideoPlayerOnLeftClick,
     pub duration_display: DurationDisplay,
 
-    #[serde(serialize_with = "round_one_place")]
-    pub subtitle_scale: f64,
-    pub subtitle_colour: String,
-    pub subtitle_background_colour: String,
-    pub subtitle_position: u32,
-    pub subtitle_font: VideoPlayerSubtitleFont,
+    pub subtitles: VideoPlayerSubtitlesConfig,
 
     pub intro_skipper: bool,
     pub intro_skipper_auto_skip: bool,
@@ -49,11 +44,7 @@ impl Default for VideoPlayerConfig {
             on_left_click: VideoPlayerOnLeftClick::default(),
             duration_display: DurationDisplay::default(),
 
-            subtitle_scale: 1.0,
-            subtitle_colour: "#FFFFFFFF".into(),
-            subtitle_background_colour: "#00000000".into(),
-            subtitle_position: 100,
-            subtitle_font: VideoPlayerSubtitleFont::default(),
+            subtitles: VideoPlayerSubtitlesConfig::default(),
 
             backend: VideoPlayerBackendPreference::default(),
             hls_playback: false,
@@ -82,6 +73,28 @@ pub enum VideoPlayerOnLeftClick {
     #[default]
     PlayPause,
     ToggleControls,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
+pub struct VideoPlayerSubtitlesConfig {
+    #[serde(serialize_with = "round_one_place")]
+    pub scale: f64,
+    pub colour: String,
+    pub background_colour: String,
+    pub position: u32,
+    pub font: VideoPlayerSubtitleFont,
+}
+
+impl Default for VideoPlayerSubtitlesConfig {
+    fn default() -> Self {
+        Self {
+            scale: 1.0,
+            colour: "#FFFFFFFF".into(),
+            background_colour: "#00000000".into(),
+            position: 100,
+            font: VideoPlayerSubtitleFont::default(),
+        }
+    }
 }
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone, Copy, PartialEq)]
