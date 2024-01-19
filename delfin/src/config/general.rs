@@ -53,11 +53,24 @@ pub struct MostRecentLogin {
     pub account_id: Uuid,
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(default)]
 pub struct GeneralConfig {
     pub language: Option<LanguageIdentifier>,
     pub theme: Theme,
     pub most_recent_login: Option<MostRecentLogin>,
+    pub restore_most_recent_login: bool,
+}
+
+impl Default for GeneralConfig {
+    fn default() -> Self {
+        Self {
+            language: Option::default(),
+            theme: Theme::default(),
+            most_recent_login: Option::default(),
+            restore_most_recent_login: true,
+        }
+    }
 }
 
 impl GeneralConfig {

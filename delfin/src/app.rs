@@ -186,20 +186,22 @@ impl Component for App {
 
         model.register_actions();
 
-        if let Some(MostRecentLogin {
-            server_id,
-            account_id,
-        }) = config.general.most_recent_login
-        {
-            if let Some(server) = config.servers.iter().find(|server| server.id == server_id) {
-                sender.input(AppInput::ServerSelected(server.clone()));
+        if config.general.restore_most_recent_login {
+            if let Some(MostRecentLogin {
+                server_id,
+                account_id,
+            }) = config.general.most_recent_login
+            {
+                if let Some(server) = config.servers.iter().find(|server| server.id == server_id) {
+                    sender.input(AppInput::ServerSelected(server.clone()));
 
-                if let Some(account) = server
-                    .accounts
-                    .iter()
-                    .find(|account| account.id == account_id)
-                {
-                    sender.input(AppInput::AccountSelected(server.clone(), account.clone()));
+                    if let Some(account) = server
+                        .accounts
+                        .iter()
+                        .find(|account| account.id == account_id)
+                    {
+                        sender.input(AppInput::AccountSelected(server.clone(), account.clone()));
+                    }
                 }
             }
         }

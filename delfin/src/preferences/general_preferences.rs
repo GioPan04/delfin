@@ -18,6 +18,7 @@ pub struct GeneralPreferences;
 pub enum GeneralPreferencesInput {
     Language(Option<String>),
     ThemeChanged(u32),
+    RestoreMostRecentLogin(bool),
 }
 
 #[relm4::component(pub)]
@@ -81,6 +82,15 @@ impl SimpleComponent for GeneralPreferences {
                         sender.input(GeneralPreferencesInput::ThemeChanged(cb.selected()));
                     },
                 },
+
+                add = &adw::SwitchRow {
+                    set_title: tr!("prefs-general-restore-most-recent.title"),
+                    set_subtitle: tr!("prefs-general-restore-most-recent.subtitle"),
+                    set_active: general_preferences.restore_most_recent_login,
+                    connect_active_notify[sender] => move |switch| {
+                        sender.input(GeneralPreferencesInput::RestoreMostRecentLogin(switch.is_active()));
+                    },
+                },
             },
         }
     }
@@ -108,6 +118,9 @@ impl SimpleComponent for GeneralPreferences {
             }
             GeneralPreferencesInput::ThemeChanged(theme) => {
                 config.general.set_theme(Theme::from(theme));
+            }
+            GeneralPreferencesInput::RestoreMostRecentLogin(restore_most_recent_login) => {
+                config.general.restore_most_recent_login = restore_most_recent_login;
             }
         }
 
