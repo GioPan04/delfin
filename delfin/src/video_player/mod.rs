@@ -315,6 +315,25 @@ impl Component for VideoPlayer {
         ComponentParts { model, widgets }
     }
 
+    fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
+        let position = self.backend.borrow().position();
+
+        self.backend.borrow_mut().stop();
+        self.session_playback_reporter.stop(self.backend.clone());
+
+        // This should only be called if the app is closed while the video player is open. We want
+        // to tell the server that playback stopped in a blocking manner so that the request goes
+        // out before the app is closed.
+        if !matches!(self.player_state, PlayerState::Loading) {
+            if let (Some(api_client), Some(media)) = (&self.api_client, &self.media) {
+                if let Ok(runtime) = tokio::runtime::Runtime::new() {
+                    let _ = runtime
+                        .block_on(api_client.report_playback_stopped(media.id.unwrap(), position));
+                }
+            }
+        }
+    }
+
     fn update_with_view(
         &mut self,
         widgets: &mut Self::Widgets,
