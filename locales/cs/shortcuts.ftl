@@ -18,3 +18,4 @@ sc-gen-quit = Ukončit
 # Library
 # =======
 sc-lib = Knihovna
+sc-lib-refresh = Obnovit
