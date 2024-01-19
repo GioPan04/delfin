@@ -38,6 +38,12 @@
                 <property name="title">{{ tr(key="sc-lib-search") }}</property>
               </object>
             </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
+                <property name="accelerator">&lt;Ctrl&gt;r</property>
+                <property name="title">{{ tr(key="sc-lib-refresh") }}</property>
+              </object>
+            </child>
           </object>
         </child>
         <child>

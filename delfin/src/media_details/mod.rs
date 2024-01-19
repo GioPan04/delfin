@@ -3,6 +3,7 @@ use std::sync::Arc;
 use adw::prelude::*;
 use jellyfin_api::types::BaseItemDto;
 use relm4::{
+    actions::{AccelsPlus, RelmAction, RelmActionGroup},
     component::{AsyncComponent, AsyncComponentController, AsyncController},
     prelude::*,
     SharedState,
@@ -14,6 +15,7 @@ use crate::{
     jellyfin_api::api_client::ApiClient,
     media_details::media_details_contents::MediaDetailsContents,
     tr,
+    utils::main_window::get_main_window,
 };
 
 use self::media_details_contents::MediaDetailsContentsInput;
@@ -110,6 +112,8 @@ impl SimpleComponent for MediaDetails {
 
         container.set_child(Some(model.media_details_contents.widget()));
 
+        model.register_actions(&sender);
+
         ComponentParts { model, widgets }
     }
 
@@ -127,4 +131,33 @@ impl SimpleComponent for MediaDetails {
             }
         }
     }
+
+    fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
+        self.unregister_actions();
+    }
 }
+
+impl MediaDetails {
+    fn register_actions(&self, sender: &ComponentSender<Self>) {
+        relm4::main_application().set_accelerators_for_action::<RefreshAction>(&["<Ctrl>r"]);
+
+        let refresh_action: RelmAction<RefreshAction> = RelmAction::new_stateless({
+            let sender = sender.clone();
+            move |_| {
+                sender.input(MediaDetailsInput::Refresh);
+            }
+        });
+        let mut group = RelmActionGroup::<MediaDetailsActionGroup>::new();
+        group.add_action(refresh_action);
+        if let Some(main_window) = get_main_window() {
+            group.register_for_widget(main_window);
+        }
+    }
+
+    fn unregister_actions(&self) {
+        relm4::main_application().set_accelerators_for_action::<RefreshAction>(&[]);
+    }
+}
+
+relm4::new_action_group!(MediaDetailsActionGroup, "media_details");
+relm4::new_stateless_action!(RefreshAction, MediaDetailsActionGroup, "refresh");

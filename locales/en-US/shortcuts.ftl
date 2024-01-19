@@ -8,6 +8,7 @@ sc-gen-quit = Quit
 # =======
 sc-lib = Library
 sc-lib-search = Search library
+sc-lib-refresh = Refresh
 # Video Player
 # ============
 sc-vp = Video Player

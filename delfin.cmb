@@ -20,7 +20,8 @@
 	(2,14,"GtkShortcutsShortcut",None,3,None,None,None,2,None),
 	(2,15,"GtkShortcutsShortcut",None,3,None,None,None,3,None),
 	(2,16,"GtkShortcutsGroup",None,2,None,None,None,1,None),
-	(2,17,"GtkShortcutsShortcut",None,16,None,None,None,None,None)
+	(2,17,"GtkShortcutsShortcut",None,16,None,None,None,None,None),
+	(2,18,"GtkShortcutsShortcut",None,16,None,None,None,1,None)
   </object>
   <object_property>
 	(2,2,"GtkShortcutsSection","section-name","Video Player",None,None,None,None,None,None,None,None,None),
@@ -48,6 +49,8 @@
 	(2,15,"GtkShortcutsShortcut","title","{{ tr(key=\"sc-gen-quit\") }}",None,None,None,None,None,None,None,None,None),
 	(2,16,"GtkShortcutsGroup","title","{{ tr(key=\"sc-lib\") }}",None,None,None,None,None,None,None,None,None),
 	(2,17,"GtkShortcutsShortcut","accelerator","&lt;Ctrl&gt;f",None,None,None,None,None,None,None,None,None),
-	(2,17,"GtkShortcutsShortcut","title","{{ tr(key=\"sc-lib-search\") }}",None,None,None,None,None,None,None,None,None)
+	(2,17,"GtkShortcutsShortcut","title","{{ tr(key=\"sc-lib-search\") }}",None,None,None,None,None,None,None,None,None),
+	(2,18,"GtkShortcutsShortcut","accelerator","&lt;Ctrl&gt;r",None,None,None,None,None,None,None,None,None),
+	(2,18,"GtkShortcutsShortcut","title","{{ tr(key=\"sc-lib-refresh\") }}",None,None,None,None,None,None,None,None,None)
   </object_property>
 </cambalache-project>

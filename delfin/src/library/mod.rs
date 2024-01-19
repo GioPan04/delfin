@@ -77,6 +77,7 @@ pub enum LibraryInput {
     SetLibraryState(LibraryState),
     Refresh,
     Shown,
+    Hidden,
     ViewStackChildVisible(String),
     Toast(String),
     SearchChanged(String),
@@ -104,7 +105,7 @@ impl Component for Library {
 
     view! {
         adw::NavigationPage {
-            set_tag: Some(AppPage::Library.into()),
+            set_tag: Some(&AppPage::Library.to_string()),
             set_title: tr!("library-page-title"),
 
             #[wrap(Some)]
@@ -265,6 +266,10 @@ impl Component for Library {
             connect_shown[sender] => move |_| {
                 sender.input(LibraryInput::Shown);
             },
+
+            connect_hidden[sender] => move |_| {
+                sender.input(LibraryInput::Hidden);
+            },
         }
     }
 
@@ -329,8 +334,16 @@ impl Component for Library {
             }
         });
 
+        let refresh_action: RelmAction<RefreshAction> = RelmAction::new_stateless({
+            let sender = sender.clone();
+            move |_| {
+                sender.input(LibraryInput::Refresh);
+            }
+        });
+
         let mut group = RelmActionGroup::<LibraryActionGroup>::new();
         group.add_action(search_action);
+        group.add_action(refresh_action);
         if let Some(main_window) = get_main_window() {
             group.register_for_widget(main_window);
         }
@@ -360,20 +373,22 @@ impl Component for Library {
                 };
             }
             LibraryInput::Refresh => {
-                let view_stack = &widgets.view_stack;
+                if root.is_child_visible() {
+                    let view_stack = &widgets.view_stack;
 
-                sender.input(LibraryInput::SetLibraryState(LibraryState::Loading));
-                self.searching.set_value(false);
+                    sender.input(LibraryInput::SetLibraryState(LibraryState::Loading));
+                    self.searching.set_value(false);
 
-                // Clear the current set of pages before loading a new one
-                if let Some(home) = self.home.take() {
-                    view_stack.remove(home.widget());
+                    // Clear the current set of pages before loading a new one
+                    if let Some(home) = self.home.take() {
+                        view_stack.remove(home.widget());
+                    }
+                    if let Some(collections) = self.collections.take() {
+                        view_stack.remove(collections.widget());
+                    }
+
+                    self.initial_fetch(&sender);
                 }
-                if let Some(collections) = self.collections.take() {
-                    view_stack.remove(collections.widget());
-                }
-
-                self.initial_fetch(&sender);
             }
             LibraryInput::Shown => {
                 if *LIBRARY_REFRESH_QUEUED.read() {
@@ -381,6 +396,12 @@ impl Component for Library {
                     *MEDIA_DETAILS_REFRESH_QUEUED.write() = false;
                 }
                 *LIBRARY_REFRESH_QUEUED.write() = false;
+
+                relm4::main_application()
+                    .set_accelerators_for_action::<RefreshAction>(&["<Ctrl>r"]);
+            }
+            LibraryInput::Hidden => {
+                relm4::main_application().set_accelerators_for_action::<RefreshAction>(&[]);
             }
             LibraryInput::ViewStackChildVisible(name) => {
                 if name != "search" {
@@ -513,3 +534,4 @@ impl Library {
 
 relm4::new_action_group!(LibraryActionGroup, "library_actions");
 relm4::new_stateless_action!(SearchAction, LibraryActionGroup, "search");
+relm4::new_stateless_action!(RefreshAction, LibraryActionGroup, "refresh");
