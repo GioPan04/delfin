@@ -222,7 +222,7 @@ impl Component for Library {
                                         set_icon_name: Some("warning"),
                                         #[wrap(Some)]
                                         set_child = &gtk::Button {
-                                            set_label: "Refresh",
+                                            set_label: tr!("library-status-refresh-button"),
                                             set_halign: gtk::Align::Center,
                                             set_css_classes: &["pill", "suggested-action"],
                                             connect_clicked[sender] => move |_| {
@@ -239,7 +239,7 @@ impl Component for Library {
                                         set_icon_name: Some("warning"),
                                         #[wrap(Some)]
                                         set_child = &gtk::Button {
-                                            set_label: "Refresh",
+                                            set_label: tr!("library-status-refresh-button"),
                                             set_halign: gtk::Align::Center,
                                             set_css_classes: &["pill", "suggested-action"],
                                             connect_clicked[sender] => move |_| {
