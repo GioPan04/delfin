@@ -8,6 +8,7 @@ use relm4::{
 };
 use std::{
     cell::OnceCell,
+    fmt::Display,
     sync::{Arc, RwLock},
 };
 
@@ -38,19 +39,25 @@ pub enum AppPage {
     Servers,
     Accounts,
     Library,
+    Collection,
     MediaDetails,
     VideoPlayer,
 }
 
-impl From<AppPage> for &str {
-    fn from(val: AppPage) -> Self {
-        match val {
-            AppPage::Servers => "servers",
-            AppPage::Accounts => "accounts",
-            AppPage::Library => "library",
-            AppPage::MediaDetails => "media_details",
-            AppPage::VideoPlayer => "video_player",
-        }
+impl Display for AppPage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                AppPage::Servers => "servers",
+                AppPage::Accounts => "accounts",
+                AppPage::Library => "library",
+                AppPage::Collection => "collection",
+                AppPage::MediaDetails => "media_details",
+                AppPage::VideoPlayer => "video_player",
+            }
+        )
     }
 }
 
@@ -78,6 +85,7 @@ pub enum AppInput {
     PlayVideo(BaseItemDto),
     SignOut,
     SetThemeDark(bool),
+    PagePopped(Option<String>),
 }
 
 #[relm4::component(pub)]
@@ -114,10 +122,14 @@ impl Component for App {
             #[wrap(Some)]
             set_content = &adw::NavigationView {
                 add = model.servers.widget() {
-                    set_tag: Some(AppPage::Servers.into()),
+                    set_tag: Some(&AppPage::Servers.to_string()),
                 },
                 add = model.account_list.widget() {
-                    set_tag: Some(AppPage::Accounts.into()),
+                    set_tag: Some(&AppPage::Accounts.to_string()),
+                },
+
+                connect_popped[sender] => move |_, page| {
+                    sender.input(AppInput::PagePopped(page.tag().map(|s| s.to_string())));
                 },
             },
         }
@@ -212,12 +224,12 @@ impl Component for App {
                 navigation.pop();
             }
             AppInput::PopToPage(page) => {
-                navigation.pop_to_tag(page.into());
+                navigation.pop_to_tag(&page.to_string());
             }
             AppInput::ServerSelected(server) => {
                 self.server = Some(server.clone());
                 self.account_list.emit(AccountListInput::SetServer(server));
-                navigation.push_by_tag(AppPage::Accounts.into());
+                navigation.push_by_tag(&AppPage::Accounts.to_string());
             }
             AppInput::AccountSelected(server, account) => {
                 self.account = Some(account.clone());
@@ -245,6 +257,9 @@ impl Component for App {
                     let media_details = MediaDetails::builder()
                         .launch((api_client.clone(), media, server.clone(), account.clone()))
                         .detach();
+                    media_details
+                        .widget()
+                        .set_tag(Some(&AppPage::MediaDetails.to_string()));
                     navigation.push(media_details.widget());
                     self.media_details = Some(media_details);
                 }
@@ -261,6 +276,9 @@ impl Component for App {
                             account.clone(),
                         ))
                         .detach();
+                    collection
+                        .widget()
+                        .set_tag(Some(&AppPage::Collection.to_string()));
                     navigation.push(collection.widget());
                     self.collection = Some(collection);
                 }
@@ -271,7 +289,7 @@ impl Component for App {
                         .launch_with_broker((), &VIDEO_PLAYER_BROKER)
                         .forward(sender.input_sender(), convert_video_player_output);
                     let video_player_widget = video_player.widget();
-                    video_player_widget.set_tag(Some(AppPage::VideoPlayer.into()));
+                    video_player_widget.set_tag(Some(&AppPage::VideoPlayer.to_string()));
                     widgets.navigation.add(video_player_widget);
                     // We already checked that video_player is unset, ignore result
                     let _ = self.video_player.set(video_player);
@@ -285,11 +303,11 @@ impl Component for App {
                             api_client.clone(),
                             Box::new(item),
                         ));
-                    navigation.push_by_tag(AppPage::VideoPlayer.into());
+                    navigation.push_by_tag(&AppPage::VideoPlayer.to_string());
                 }
             }
             AppInput::SignOut => {
-                navigation.pop_to_tag(AppPage::Servers.into());
+                navigation.pop_to_tag(&AppPage::Servers.to_string());
             }
             AppInput::SetThemeDark(dark) => {
                 if dark {
@@ -299,6 +317,17 @@ impl Component for App {
                     root.remove_css_class("dark");
                     root.add_css_class("light");
                 }
+            }
+            AppInput::PagePopped(tag) => {
+                match tag {
+                    Some(tag) if tag == AppPage::MediaDetails.to_string() => {
+                        self.media_details = None;
+                    }
+                    Some(tag) if tag == AppPage::Collection.to_string() => {
+                        self.collection = None;
+                    }
+                    _ => {}
+                };
             }
         }
 

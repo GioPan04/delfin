@@ -3,7 +3,10 @@ use std::sync::Arc;
 use adw::prelude::*;
 use anyhow::Result;
 use jellyfin_api::types::BaseItemDto;
-use relm4::prelude::*;
+use relm4::{
+    actions::{AccelsPlus, RelmAction, RelmActionGroup},
+    prelude::*,
+};
 
 use crate::{
     borgar::borgar_menu::{BorgarMenu, BorgarMenuAuth},
@@ -14,7 +17,7 @@ use crate::{
         media_tile::MediaTileDisplay,
     },
     tr,
-    utils::empty_component::EmptyComponent,
+    utils::{empty_component::EmptyComponent, main_window::get_main_window},
 };
 
 use super::{media_fetcher::Fetcher, media_page::MediaPageInit};
@@ -89,8 +92,15 @@ impl Component for Collection {
 
         let widgets = view_output!();
 
+        model.register_actions(&sender);
+
         ComponentParts { model, widgets }
     }
+
+    fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
+        self.unregister_actions();
+    }
+
     fn update_with_view(
         &mut self,
         widgets: &mut Self::Widgets,
@@ -108,6 +118,28 @@ impl Component for Collection {
             }
         }
         self.update_view(widgets, sender);
+    }
+}
+
+impl Collection {
+    fn register_actions(&self, sender: &ComponentSender<Self>) {
+        relm4::main_application().set_accelerators_for_action::<RefreshAction>(&["<Ctrl>r"]);
+
+        let refresh_action: RelmAction<RefreshAction> = RelmAction::new_stateless({
+            let sender = sender.clone();
+            move |_| {
+                sender.input(CollectionInput::Refresh);
+            }
+        });
+        let mut group = RelmActionGroup::<CollectionActionGroup>::new();
+        group.add_action(refresh_action);
+        if let Some(main_window) = get_main_window() {
+            group.register_for_widget(main_window);
+        }
+    }
+
+    fn unregister_actions(&self) {
+        relm4::main_application().set_accelerators_for_action::<RefreshAction>(&[]);
     }
 }
 
@@ -149,3 +181,6 @@ impl Fetcher for CollectionItemsFetcher {
             .clone()
     }
 }
+
+relm4::new_action_group!(CollectionActionGroup, "collection");
+relm4::new_stateless_action!(RefreshAction, CollectionActionGroup, "refresh");
