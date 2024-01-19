@@ -16,6 +16,10 @@ prefs-general-theme =
     .option-light = Light
     .option-dark = Dark
 
+prefs-general-restore-most-recent =
+    .title = Sign in automatically when { app-name } starts
+    .subtitle = On startup, you will be signed in to your most recently used account
+
 # Interface
 # =========
 

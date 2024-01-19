@@ -147,6 +147,7 @@ italic = false
                 language: None,
                 theme: THEME_DARK,
                 most_recent_login: None,
+                ..Default::default()
             },
             video_player: VideoPlayerConfig {
                 volume: 0.0,
