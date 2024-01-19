@@ -8,6 +8,7 @@ library-offline =
 library-error =
     .title = Error loading library
     .description = Check the console for errors or try again.
+library-status-refresh-button = Refresh
 library-page-home-title = Home
 library-section-title =
     .continue-watching = Continue Watching
