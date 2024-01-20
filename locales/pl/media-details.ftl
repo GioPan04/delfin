@@ -22,3 +22,4 @@ media-details-season-tooltip =
     .unknown-item-count = Ten sezon ma nieobejrzane odcinki
 media-details-episode-list-empty = Nie znaleziono odcinków dla tego sezonu.
 media-details-unnamed-season = Nienazwany sezon
+media-details-unnamed-item = Nienazwany element

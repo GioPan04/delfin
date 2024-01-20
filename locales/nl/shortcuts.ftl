@@ -12,3 +12,10 @@ sc-vp-subtitles = Ondertiteling tonen/verbergen
 sc-vp-frame-step = Frame-voor-frame spoelen
 sc-vp-seek = Spoelen
 sc-vp-play-pause = Afspelen/Pauzeren
+sc-gen-close-window = Venster sluiten
+sc-lib-search = Verzameling doorzoeken
+sc-gen-quit = Afsluiten
+# Library
+# =======
+sc-lib = Verzameling
+sc-lib-refresh = Herladen

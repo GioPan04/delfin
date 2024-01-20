@@ -9,3 +9,5 @@ library-loading = Chargement de la bibliothèque…
 library-page-title = Bibliothèque
 library-episode-name-with-season-and-episode = S{ $seasonNumber }:E{ $episodeNumber } - { $episodeName }
 library-page-home-title = Accueil
+library-status-refresh-button = Rafraichir
+library-search-button = Rechercher dans la bibliothèque

@@ -12,3 +12,9 @@ sc-vp-subtitles = Untertitel anzeigen/ausblenden
 sc-vp-frame-step = Bild für Bild anzeigen
 sc-vp-seek = Vor/Zurückspulen
 sc-vp-play-pause = Play/Pause
+sc-gen-close-window = Fenster schließen
+sc-lib-search = Bibliothek durchsuchen
+sc-gen-quit = Beenden
+# Library
+# =======
+sc-lib = Bibliothek

@@ -9,6 +9,12 @@ sc-vp-mute = Ativar/Desativar Som
 # ============
 sc-vp = Reprodutor de Vídeo
 sc-vp-subtitles = Ativar/Desativar Legendas
-sc-vp-frame-step = Vasculhar quadro-a-quadro
-sc-vp-seek = Vasculhar
+sc-vp-frame-step = Retroceder/Avançar quadro-a-quadro
+sc-vp-seek = Retroceder/Avançar
 sc-vp-play-pause = Reproduzir/Pausar
+sc-gen-close-window = Fechar janela
+sc-lib-search = Pesquisar na biblioteca
+sc-gen-quit = Sair
+# Library
+# =======
+sc-lib = Biblioteca

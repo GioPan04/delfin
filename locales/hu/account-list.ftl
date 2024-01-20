@@ -1,0 +1,12 @@
+account-list =
+    .title = Jelentkezz be
+    .description = Válassz egy felhasználót
+account-list-add-account-button = Felhasználó hozzáadása
+account-list-add-account-password = Jelszó
+account-list-add-account-username = Felhasználónév
+account-list-page-title = Felhasználók
+account-list-add-account-title = Felhasználó hozzáadása
+account-list-add-account-submit-button = Bejelentkezés
+account-list-empty =
+    .title = Nincs beállított felhasználó
+    .subtitle = Adj hozzá egy felhasználót

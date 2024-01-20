@@ -12,3 +12,9 @@ sc-vp-mute = адключыць/уключыць гук
 sc-vp-subtitles = Пераключыць субцітры
 sc-vp-frame-step = Пакадравыя перамотка
 sc-vp-seek = Перамотка
+sc-gen-close-window = Закрыць акно
+sc-lib-search = Пошук у бібліятэцы
+sc-gen-quit = Выйсці
+# Library
+# =======
+sc-lib = Бібліятэка
