@@ -3,6 +3,7 @@
 sc-gen = General
 sc-gen-shortcuts = Show shortcuts
 sc-gen-close-window = Close window
+sc-gen-menu = Open menu
 sc-gen-quit = Quit
 # Library
 # =======

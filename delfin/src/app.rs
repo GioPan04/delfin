@@ -14,6 +14,7 @@ use std::{
 
 use crate::{
     accounts::account_list::{AccountList, AccountListInput, AccountListOutput},
+    borgar::borgar_menu::{BorgarMenuInput, BORGAR_MENU_SENDER},
     config::{self, general::MostRecentLogin},
     globals::CONFIG,
     jellyfin_api::api_client::ApiClient,
@@ -357,10 +358,10 @@ impl App {
 
         let mut group = RelmActionGroup::<AppActionGroup>::new();
 
-        let quit_action: RelmAction<QuitAction> = RelmAction::new_stateless(|_| {
-            relm4::main_application().quit();
+        let menu_action: RelmAction<MenuAction> = RelmAction::new_stateless(|_| {
+            BORGAR_MENU_SENDER.send(BorgarMenuInput::OpenMenu).unwrap();
         });
-        app.set_accelerators_for_action::<QuitAction>(&["<Ctrl>q"]);
+        app.set_accelerators_for_action::<MenuAction>(&["F10"]);
 
         let preferences_action: RelmAction<PreferencesAction> = RelmAction::new_stateless({
             let sender = sender.clone();
@@ -370,8 +371,14 @@ impl App {
         });
         app.set_accelerators_for_action::<PreferencesAction>(&["<Ctrl>comma"]);
 
-        group.add_action(quit_action);
+        let quit_action: RelmAction<QuitAction> = RelmAction::new_stateless(|_| {
+            relm4::main_application().quit();
+        });
+        app.set_accelerators_for_action::<QuitAction>(&["<Ctrl>q"]);
+
+        group.add_action(menu_action);
         group.add_action(preferences_action);
+        group.add_action(quit_action);
         group.register_for_main_application();
     }
 }
@@ -409,5 +416,6 @@ fn convert_library_output(output: LibraryOutput) -> AppInput {
 }
 
 relm4::new_action_group!(AppActionGroup, "app");
+relm4::new_stateless_action!(MenuAction, AppActionGroup, "menu");
 relm4::new_stateless_action!(PreferencesAction, AppActionGroup, "preferences");
 relm4::new_stateless_action!(QuitAction, AppActionGroup, "quit");

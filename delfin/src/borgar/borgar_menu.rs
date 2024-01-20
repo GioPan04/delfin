@@ -2,10 +2,13 @@ use std::sync::Arc;
 
 use gtk::gio;
 use gtk::prelude::*;
+use once_cell::sync::Lazy;
 use relm4::{
     actions::{AccelsPlus, RelmAction, RelmActionGroup},
+    once_cell,
     prelude::*,
 };
+use tokio::sync::broadcast;
 
 use crate::app::AppInput;
 use crate::app::APP_BROKER;
@@ -19,6 +22,9 @@ use crate::{
 
 use super::about::About;
 
+pub static BORGAR_MENU_SENDER: Lazy<broadcast::Sender<BorgarMenuInput>> =
+    Lazy::new(|| broadcast::channel(1).0);
+
 pub struct BorgarMenuAuth {
     pub api_client: Arc<ApiClient>,
     pub server: Server,
@@ -31,8 +37,9 @@ pub struct BorgarMenu {
     about: Option<Controller<About>>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum BorgarMenuInput {
+    OpenMenu,
     SignOut,
     About,
 }
@@ -122,6 +129,15 @@ impl Component for BorgarMenu {
 
         group.register_for_widget(root);
 
+        relm4::spawn({
+            let mut rx = BORGAR_MENU_SENDER.subscribe();
+            async move {
+                while let Ok(msg) = rx.recv().await {
+                    sender.input(msg);
+                }
+            }
+        });
+
         ComponentParts { model, widgets }
     }
 
@@ -132,7 +148,14 @@ impl Component for BorgarMenu {
         sender: ComponentSender<Self>,
         root: &Self::Root,
     ) {
+        if !root.is_mapped() {
+            return;
+        }
+
         match message {
+            BorgarMenuInput::OpenMenu => {
+                root.activate();
+            }
             BorgarMenuInput::SignOut => 'msg: {
                 let BorgarMenuAuth {
                     api_client,

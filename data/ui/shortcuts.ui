@@ -23,6 +23,12 @@
             </child>
             <child>
               <object class="GtkShortcutsShortcut">
+                <property name="accelerator">F10</property>
+                <property name="title">{{ tr(key="sc-gen-menu") }}</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkShortcutsShortcut">
                 <property name="accelerator">&lt;Ctrl&gt;q</property>
                 <property name="title">{{ tr(key="sc-gen-quit") }}</property>
               </object>
