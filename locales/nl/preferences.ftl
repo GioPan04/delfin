@@ -84,3 +84,6 @@ prefs-vp-intro-skipper =
     .subtitle =
         Toon een knop om de introductie van afleveringen over te slaan.
         Hiervoor dient de <a href="{ $introSkipperUrl }">Intro Skipper</a>-plug-in geïnstalleerd te zijn op uw server.
+prefs-general-restore-most-recent =
+    .title = Automatisch inloggen na starten van { app-name }
+    .subtitle = Log na het opstarten automatisch in op uw laatstgebruikte account
