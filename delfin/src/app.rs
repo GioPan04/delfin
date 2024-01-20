@@ -21,6 +21,7 @@ use crate::{
     locales::tera_tr,
     media_details::MediaDetails,
     meson_config::APP_ID,
+    preferences::Preferences,
     servers::server_list::{ServerList, ServerListOutput},
     tr,
     utils::{main_window::MAIN_APP_WINDOW_NAME, shift_state::shift_state_controller},
@@ -71,6 +72,7 @@ pub struct App {
     video_player: OnceCell<Controller<VideoPlayer>>,
     server: Option<config::Server>,
     account: Option<config::Account>,
+    preferences: Option<Controller<Preferences>>,
 }
 
 #[derive(Debug)]
@@ -86,6 +88,7 @@ pub enum AppInput {
     SignOut,
     SetThemeDark(bool),
     PagePopped(Option<String>),
+    ShowPreferences,
 }
 
 #[relm4::component(pub)]
@@ -180,11 +183,12 @@ impl Component for App {
             video_player: OnceCell::new(),
             server: None,
             account: None,
+            preferences: None,
         };
 
         let widgets = view_output!();
 
-        model.register_actions();
+        model.register_actions(&sender);
 
         if config.general.restore_most_recent_login {
             if let Some(MostRecentLogin {
@@ -331,6 +335,14 @@ impl Component for App {
                     _ => {}
                 };
             }
+            AppInput::ShowPreferences => {
+                self.preferences = Some(
+                    Preferences::builder()
+                        .transient_for(root)
+                        .launch(())
+                        .detach(),
+                );
+            }
         }
 
         self.update_view(widgets, sender);
@@ -338,7 +350,7 @@ impl Component for App {
 }
 
 impl App {
-    fn register_actions(&self) {
+    fn register_actions(&self, sender: &ComponentSender<Self>) {
         let app = relm4::main_application();
         app.set_accels_for_action("win.show-help-overlay", &["<Ctrl>question"]);
         app.set_accels_for_action("window.close", &["<Ctrl>w"]);
@@ -350,7 +362,16 @@ impl App {
         });
         app.set_accelerators_for_action::<QuitAction>(&["<Ctrl>q"]);
 
+        let preferences_action: RelmAction<PreferencesAction> = RelmAction::new_stateless({
+            let sender = sender.clone();
+            move |_| {
+                sender.input(AppInput::ShowPreferences);
+            }
+        });
+        app.set_accelerators_for_action::<PreferencesAction>(&["<Ctrl>comma"]);
+
         group.add_action(quit_action);
+        group.add_action(preferences_action);
         group.register_for_main_application();
     }
 }
@@ -388,4 +409,5 @@ fn convert_library_output(output: LibraryOutput) -> AppInput {
 }
 
 relm4::new_action_group!(AppActionGroup, "app");
+relm4::new_stateless_action!(PreferencesAction, AppActionGroup, "preferences");
 relm4::new_stateless_action!(QuitAction, AppActionGroup, "quit");

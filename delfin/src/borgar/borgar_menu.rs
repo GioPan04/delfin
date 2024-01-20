@@ -7,11 +7,12 @@ use relm4::{
     prelude::*,
 };
 
+use crate::app::AppInput;
+use crate::app::APP_BROKER;
 use crate::{
     borgar::sign_out_dialog::SignOutDialog,
     config::{Account, Server},
     jellyfin_api::api_client::ApiClient,
-    preferences::Preferences,
     tr,
     utils::main_window::get_main_window,
 };
@@ -26,7 +27,6 @@ pub struct BorgarMenuAuth {
 
 pub struct BorgarMenu {
     auth: Option<BorgarMenuAuth>,
-    preferences: Option<Controller<Preferences>>,
     sign_out_dialog: Option<Controller<SignOutDialog>>,
     about: Option<Controller<About>>,
 }
@@ -34,7 +34,6 @@ pub struct BorgarMenu {
 #[derive(Debug)]
 pub enum BorgarMenuInput {
     SignOut,
-    Preferences,
     About,
 }
 
@@ -81,7 +80,6 @@ impl Component for BorgarMenu {
     ) -> ComponentParts<Self> {
         let model = BorgarMenu {
             auth,
-            preferences: None,
             sign_out_dialog: None,
             about: None,
         };
@@ -92,12 +90,11 @@ impl Component for BorgarMenu {
 
         let mut group = RelmActionGroup::<BorgarMenuActionGroup>::new();
 
-        let preferences_action: RelmAction<PreferencesAction> = RelmAction::new_stateless({
-            let sender = sender.clone();
-            move |_| {
-                sender.input(BorgarMenuInput::Preferences);
-            }
-        });
+        let preferences_action: RelmAction<PreferencesAction> =
+            RelmAction::new_stateless(move |_| {
+                APP_BROKER.send(AppInput::ShowPreferences);
+            });
+        app.set_accelerators_for_action::<PreferencesAction>(&["<Ctrl>comma"]);
 
         let keyboard_shortcuts_action: RelmAction<KeyboardShortcutsAction> =
             RelmAction::new_stateless(move |_| {
@@ -106,7 +103,6 @@ impl Component for BorgarMenu {
                     .expect("Error getting show-help-overlay action")
                     .activate(None);
             });
-
         app.set_accelerators_for_action::<KeyboardShortcutsAction>(&["<Ctrl>question"]);
 
         let about_action: RelmAction<AboutAction> = RelmAction::new_stateless({
@@ -151,14 +147,6 @@ impl Component for BorgarMenu {
                     SignOutDialog::builder()
                         .transient_for(root)
                         .launch((api_client.clone(), server.clone(), account.clone()))
-                        .detach(),
-                );
-            }
-            BorgarMenuInput::Preferences => {
-                self.preferences = Some(
-                    Preferences::builder()
-                        .transient_for(root)
-                        .launch(())
                         .detach(),
                 );
             }
