@@ -18,3 +18,4 @@ sc-gen-quit = Afsluiten
 # Library
 # =======
 sc-lib = Verzameling
+sc-lib-refresh = Herladen
