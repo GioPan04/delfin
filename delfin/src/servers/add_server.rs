@@ -1,7 +1,12 @@
 use adw::prelude::*;
 use relm4::prelude::*;
+use tracing::error;
 
-use crate::{config, jellyfin_api::api::system::get_public_server_info, tr};
+use crate::{
+    config,
+    jellyfin_api::{api::system::get_public_server_info, util::url::httpify},
+    tr,
+};
 
 #[derive(Clone, Debug)]
 pub enum ValidationState {
@@ -18,7 +23,7 @@ pub struct AddServerDialog {
 
 #[derive(Debug)]
 pub enum AddServerInput {
-    ValidateServer(String),
+    Validate,
     Invalidate,
     AddServer,
 }
@@ -67,9 +72,11 @@ impl Component for AddServerDialog {
                                 set_editable: !matches!(model.valid, ValidationState::Loading),
                                 set_input_purpose: gtk::InputPurpose::Url,
 
-                                connect_changed[sender] => move |_| { sender.input(AddServerInput::Invalidate); },
-                                connect_apply[sender] => move |entry| {
-                                    sender.input(AddServerInput::ValidateServer(entry.text().to_string()));
+                                connect_changed[sender] => move |_| {
+                                    sender.input(AddServerInput::Invalidate);
+                                },
+                                connect_apply[sender] => move |_| {
+                                    sender.input(AddServerInput::Validate);
                                 },
                             },
 
@@ -124,10 +131,25 @@ impl Component for AddServerDialog {
         root.set_default_widget(Some(&widgets.submit_btn));
         ComponentParts { model, widgets }
     }
-
-    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, root: &Self::Root) {
+    fn update_with_view(
+        &mut self,
+        widgets: &mut Self::Widgets,
+        message: Self::Input,
+        sender: ComponentSender<Self>,
+        root: &Self::Root,
+    ) {
         match message {
-            AddServerInput::ValidateServer(url) => {
+            AddServerInput::Validate => {
+                let url_entry = &widgets.url_entry;
+
+                let url = url_entry.text().to_string();
+                let url = httpify(&url);
+
+                // If HTTPS prefix was added, we want the user to see it so
+                // they can change it to HTTP if necessary
+                url_entry.set_text(&url);
+                url_entry.set_position(-1);
+
                 self.valid = ValidationState::Loading;
                 sender.oneshot_command(async move {
                     let public_server_info = get_public_server_info(&url).await;
@@ -141,7 +163,7 @@ impl Component for AddServerDialog {
                             },
                         ));
                     }
-                    println!("Error getting server info: {:#?}", public_server_info);
+                    error!("Error getting server info: {:#?}", public_server_info);
                     AddServerCommandOutput::ServerValidated(ValidationState::Error)
                 });
             }
@@ -155,6 +177,8 @@ impl Component for AddServerDialog {
                 }
             }
         }
+
+        self.update_view(widgets, sender);
     }
 
     fn update_cmd(
