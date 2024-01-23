@@ -20,6 +20,7 @@ use jellyfin_api::types::{BaseItemDto, BaseItemKind};
 use relm4::component::{AsyncComponent, AsyncComponentController, AsyncController};
 use relm4::{gtk, ComponentParts};
 use relm4::{prelude::*, MessageBroker};
+use tracing::{debug, info};
 
 use crate::app::{AppInput, APP_BROKER};
 use crate::globals::CONFIG;
@@ -259,7 +260,7 @@ impl Component for VideoPlayer {
             let sender = sender.clone();
             Box::new(move |state| {
                 if cfg!(debug_assertions) {
-                    println!("Player state changed: {state:#?}");
+                    debug!("Player state changed: {state:#?}");
                 }
 
                 sender.input(VideoPlayerInput::PlayerStateChanged(state));
@@ -358,6 +359,7 @@ impl Component for VideoPlayer {
 
                 self.media = Some(*item.clone());
                 let url = api_client.get_stream_url(&item.id.unwrap());
+                info!("Playing video from URL: {url}");
                 self.backend.borrow_mut().play_uri(&url);
 
                 if let Some(playback_position_ticks) = item
