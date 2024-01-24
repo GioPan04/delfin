@@ -9,6 +9,10 @@
 }
 
 .video-player {
+  & > overlay {
+    background-color: black;
+  }
+
   .video-player-controls {
     .scrubber-position-label {
       // Match duration label padding (which is a button)

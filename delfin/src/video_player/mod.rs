@@ -140,6 +140,9 @@ impl Component for VideoPlayer {
                 gtk::Overlay {
                     #[local_ref]
                     video_player -> gtk::Widget {
+                        #[watch]
+                        set_visible: !matches!(model.player_state, PlayerState::Loading),
+
                         add_controller = gtk::GestureClick {
                             connect_released[sender] => move |_, n_press, _, _| {
                                 sender.input(VideoPlayerInput::MouseClick(n_press));
