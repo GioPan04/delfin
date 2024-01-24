@@ -7,6 +7,7 @@ use relm4::{
     gtk::{self, gio},
     Component, ComponentParts, ComponentSender,
 };
+use tracing::warn;
 
 use crate::{
     jellyfin_api::api_client::ApiClient,
@@ -243,7 +244,7 @@ impl Subtitles {
                 let playback_info = match api_client.get_playback_info(&item_id).await {
                     Ok(playback_info) => playback_info,
                     Err(err) => {
-                        println!("Error getting playback info: {err}");
+                        warn!("Error getting playback info: {err}");
                         return SubtitlesCommandOutput::ExternalSubtitlesLoaded(None);
                     }
                 };

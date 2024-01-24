@@ -6,6 +6,7 @@ use relm4::{
     prelude::*,
     AsyncComponentSender,
 };
+use tracing::warn;
 use uuid::Uuid;
 
 use crate::{
@@ -121,7 +122,7 @@ impl AsyncComponent for SkipIntro {
                 self.intro_timestamps = match api_client.get_intro_timestamps(&id).await {
                     Ok(intro_timestamps) => intro_timestamps,
                     Err(err) => {
-                        println!("Error getting intro timestamps for {id}: {err:#?}");
+                        warn!("Error getting intro timestamps for {id}: {err:#?}");
                         None
                     }
                 };

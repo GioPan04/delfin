@@ -7,6 +7,7 @@ use std::{
 };
 
 use tokio::time::sleep;
+use tracing::debug;
 
 type DebounceCallback = Arc<Mutex<Box<dyn Fn() + Send>>>;
 
@@ -44,7 +45,7 @@ impl Debounce {
                 if let Ok(callback) = callback.try_lock() {
                     callback();
                 } else {
-                    println!("Debounce callback lock could not be acquired");
+                    debug!("Debounce callback lock could not be acquired");
                 }
             }
         });

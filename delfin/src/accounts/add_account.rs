@@ -1,5 +1,6 @@
 use adw::prelude::*;
 use relm4::{adw, gtk, prelude::*, Component, ComponentParts};
+use tracing::error;
 use uuid::Uuid;
 
 use crate::{
@@ -171,7 +172,7 @@ impl Component for AddAccountDialog {
                 root.close();
             }
             AddAccountCommandOutput::SignInFail(err) => {
-                println!("Sign in failed: {:#?}", err);
+                error!("Sign in failed: {:#?}", err);
                 sender.input(AddAccountInput::Toast(err.to_string()));
                 self.valid = ValidationState::Invalid;
             }

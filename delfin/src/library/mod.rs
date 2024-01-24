@@ -19,6 +19,7 @@ use relm4::{
     ComponentController, RelmObjectExt, SharedState,
 };
 use std::sync::{Arc, RwLock};
+use tracing::error;
 
 use adw::prelude::*;
 use gtk::glib;
@@ -463,7 +464,7 @@ impl Library {
             match api_client.ping().await {
                 Ok(_) => {}
                 Err(err) => {
-                    println!("Error pinging server: {err}");
+                    error!("Failed to ping server: {err}");
                     return LibraryCommandOutput::SetLibraryState(LibraryState::Offline);
                 }
             }
@@ -482,7 +483,7 @@ impl Library {
                     LibraryCommandOutput::LibraryLoaded(user_views.0, display_preferences)
                 }
                 Err(err) => {
-                    println!("Error loading library: {err}");
+                    error!("Failed to load library: {err}");
                     LibraryCommandOutput::SetLibraryState(LibraryState::Error)
                 }
             }

@@ -6,6 +6,7 @@ use std::{
     },
 };
 
+use tracing::warn;
 use uuid::Uuid;
 
 use crate::{
@@ -98,7 +99,7 @@ fn start_session_reporting(
                                 .await)
                                 .is_err()
                             {
-                                println!("Error reporting playback progress.");
+                                warn!("Error reporting playback progress.");
                             }
                         }
                     });
@@ -133,7 +134,7 @@ fn start_session_reporting(
                             .await)
                             .is_err()
                         {
-                            println!("Error reporting playback progress.");
+                            warn!("Error reporting playback progress.");
                         }
                     }
                 });

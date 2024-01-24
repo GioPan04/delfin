@@ -7,9 +7,13 @@ use delfin::{
 };
 use gtk::gio;
 use relm4::{gtk, RelmApp};
+use tracing::log::LevelFilter;
 
 fn main() {
-    env_logger::init();
+    env_logger::builder()
+        .filter_level(LevelFilter::Warn)
+        .parse_default_env()
+        .init();
 
     #[cfg(feature = "gst")]
     {

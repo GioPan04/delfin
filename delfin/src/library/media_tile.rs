@@ -7,6 +7,7 @@ use relm4::{
     prelude::{AsyncComponent, AsyncComponentParts},
     AsyncComponentSender,
 };
+use tracing::error;
 
 use crate::{
     app::{AppInput, APP_BROKER},
@@ -298,8 +299,13 @@ async fn get_thumbnail(
         .into_iter()
         .collect();
 
-    let pixbuf = gdk_pixbuf::Pixbuf::from_read(img_bytes)
-        .unwrap_or_else(|_| panic!("Error creating media tile pixbuf: {:#?}", media.id));
+    let pixbuf = match gdk_pixbuf::Pixbuf::from_read(img_bytes) {
+        Ok(pixbuf) => pixbuf,
+        _ => {
+            error!("Error creating media tile pixbuf: {:#?}", media.id);
+            return None;
+        }
+    };
 
     // TODO: merge resizing with how it's done for episode list
 

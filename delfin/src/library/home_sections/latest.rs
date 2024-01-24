@@ -6,6 +6,7 @@ use relm4::{
     gtk, Component, ComponentController, ComponentParts, ComponentSender, Controller,
     SimpleComponent,
 };
+use tracing::warn;
 use uuid::Uuid;
 
 use crate::{
@@ -125,7 +126,7 @@ impl SimpleComponent for LatestRow {
             CollectionType::TvShows => tr!("library-section-title.latest-shows").to_string(),
             CollectionType::Music => tr!("library-section-title.latest-music").to_string(),
             s => {
-                println!("Unknown collection type: {s}");
+                warn!("Unknown collection type: {s}");
                 s.to_string()
             }
         };
