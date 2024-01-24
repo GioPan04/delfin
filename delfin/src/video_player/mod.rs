@@ -20,7 +20,7 @@ use jellyfin_api::types::{BaseItemDto, BaseItemKind};
 use relm4::component::{AsyncComponent, AsyncComponentController, AsyncController};
 use relm4::{gtk, ComponentParts};
 use relm4::{prelude::*, MessageBroker};
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 
 use crate::app::{AppInput, APP_BROKER};
 use crate::globals::CONFIG;
@@ -722,7 +722,7 @@ impl VideoPlayer {
                         return VideoPlayerCommandOutput::LoadedTrickplay(None);
                     }
                     Err(err) => {
-                        println!("Error fetching trickplay manifest: {err}");
+                        warn!("Error fetching trickplay manifest: {err}");
                         return VideoPlayerCommandOutput::LoadedTrickplay(None);
                     }
                 };
@@ -738,7 +738,7 @@ impl VideoPlayer {
                         return VideoPlayerCommandOutput::LoadedTrickplay(None);
                     }
                     Err(err) => {
-                        println!("Error fetching trickplay thumbnails: {err}");
+                        warn!("Error fetching trickplay thumbnails: {err}");
                         return VideoPlayerCommandOutput::LoadedTrickplay(None);
                     }
                 };

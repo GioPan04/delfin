@@ -1,5 +1,6 @@
 use bytes::Buf;
 use std::{cell::RefCell, sync::Arc};
+use tracing::warn;
 
 use gdk::{Rectangle, Texture};
 use graphene::Point;
@@ -292,14 +293,14 @@ impl Scrubber {
         let image = match thumbnails.get(nearest_thumbnail_idx) {
             Some(thumbnail) => &thumbnail.image,
             _ => {
-                println!("Error getting trickplay thumbnail");
+                warn!("Error getting trickplay thumbnail");
                 return None;
             }
         };
         let pixbuf = match gdk_pixbuf::Pixbuf::from_read(image.clone().reader()) {
             Ok(pixbuf) => pixbuf,
             Err(err) => {
-                println!(
+                warn!(
                     "Error creating pixbuf for scrubber thumbnail at timestamp {timestamp}: {err}"
                 );
                 return None;

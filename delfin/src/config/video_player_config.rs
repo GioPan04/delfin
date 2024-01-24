@@ -2,6 +2,7 @@ use std::{cell::RefCell, sync::Arc, time::Duration};
 
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use tracing::warn;
 
 use crate::{
     utils::round::round_one_place,
@@ -116,7 +117,7 @@ impl From<VideoPlayerBackendPreference> for Arc<RefCell<dyn VideoPlayerBackend>>
 
                 #[cfg(not(feature = "gst"))]
                 {
-                    println!("GStreamer backend not available, falling back to MPV backend");
+                    warn!("GStreamer backend not available, falling back to MPV backend");
                     Arc::<RefCell<VideoPlayerBackendMpv>>::default()
                 }
             }

@@ -3,6 +3,7 @@ use std::collections::VecDeque;
 use anyhow::Result;
 use reqwest::{StatusCode, Url};
 use serde::{Deserialize, Serialize};
+use tracing::error;
 use uuid::Uuid;
 
 use crate::jellyfin_api::{
@@ -69,7 +70,7 @@ pub async fn authenticate_by_name(
         }
         StatusCode::UNAUTHORIZED => anyhow::bail!("Wrong username or password."),
         _ => {
-            println!("Sign in error: {:#?}", res);
+            error!("Sign in error: {:#?}", res);
             anyhow::bail!("Error signing in.");
         }
     }

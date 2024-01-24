@@ -4,6 +4,7 @@ use anyhow::Result;
 use gtk::prelude::*;
 use jellyfin_api::types::BaseItemDto;
 use relm4::{adw::traits::ActionRowExt, gtk::traits::BoxExt, prelude::*};
+use tracing::warn;
 
 use crate::{
     app::{AppInput, APP_BROKER},
@@ -186,7 +187,7 @@ impl Component for SearchResultsEmpty {
             {
                 Ok((items, _)) => SearchResultsEmptyCommandOutput::Suggestions(items),
                 Err(err) => {
-                    println!("Error getting search suggestions: {err}");
+                    warn!("Error getting search suggestions: {err}");
                     SearchResultsEmptyCommandOutput::Suggestions(vec![])
                 }
             }

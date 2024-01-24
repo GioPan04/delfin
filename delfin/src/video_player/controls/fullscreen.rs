@@ -3,6 +3,7 @@ use std::mem::take;
 use glib::SignalHandlerId;
 use gtk::{glib, prelude::*};
 use relm4::{gtk, ComponentParts, SimpleComponent};
+use tracing::error;
 
 use crate::{
     tr,
@@ -92,7 +93,7 @@ impl SimpleComponent for Fullscreen {
                     self.fullscreen = !self.fullscreen;
                     window.set_fullscreened(self.fullscreen);
                 } else {
-                    println!("Error getting main window");
+                    error!("Failed to get main window");
                 }
             }
             FullscreenInput::ExitFullscreen => {
@@ -100,7 +101,7 @@ impl SimpleComponent for Fullscreen {
                     self.fullscreen = false;
                     window.set_fullscreened(false);
                 } else {
-                    println!("Error getting main window");
+                    error!("Failed to get main window");
                 }
             }
             FullscreenInput::WindowFullscreenChanged(fullscreen) => {

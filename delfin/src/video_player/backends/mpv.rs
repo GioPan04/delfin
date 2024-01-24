@@ -6,6 +6,7 @@ use std::{
 
 use glib::SignalHandlerId;
 use relm4::gtk::{self, glib, prelude::*};
+use tracing::debug;
 use uuid::Uuid;
 use video_player_mpv::{Track, TrackType, VideoPlayerMpv};
 
@@ -360,7 +361,7 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
                 self.widget.disconnect(signal_handler_id);
             }
             None => {
-                println!("Signal handler not found when trying to disconnect: {id}");
+                debug!("Signal handler not found when trying to disconnect: {id}");
             }
         };
     }

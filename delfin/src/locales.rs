@@ -1,6 +1,7 @@
 use fluent_templates::{lazy_static::lazy_static, FluentLoader};
 use sys_locale::get_locale;
 use tera::Tera;
+use tracing::warn;
 use unic_langid::{langid, LanguageIdentifier};
 
 use crate::globals::CONFIG;
@@ -17,7 +18,7 @@ lazy_static! {
     pub static ref DEFAULT_LANGUAGE: LanguageIdentifier = get_locale()
         .and_then(|l| l.parse().ok())
         .unwrap_or_else(|| {
-            println!("Error parsing system locale, defaulting to en-US");
+            warn!("Error parsing system locale, defaulting to en-US");
             langid!("en-US")
         });
 }
