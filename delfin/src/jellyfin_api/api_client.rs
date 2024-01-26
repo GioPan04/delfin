@@ -29,7 +29,8 @@ impl ApiClient {
         #[cfg_attr(not(debug_assertions), allow(unused_mut))]
         let mut client = reqwest::Client::builder()
             .user_agent(APP_USER_AGENT)
-            .default_headers(headers);
+            .default_headers(headers)
+            .connection_verbose(true);
 
         #[cfg(debug_assertions)]
         {
