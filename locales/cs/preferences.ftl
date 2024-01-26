@@ -53,7 +53,7 @@ prefs-vp-skip-backwards =
 prefs-vp-subs-style = Styl titulků
 prefs-vp-hls-playback =
     .title = Přehrávání pomocí HLS
-    .subtitle = .title = Toto může rozbít výběr zvukové stopy a stopy titulků.
+    .subtitle = { "." }title = Toto může rozbít výběr zvukové stopy a stopy titulků.
 prefs-vp-subs-colour =
     .title = Barva textu titulků
 prefs-vp-subs-background-colour =
@@ -85,3 +85,6 @@ prefs-vp-intro-skipper =
     .subtitle =
         Zobrazí tlačítko k přeskočení během znělky epizody seriálu.
         Tato možnost vyžaduje nainstalovaný doplněk <a href="{ $introSkipperUrl }">Intro Skipper</a> na vašem serveru.
+prefs-general-restore-most-recent =
+    .title = Automaticky se přihlásit po spuštění aplikace { app-name }
+    .subtitle = Po spuštění budete přihlášeni do vašeho naposledy použitého účtu

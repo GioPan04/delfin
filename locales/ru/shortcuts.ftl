@@ -12,3 +12,10 @@ sc-vp-subtitles = Переключение субтитров
 sc-vp-frame-step = Покадровая перемотка
 sc-vp-seek = Перемотка
 sc-vp-play-pause = Воспроизведение/пауза
+sc-gen-close-window = Закрыть окно
+sc-lib-search = Поиск по медиатеке
+# Library
+# =======
+sc-lib = Медиатека
+sc-gen-menu = Открыть меню
+sc-lib-refresh = Обновить

@@ -26,3 +26,4 @@ library-search-empty =
 library-search-button = Hledat v knihovně
 library-unnamed-collection = Nepojmenovaná sbírka
 library-collection-refresh-button = Znovu načíst sbírku
+library-status-refresh-button = Obnovit
