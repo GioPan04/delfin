@@ -85,6 +85,37 @@
   </provides>
 
   <releases>
+    <release version="0.4.0" date="2024-01-28">
+      <description>
+        <p>Features:</p>
+        <ul>
+          <li>You can now access all your collections from the new collections page</li>
+          <li>"My Media" and "My Media (small)" sections are now displayed on the home screen</li>
+          <li>When reopening Delfin, you will be automatically signed in to your most recently used
+            account (this can be disabled in preferences)</li>
+        </ul>
+
+        <p>Changes and bugfixes:</p>
+        <ul>
+          <li>Fixed an issue where adding another account to a server causes previous accounts to be
+            signed out</li>
+          <li>Added keyboard shortcuts to quit (Ctrl + Q), close window (Ctrl + W), refresh library
+            (Ctrl + R), open menu (F10), and open preferences (Ctrl + ,)</li>
+          <li>Reduce flickering at start of video playback</li>
+          <li>Show automatically added https:// prefix in add server dialog - it can be replaced
+            with http:// if server does not use HTTPS</li>
+          <li>Improvements to playback reporting to server - play/pause is now reported, and a stop
+            is reported when the app is closed</li>
+          <li>When refreshing the episode listing for a show, the selected season is now remembered</li>
+          <li>Subtitle/audio tracks menu now prefers opening upwards when possible</li>
+          <li>You can click on the duration label to swap between total time and remaining time -
+            the label's state is now saved when you reopen Delfin</li>
+          <li>Translation updates from Weblate - thanks to Codeberg users Anthell, bitals, Eryk
+            Michalak, Filipe Motta, Fjuro, Heimen Stoffels, k1llo, smrtrfszm, and ThetaDev</li>
+        </ul>
+      </description>
+    </release>
+
     <release version="0.3.0" date="2023-12-27">
       <description>
         <p>Happy holidays/new year! This release adds several new features and bugfixes.</p>
