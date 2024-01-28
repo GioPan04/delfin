@@ -110,6 +110,7 @@
           <li>Subtitle/audio tracks menu now prefers opening upwards when possible</li>
           <li>You can click on the duration label to swap between total time and remaining time -
             the label's state is now saved when you reopen Delfin</li>
+          <li>Updated Delfin Flatpak's MPV version to 0.37.0</li>
           <li>Translation updates from Weblate - thanks to Codeberg users Anthell, bitals, Eryk
             Michalak, Filipe Motta, Fjuro, Heimen Stoffels, k1llo, smrtrfszm, and ThetaDev</li>
         </ul>
