@@ -102,8 +102,8 @@
           <li>Added keyboard shortcuts to quit (Ctrl + Q), close window (Ctrl + W), refresh library
             (Ctrl + R), open menu (F10), and open preferences (Ctrl + ,)</li>
           <li>Reduce flickering at start of video playback</li>
-          <li>Show automatically added https:// prefix in add server dialog - it can be replaced
-            with http:// if server does not use HTTPS</li>
+          <li>Show HTTPS prefix that gets automatically added to URL in add server dialog - it can
+            be replaced with an HTTP prefix if necessary</li>
           <li>Improvements to playback reporting to server - play/pause is now reported, and a stop
             is reported when the app is closed</li>
           <li>When refreshing the episode listing for a show, the selected season is now remembered</li>
