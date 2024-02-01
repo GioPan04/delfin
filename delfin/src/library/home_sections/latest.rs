@@ -1,4 +1,4 @@
-use std::{collections::HashMap, convert::identity, sync::Arc};
+use std::{collections::HashMap, convert::identity, sync::Arc, unreachable};
 
 use gtk::prelude::*;
 use relm4::{
@@ -10,6 +10,7 @@ use tracing::warn;
 use uuid::Uuid;
 
 use crate::{
+    app::{AppInput, APP_BROKER},
     jellyfin_api::{
         api_client::ApiClient,
         models::{
@@ -24,13 +25,13 @@ use crate::{
 };
 
 pub struct HomeSectionLatest {
-    rows: HashMap<String, Controller<LatestRow>>,
+    rows: HashMap<Uuid, (UserView, Controller<LatestRow>)>,
 }
 
 #[derive(Debug)]
 pub enum HomeSectionLatestInput {
     Empty(Uuid),
-    None,
+    ShowCollection(Uuid),
 }
 
 #[relm4::component(pub)]
@@ -68,7 +69,7 @@ impl Component for HomeSectionLatest {
                 .launch((api_client.clone(), view.clone()))
                 .forward(sender.input_sender(), identity);
             root.append(row.widget());
-            model.rows.insert(view.id().to_string(), row);
+            model.rows.insert(view.id(), (view, row));
         }
 
         ComponentParts { model, widgets }
@@ -77,11 +78,15 @@ impl Component for HomeSectionLatest {
     fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         match message {
             HomeSectionLatestInput::Empty(id) => {
-                if let Some(row) = self.rows.get(&id.to_string()) {
-                    row.widget().set_visible(false);
+                if let Some(row) = self.rows.get(&id) {
+                    row.1.widget().set_visible(false);
                 }
             }
-            HomeSectionLatestInput::None => {}
+            HomeSectionLatestInput::ShowCollection(id) => {
+                if let Some(collection) = self.rows.get(&id) {
+                    APP_BROKER.send(AppInput::ShowCollection(collection.0.clone().into()));
+                }
+            }
         }
     }
 }
@@ -90,7 +95,8 @@ impl From<MediaListOutput> for HomeSectionLatestInput {
     fn from(value: MediaListOutput) -> Self {
         match value {
             MediaListOutput::Empty(Some(id)) => HomeSectionLatestInput::Empty(id),
-            _ => HomeSectionLatestInput::None,
+            MediaListOutput::LabelClicked(Some(id)) => HomeSectionLatestInput::ShowCollection(id),
+            _ => unreachable!(),
         }
     }
 }
@@ -136,6 +142,7 @@ impl SimpleComponent for LatestRow {
                 api_client,
                 list_type: MediaListType::Latest(MediaListTypeLatestParams { view_id: view.id() }),
                 label: title_text.to_string(),
+                label_clickable: true,
             })
             .forward(sender.input_sender(), |o| o.into());
         root.append(media_list.widget());

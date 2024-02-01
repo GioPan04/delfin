@@ -16,15 +16,10 @@ pub struct HomeSectionNextUp {
     _media_grid: AsyncController<MediaList>,
 }
 
-#[derive(Debug)]
-pub enum HomeSectionNextUpInput {
-    Empty,
-}
-
 #[relm4::component(pub)]
 impl Component for HomeSectionNextUp {
     type Init = Arc<ApiClient>;
-    type Input = HomeSectionNextUpInput;
+    type Input = MediaListOutput;
     type Output = ();
     type CommandOutput = ();
 
@@ -47,8 +42,9 @@ impl Component for HomeSectionNextUp {
                 api_client,
                 list_type: MediaListType::NextUp,
                 label: tr!("library-section-title.next-up").to_string(),
+                label_clickable: false,
             })
-            .forward(sender.input_sender(), |o| o.into());
+            .forward(sender.input_sender(), |o| o);
         root.append(media_grid.widget());
 
         let model = HomeSectionNextUp {
@@ -66,15 +62,8 @@ impl Component for HomeSectionNextUp {
         root: &Self::Root,
     ) {
         match message {
-            HomeSectionNextUpInput::Empty => root.set_visible(false),
-        }
-    }
-}
-
-impl From<MediaListOutput> for HomeSectionNextUpInput {
-    fn from(value: MediaListOutput) -> Self {
-        match value {
-            MediaListOutput::Empty(_) => HomeSectionNextUpInput::Empty,
+            MediaListOutput::Empty(_) => root.set_visible(false),
+            MediaListOutput::LabelClicked(_) => {}
         }
     }
 }

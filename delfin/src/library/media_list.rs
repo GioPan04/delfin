@@ -13,7 +13,7 @@ use crate::jellyfin_api::{
 };
 
 use super::{
-    media_carousel::{MediaCarousel, MediaCarouselInit, MediaCarouselType},
+    media_carousel::{MediaCarousel, MediaCarouselInit, MediaCarouselOutput, MediaCarouselType},
     media_tile::MediaTileDisplay,
 };
 
@@ -46,11 +46,13 @@ pub struct MediaListInit {
     pub list_type: MediaListType,
     pub api_client: Arc<ApiClient>,
     pub label: String,
+    pub label_clickable: bool,
 }
 
 #[derive(Debug)]
 pub enum MediaListOutput {
     Empty(Option<Uuid>),
+    LabelClicked(Option<Uuid>),
 }
 
 #[relm4::component(pub async)]
@@ -86,6 +88,9 @@ impl MediaList {
         let api_client = Arc::clone(&init.api_client);
         let list_type = &init.list_type;
         let label = init.label.clone();
+        let label_clickable = init.label_clickable;
+
+        let view_id = list_type.view_id();
 
         let media = match list_type {
             MediaListType::ContinueWatching => api_client
@@ -111,9 +116,7 @@ impl MediaList {
                 .collect(),
         };
         if media.is_empty() {
-            sender
-                .output(MediaListOutput::Empty(get_view_id(list_type)))
-                .unwrap();
+            sender.output(MediaListOutput::Empty(view_id)).unwrap();
         }
 
         let media_tile_display = match list_type {
@@ -136,8 +139,11 @@ impl MediaList {
                     carousel_type,
                     api_client,
                     label,
+                    label_clickable,
                 })
-                .detach();
+                .forward(sender.output_sender(), move |msg| match msg {
+                    MediaCarouselOutput::LabelClicked => MediaListOutput::LabelClicked(view_id),
+                });
             root.append(carousel.widget());
             MediaListContents::Carousel(carousel)
         };
@@ -148,11 +154,13 @@ impl MediaList {
     }
 }
 
-fn get_view_id(list_type: &MediaListType) -> Option<Uuid> {
-    match list_type {
-        MediaListType::ContinueWatching | MediaListType::NextUp | MediaListType::MyMedia { .. } => {
-            None
+impl MediaListType {
+    fn view_id(&self) -> Option<Uuid> {
+        match self {
+            MediaListType::ContinueWatching
+            | MediaListType::NextUp
+            | MediaListType::MyMedia { .. } => None,
+            MediaListType::Latest(params) => Some(params.view_id),
         }
-        MediaListType::Latest(params) => Some(params.view_id),
     }
 }

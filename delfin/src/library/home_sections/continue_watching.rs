@@ -16,15 +16,10 @@ pub struct HomeSectionContinueWatching {
     _media_grid: AsyncController<MediaList>,
 }
 
-#[derive(Debug)]
-pub enum HomeSectionContinueWatchingInput {
-    Empty,
-}
-
 #[relm4::component(pub)]
 impl Component for HomeSectionContinueWatching {
     type Init = Arc<ApiClient>;
-    type Input = HomeSectionContinueWatchingInput;
+    type Input = MediaListOutput;
     type Output = ();
     type CommandOutput = ();
 
@@ -47,8 +42,9 @@ impl Component for HomeSectionContinueWatching {
                 api_client,
                 list_type: MediaListType::ContinueWatching,
                 label: tr!("library-section-title.continue-watching").to_string(),
+                label_clickable: false,
             })
-            .forward(sender.input_sender(), |o| o.into());
+            .forward(sender.input_sender(), |o| o);
         root.append(media_grid.widget());
 
         let model = HomeSectionContinueWatching {
@@ -66,15 +62,8 @@ impl Component for HomeSectionContinueWatching {
         root: &Self::Root,
     ) {
         match message {
-            HomeSectionContinueWatchingInput::Empty => root.set_visible(false),
-        }
-    }
-}
-
-impl From<MediaListOutput> for HomeSectionContinueWatchingInput {
-    fn from(value: MediaListOutput) -> Self {
-        match value {
-            MediaListOutput::Empty(_) => HomeSectionContinueWatchingInput::Empty,
+            MediaListOutput::Empty(_) => root.set_visible(false),
+            MediaListOutput::LabelClicked(_) => {}
         }
     }
 }

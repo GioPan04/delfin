@@ -84,6 +84,7 @@ pub enum LibraryInput {
     SearchChanged(String),
     SearchingChanged(bool),
     ShowSearch,
+    ShowCollections,
 }
 
 #[derive(Debug)]
@@ -430,6 +431,11 @@ impl Component for Library {
             LibraryInput::ShowSearch => {
                 if let LibraryState::Ready = self.state {
                     self.searching.set_value(true);
+                }
+            }
+            LibraryInput::ShowCollections => {
+                if let Some(collections) = &self.collections {
+                    widgets.view_stack.set_visible_child(collections.widget());
                 }
             }
         }
