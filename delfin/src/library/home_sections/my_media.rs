@@ -8,7 +8,10 @@ use crate::{
         api_client::ApiClient,
         models::user_view::{FilterSupported, UserView},
     },
-    library::media_list::{MediaList, MediaListInit, MediaListOutput, MediaListType},
+    library::{
+        media_list::{MediaList, MediaListInit, MediaListOutput, MediaListType},
+        LibraryInput, LIBRARY_BROKER,
+    },
     tr,
 };
 
@@ -56,6 +59,7 @@ impl Component for HomeSectionMyMedia {
                 api_client,
                 list_type: MediaListType::MyMedia { user_views, small },
                 label: tr!("library-section-title.my-media").to_string(),
+                label_clickable: true,
             })
             .forward(sender.input_sender(), |m| m);
 
@@ -68,7 +72,12 @@ impl Component for HomeSectionMyMedia {
 
     fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
         match message {
-            MediaListOutput::Empty(_) => root.set_visible(false),
+            MediaListOutput::Empty(_) => {
+                root.set_visible(false);
+            }
+            MediaListOutput::LabelClicked(_) => {
+                LIBRARY_BROKER.send(LibraryInput::ShowCollections);
+            }
         }
     }
 }

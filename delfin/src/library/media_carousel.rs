@@ -45,6 +45,7 @@ pub(crate) struct MediaCarouselInit {
     pub(crate) carousel_type: MediaCarouselType,
     pub(crate) api_client: Arc<ApiClient>,
     pub(crate) label: String,
+    pub(crate) label_clickable: bool,
 }
 
 #[derive(Debug)]
@@ -52,6 +53,11 @@ pub(crate) enum MediaCarouselInput {
     Resize(i32),
     Left,
     Right,
+}
+
+#[derive(Debug)]
+pub(crate) enum MediaCarouselOutput {
+    LabelClicked,
 }
 
 impl MediaTileDisplay {
@@ -67,7 +73,7 @@ impl MediaTileDisplay {
 impl Component for MediaCarousel {
     type Init = MediaCarouselInit;
     type Input = MediaCarouselInput;
-    type Output = ();
+    type Output = MediaCarouselOutput;
     type CommandOutput = ();
 
     view! {
@@ -78,11 +84,32 @@ impl Component for MediaCarousel {
             gtk::Box {
                 set_orientation: gtk::Orientation::Horizontal,
 
-                #[name = "title"]
-                gtk::Label {
-                    set_label: label.as_str(),
-                    add_css_class: "title-2",
-                    set_halign: gtk::Align::Start,
+                gtk::Box {
+                    set_spacing: 4,
+                    set_cursor_from_name: if label_clickable { Some("pointer") } else { None },
+
+                    gtk::Label {
+                        set_label: label.as_str(),
+                        add_css_class: "title-2",
+                        set_halign: gtk::Align::Start,
+                    },
+
+                    gtk::Image::from_icon_name("right") {
+                        set_visible: label_clickable,
+                    },
+
+                    add_controller?: if label_clickable {
+                        let controller = gtk::GestureClick::new();
+                        controller.connect_released({
+                            let sender = sender.clone();
+                            move |_, _, _, _| {
+                                sender.output(MediaCarouselOutput::LabelClicked).unwrap();
+                            }
+                        });
+                        Some(controller)
+                    } else {
+                        None
+                    },
                 },
 
                 gtk::Box {
@@ -167,6 +194,7 @@ impl Component for MediaCarousel {
             media_tile_display,
             carousel_type,
             label,
+            label_clickable,
         } = init;
 
         let media_tiles = media
