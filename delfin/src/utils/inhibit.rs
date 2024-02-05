@@ -4,7 +4,10 @@ use relm4::gtk;
 
 use super::main_window::get_main_window;
 
-pub struct InhibitCookie(u32);
+pub struct InhibitCookie {
+    cookie: u32,
+    pub skip_uninhibit: bool,
+}
 
 impl InhibitCookie {
     pub fn new() -> Result<Self> {
@@ -15,13 +18,18 @@ impl InhibitCookie {
             Some("Playing media"),
         ) {
             0 => Err(anyhow!("Failed to inhibit")),
-            cookie => Ok(Self(cookie)),
+            cookie => Ok(Self {
+                cookie,
+                skip_uninhibit: false,
+            }),
         }
     }
 }
 
 impl Drop for InhibitCookie {
     fn drop(&mut self) {
-        relm4::main_application().uninhibit(self.0);
+        if !self.skip_uninhibit {
+            relm4::main_application().uninhibit(self.cookie);
+        }
     }
 }

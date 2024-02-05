@@ -325,6 +325,12 @@ impl Component for VideoPlayer {
         self.backend.borrow_mut().stop();
         self.session_playback_reporter.stop(self.backend.clone());
 
+        // Don't uninhibit when cookie is dropped, otherwise application will
+        // crash as it's shutting down
+        if let Some(mut inhibit_cookie) = self.inhibit_cookie.take() {
+            inhibit_cookie.skip_uninhibit = true;
+        }
+
         // This should only be called if the app is closed while the video player is open. We want
         // to tell the server that playback stopped in a blocking manner so that the request goes
         // out before the app is closed.
