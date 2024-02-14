@@ -169,7 +169,7 @@ impl Component for Scrubber {
 
     fn init(
         video_player: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         video_player.borrow_mut().connect_position_updated({

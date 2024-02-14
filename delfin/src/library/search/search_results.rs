@@ -40,7 +40,7 @@ impl Component for SearchResults {
 
     fn init(
         api_client: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         _sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let model = SearchResults {
@@ -168,7 +168,7 @@ impl Component for SearchResultsEmpty {
 
     fn init(
         api_client: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let model = SearchResultsEmpty;

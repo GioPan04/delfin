@@ -55,7 +55,7 @@ impl Component for AudioTracks {
 
     fn init(
         video_player: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let model = AudioTracks {

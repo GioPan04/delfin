@@ -56,7 +56,7 @@ impl SimpleComponent for Home {
 
     fn init(
         init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         _sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let mut model = Home { sections: vec![] };

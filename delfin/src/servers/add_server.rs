@@ -120,7 +120,7 @@ impl Component for AddServerDialog {
 
     fn init(
         _init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let model = AddServerDialog {

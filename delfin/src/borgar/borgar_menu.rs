@@ -82,7 +82,7 @@ impl Component for BorgarMenu {
 
     fn init(
         auth: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let model = BorgarMenu {

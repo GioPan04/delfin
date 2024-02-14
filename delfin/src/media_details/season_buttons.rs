@@ -24,7 +24,7 @@ impl SimpleComponent for SeasonButtons {
 
     fn init(
         init: Self::Init,
-        seasons_box: &Self::Root,
+        seasons_box: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let (seasons, initial_selected_season_index) = init;

@@ -34,7 +34,7 @@ impl SimpleComponent for Collections {
 
     fn init(
         api_client: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         _sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let fetcher = CollectionsFetcher {

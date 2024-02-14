@@ -141,7 +141,7 @@ impl Component for App {
 
     fn init(
         _init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         gtk::Window::set_default_icon_name(APP_ID);

@@ -54,7 +54,7 @@ impl SimpleComponent for PlayPause {
 
     fn init(
         video_player: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let model = PlayPause {
