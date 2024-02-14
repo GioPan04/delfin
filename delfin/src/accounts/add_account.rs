@@ -116,7 +116,7 @@ impl Component for AddAccountDialog {
 
     fn init(
         server: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let model = AddAccountDialog {

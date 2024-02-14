@@ -97,7 +97,7 @@ impl SimpleComponent for GeneralPreferences {
 
     fn init(
         _init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let config = CONFIG.read();

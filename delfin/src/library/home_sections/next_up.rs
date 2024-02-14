@@ -32,7 +32,7 @@ impl Component for HomeSectionNextUp {
 
     fn init(
         api_client: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let widgets = view_output!();

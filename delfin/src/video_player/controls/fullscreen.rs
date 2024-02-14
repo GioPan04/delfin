@@ -55,7 +55,7 @@ impl SimpleComponent for Fullscreen {
 
     fn init(
         _init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let window = get_main_window().expect("Failed to get main window.");

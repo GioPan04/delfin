@@ -54,7 +54,7 @@ impl SimpleComponent for Episode {
 
     fn init(
         init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         _sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let (media, api_client) = init;
@@ -146,7 +146,7 @@ impl Component for EpisodeThumbnail {
 
     fn init(
         init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let (media, api_client) = init;

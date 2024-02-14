@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{fmt::Debug, path::PathBuf};
 
 use anyhow::{bail, Context, Result};
 use delfin::{
@@ -24,13 +24,13 @@ fn main() {
 
     let app = RelmApp::new(APP_ID);
     relm4_icons::initialize_icons();
-    load_css();
+    load_css(&app);
     app.with_broker(&APP_BROKER).run::<App>(());
 }
 
-fn load_css() {
+fn load_css<T: Debug>(app: &RelmApp<T>) {
     let css = include_str!(concat!(env!("OUT_DIR"), "/app.css"));
-    relm4::set_global_css(css);
+    app.set_global_css(css);
 }
 
 fn load_resources() -> Result<()> {

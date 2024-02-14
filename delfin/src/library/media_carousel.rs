@@ -61,7 +61,7 @@ pub(crate) enum MediaCarouselOutput {
 }
 
 impl MediaTileDisplay {
-    fn min_height(&self, pages: &Vec<gtk::Box>) -> i32 {
+    fn min_height(&self, pages: &[gtk::Box]) -> i32 {
         match pages.len() {
             1 => self.height() + 50,
             _ => self.height() + 80,
@@ -185,7 +185,7 @@ impl Component for MediaCarousel {
 
     fn init(
         init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let MediaCarouselInit {

@@ -75,7 +75,7 @@ impl SimpleComponent for NextPrevEpisode {
 
     fn init(
         direction: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let model = NextPrevEpisode {

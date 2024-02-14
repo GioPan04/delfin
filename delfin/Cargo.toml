@@ -2,21 +2,21 @@
 name = "delfin"
 version = "0.4.0"
 edition = "2021"
-rust-version = "1.75.0"
+rust-version = "1.76.0"
 
 [features]
 # Enables GStreamer video player backend
 gst = ["dep:video_player_gst"]
 
 [dependencies]
-anyhow = "1.0.75"
+anyhow = "1.0.79"
 bytes = "1.5.0"
-chrono = "0.4.31"
-derive_builder = "0.12.0"
+chrono = "0.4.34"
+derive_builder = "0.20.0"
 dirs = "5.0.1"
-env_logger = "0.10.0"
+env_logger = "0.11.2"
 fluent-templates = { version = "0.8.0", features = ["tera"] }
-jellyfin_api = "10.8.10-2"
+jellyfin_api = "10.8.13-1"
 relm4 = { workspace = true }
 relm4-icons = { version = "0.7.0-alpha.2", features = [
   "check-round-outline",
@@ -45,27 +45,27 @@ relm4-icons = { version = "0.7.0-alpha.2", features = [
   "tv-filled",
   "music-note-2-filled",
 ] }
-reqwest = { version = "0.11.20", features = ["json"] }
-serde = { version = "1.0.188", features = ["derive"] }
-serde_json = "1.0.107"
-serde_repr = "0.1.16"
-souvlaki = { version = "0.6.1", features = [
+reqwest = { version = "0.11.24", features = ["json"] }
+serde = { version = "1.0.196", features = ["derive"] }
+serde_json = "1.0.113"
+serde_repr = "0.1.18"
+souvlaki = { version = "0.7.3", features = [
   "use_zbus",
 ], default-features = false }
 sys-locale = "0.3.1"
 tera = "1.19.1"
-tokio = { version = "1.32.0", features = ["macros"] }
-toml = "0.8.0"
-tracing = { version = "0.1.37", features = ["log"] }
+tokio = { version = "1.36.0", features = ["macros"] }
+toml = "0.8.10"
+tracing = { version = "0.1.40", features = ["log"] }
 unic-langid = { version = "0.9.1", features = ["macros", "serde"] }
-uuid = { version = "1.4.1", features = ["v4"] }
+uuid = { version = "1.7.0", features = ["v4"] }
 video_player_gst = { version = "0.1.0", path = "../video_player_gst", optional = true }
 video_player_mpv = { version = "0.1.0", path = "../video_player_mpv" }
 whoami = { version = "1.4.1", default-features = false }
 
 [build-dependencies]
-grass = "0.13.1"
-regex = "1.9.5"
+grass = "0.13.2"
+regex = "1.10.3"
 
 [dev-dependencies]
 pretty_assertions = "1.4.0"

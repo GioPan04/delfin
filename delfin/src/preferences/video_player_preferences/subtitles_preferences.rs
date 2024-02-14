@@ -190,7 +190,7 @@ impl SimpleComponent for SubtitlesPreferences {
 
     fn init(
         _init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let model = SubtitlesPreferences {

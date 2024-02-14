@@ -259,6 +259,9 @@ fn attach_media_control_events(controls: &mut MediaControls) {
                 MediaControlEvent::Raise => {
                     APP_BROKER.send(AppInput::Present);
                 }
+                MediaControlEvent::SetVolume(_) => {
+                    // TODO
+                }
                 MediaControlEvent::OpenUri(_) => {
                     // not supported
                 }

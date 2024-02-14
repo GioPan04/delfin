@@ -39,7 +39,7 @@ impl SimpleComponent for MediaButton {
 
     fn init(
         init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         _sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let (media, display) = init;

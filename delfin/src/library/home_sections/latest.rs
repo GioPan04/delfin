@@ -50,7 +50,7 @@ impl Component for HomeSectionLatest {
 
     fn init(
         init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let api_client = init.0;
@@ -120,7 +120,7 @@ impl SimpleComponent for LatestRow {
 
     fn init(
         init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let (api_client, view) = init;

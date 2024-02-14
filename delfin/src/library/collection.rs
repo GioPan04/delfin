@@ -70,7 +70,7 @@ impl Component for Collection {
 
     fn init(
         init: Self::Init,
-        root: &Self::Root,
+        root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let (api_client, collection, server, account) = init;
