@@ -17,7 +17,7 @@ use crate::{
 
 use super::{
     display_years::DisplayYears,
-    media_details_header::MediaDetailsHeader,
+    media_details_header::{MediaDetailsHeader, MediaDetailsHeaderInput, MediaDetailsHeaderOutput},
     seasons::{Seasons, SeasonsOutput},
 };
 
@@ -25,7 +25,7 @@ pub struct MediaDetailsContents {
     api_client: Arc<ApiClient>,
     item: BaseItemDto,
     series_id: Option<Uuid>,
-    header: OnceCell<Controller<MediaDetailsHeader>>,
+    header: OnceCell<AsyncController<MediaDetailsHeader>>,
     seasons: Option<AsyncController<Seasons>>,
     selected_season_index: Option<usize>,
 }
@@ -34,6 +34,7 @@ pub struct MediaDetailsContents {
 pub enum MediaDetailsContentsInput {
     RefreshSeasons,
     SetSelectedSeasonIndex(usize),
+    UpdatePlayNext,
 }
 
 #[relm4::component(pub async)]
@@ -132,7 +133,7 @@ impl AsyncComponent for MediaDetailsContents {
                 media,
                 item,
             })
-            .detach();
+            .forward(sender.input_sender(), |m| m.into());
         root.prepend(header.widget());
         model.header.set(header).unwrap();
 
@@ -156,6 +157,11 @@ impl AsyncComponent for MediaDetailsContents {
             }
             MediaDetailsContentsInput::SetSelectedSeasonIndex(selected_season_index) => {
                 self.selected_season_index = Some(selected_season_index);
+            }
+            MediaDetailsContentsInput::UpdatePlayNext => {
+                if let Some(header) = self.header.get() {
+                    header.emit(MediaDetailsHeaderInput::UpdatePlayNext);
+                }
             }
         }
         self.update_view(widgets, sender);
@@ -249,5 +255,11 @@ impl From<SeasonsOutput> for MediaDetailsContentsInput {
                 MediaDetailsContentsInput::SetSelectedSeasonIndex(selected_season_index)
             }
         }
+    }
+}
+
+impl From<MediaDetailsHeaderOutput> for MediaDetailsContentsInput {
+    fn from(_: MediaDetailsHeaderOutput) -> Self {
+        Self::RefreshSeasons
     }
 }

@@ -23,3 +23,13 @@ media-details-season-tooltip =
        *[other] episodes
     }
     .unknown-item-count = This season has unplayed episodes
+media-details-watched = Watched
+media-details-unwatched = Not watched
+media-details-toggle-watched-error = Failed to mark { $type ->
+        *[episode] episode
+        [series] series
+        [movie] movie
+    } as { $watched ->
+        [true] watched
+        *[false] not watched
+    }

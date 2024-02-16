@@ -21,7 +21,7 @@ use crate::{
     jellyfin_api::api_client::ApiClient,
     library::{collection::Collection, Library, LibraryOutput, LIBRARY_BROKER},
     locales::tera_tr,
-    media_details::MediaDetails,
+    media_details::{MediaDetails, MEDIA_DETAILS_BROKER},
     meson_config::APP_ID,
     preferences::Preferences,
     servers::server_list::{ServerList, ServerListOutput},
@@ -268,8 +268,12 @@ impl Component for App {
                 if let (Some(api_client), Some(server), Some(account)) =
                     (&self.api_client, &self.server, &self.account)
                 {
+                    MEDIA_DETAILS_BROKER.reset();
                     let media_details = MediaDetails::builder()
-                        .launch((api_client.clone(), media, server.clone(), account.clone()))
+                        .launch_with_broker(
+                            (api_client.clone(), media, server.clone(), account.clone()),
+                            &MEDIA_DETAILS_BROKER.read(),
+                        )
                         .detach();
                     media_details
                         .widget()

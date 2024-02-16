@@ -1,4 +1,5 @@
 use anyhow::Result;
+use jellyfin_api::types::UserItemDataDto;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -75,5 +76,19 @@ impl ApiClient {
             .await?;
 
         Ok(())
+    }
+
+    pub async fn mark_item_played(&self, item_id: Uuid) -> Result<UserItemDataDto> {
+        let url = self
+            .root
+            .join(&format!("Users/{}/PlayedItems/{item_id}", self.account.id))?;
+        Ok(self.client.post(url).send().await?.json().await?)
+    }
+
+    pub async fn mark_item_unplayed(&self, item_id: Uuid) -> Result<UserItemDataDto> {
+        let url = self
+            .root
+            .join(&format!("Users/{}/PlayedItems/{item_id}", self.account.id))?;
+        Ok(self.client.delete(url).send().await?.json().await?)
     }
 }

@@ -12,21 +12,32 @@ use relm4::{
 use crate::{
     app::{AppInput, APP_BROKER},
     jellyfin_api::api_client::ApiClient,
+    library::LIBRARY_REFRESH_QUEUED,
+    media_details::watched_state::{watched_label, Played},
     tr,
 };
+
+use super::{watched_state::toggle_watched, MediaDetailsInput, MEDIA_DETAILS_BROKER};
 
 pub const EPISODE_THUMBNAIL_SIZE: i32 = 75;
 
 pub(crate) struct Episode {
     media: BaseItemDto,
+    api_client: Arc<ApiClient>,
     thumbnail: OnceCell<Controller<EpisodeThumbnail>>,
 }
 
-#[relm4::component(pub(crate))]
-impl SimpleComponent for Episode {
+#[derive(Debug)]
+pub(crate) enum EpisodeInput {
+    ToggleWatched(bool),
+}
+
+#[relm4::component(pub(crate) async)]
+impl AsyncComponent for Episode {
     type Init = (BaseItemDto, Arc<ApiClient>);
-    type Input = ();
+    type Input = EpisodeInput;
     type Output = ();
+    type CommandOutput = ();
 
     view! {
         adw::ActionRow {
@@ -41,8 +52,19 @@ impl SimpleComponent for Episode {
             } else { "" },
             set_subtitle_lines: 3,
 
-            add_suffix = &gtk::Image {
-                set_icon_name: Some("go-next-symbolic"),
+            add_suffix = &gtk::ToggleButton {
+                set_icon_name: "eye-open-negative-filled",
+                set_css_classes: &["image-button", "flat", "btn-watched"],
+                set_valign: gtk::Align::Center,
+                #[watch]
+                set_tooltip: &watched_label(model.media.played()),
+
+                #[watch]
+                #[block_signal(toggle_handler)]
+                set_active: model.media.played(),
+                connect_toggled[sender] => move |btn| {
+                    sender.input(EpisodeInput::ToggleWatched(btn.is_active()));
+                } @toggle_handler,
             },
 
             set_activatable: true,
@@ -52,15 +74,16 @@ impl SimpleComponent for Episode {
         }
     }
 
-    fn init(
+    async fn init(
         init: Self::Init,
         root: Self::Root,
-        _sender: ComponentSender<Self>,
-    ) -> ComponentParts<Self> {
+        sender: AsyncComponentSender<Self>,
+    ) -> AsyncComponentParts<Self> {
         let (media, api_client) = init;
 
         let model = Self {
             media: media.clone(),
+            api_client: api_client.clone(),
             thumbnail: OnceCell::new(),
         };
 
@@ -79,7 +102,39 @@ impl SimpleComponent for Episode {
 
         model.thumbnail.set(thumbnail).unwrap();
 
-        ComponentParts { model, widgets }
+        AsyncComponentParts { model, widgets }
+    }
+
+    async fn update(
+        &mut self,
+        message: Self::Input,
+        _sender: AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match message {
+            EpisodeInput::ToggleWatched(watched) => {
+                self.media.user_data =
+                    match toggle_watched(&self.media, &self.api_client, watched).await {
+                        Ok(user_data) => Some(user_data),
+                        Err(err) => {
+                            tracing::error!(
+                                "Failed to mark episode as {}: {err}",
+                                watched_label(watched)
+                            );
+                            APP_BROKER.send(AppInput::Toast(
+                                tr!("media-details-toggle-watched-error", {
+                                    "type" => "episode",
+                                    "watched" => watched.to_string(),
+                                })
+                                .to_owned(),
+                            ));
+                            return;
+                        }
+                    };
+                *LIBRARY_REFRESH_QUEUED.write() = true;
+                MEDIA_DETAILS_BROKER.send(MediaDetailsInput::UpdatePlayNext);
+            }
+        }
     }
 }
 
@@ -121,9 +176,9 @@ impl Component for EpisodeThumbnail {
                 add_overlay = &gtk::Box {
                     #[watch]
                     set_visible: !model.media.user_data.as_ref()
-                        .and_then(|user_data| user_data.played)
-                        .unwrap_or(false),
-
+                        .and_then(|user_data| user_data.play_count)
+                        .unwrap_or(0) == 0,
+                    set_tooltip: "This episode has never been played",
                     add_css_class: "episode-unplayed-indicator",
                     set_halign: gtk::Align::End,
                     set_valign: gtk::Align::Start,

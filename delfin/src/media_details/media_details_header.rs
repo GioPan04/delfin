@@ -8,17 +8,23 @@ use relm4::{
 };
 
 use crate::{
-    app::APP_BROKER,
+    app::{AppInput, APP_BROKER},
     jellyfin_api::api_client::ApiClient,
+    library::LIBRARY_REFRESH_QUEUED,
+    media_details::watched_state::{watched_label, Played},
     tr,
     utils::{constants::MAX_LIBRARY_WIDTH, playable::get_next_playable_media},
 };
+
+use super::watched_state::toggle_watched;
 
 pub const MEDIA_DETAILS_BACKDROP_HEIGHT: i32 = 400;
 
 #[derive(Debug)]
 pub(crate) struct MediaDetailsHeader {
+    api_client: Arc<ApiClient>,
     media: BaseItemDto,
+    item: BaseItemDto,
     backdrop: Option<Texture>,
     play_next_label: Option<String>,
     play_next_media: Option<BaseItemDto>,
@@ -33,6 +39,13 @@ pub(crate) struct MediaDetailsHeaderInit {
 #[derive(Debug)]
 pub enum MediaDetailsHeaderInput {
     PlayNext,
+    ToggleWatched(bool),
+    UpdatePlayNext,
+}
+
+#[derive(Debug)]
+pub enum MediaDetailsHeaderOutput {
+    RefreshEpisodes,
 }
 
 #[derive(Debug)]
@@ -41,11 +54,11 @@ pub enum MediaDetailsHeaderCommandOutput {
     BackdropLoaded(VecDeque<u8>),
 }
 
-#[relm4::component(pub(crate))]
-impl Component for MediaDetailsHeader {
+#[relm4::component(pub(crate) async)]
+impl AsyncComponent for MediaDetailsHeader {
     type Init = MediaDetailsHeaderInit;
     type Input = MediaDetailsHeaderInput;
-    type Output = ();
+    type Output = MediaDetailsHeaderOutput;
     type CommandOutput = MediaDetailsHeaderCommandOutput;
 
     view! {
@@ -127,7 +140,7 @@ impl Component for MediaDetailsHeader {
                                 set_valign: gtk::Align::End,
                                 set_margin_start:  32,
                                 set_margin_end: 32,
-                                set_spacing: 32,
+                                set_spacing: 16,
 
                                 gtk::Label {
                                     set_label: &title,
@@ -138,12 +151,29 @@ impl Component for MediaDetailsHeader {
                                     add_css_class: "media-details-header-title",
                                 },
 
+                                gtk::ToggleButton {
+                                    set_icon_name: "eye-open-negative-filled",
+                                    set_css_classes: &["pill", "btn-watched"],
+                                    set_halign: gtk::Align::End,
+                                    set_valign: gtk::Align::Center,
+                                    set_hexpand: true,
+                                    #[watch]
+                                    set_tooltip: &watched_label(model.item.played()),
+
+                                    #[watch]
+                                    #[block_signal(toggle_handler)]
+                                    set_active: model.item.played(),
+                                    connect_toggled[sender] => move |btn| {
+                                        sender.input(MediaDetailsHeaderInput::ToggleWatched(btn.is_active()));
+                                    } @toggle_handler,
+                                },
+
                                 gtk::Button {
                                     add_css_class: "pill",
                                     add_css_class: "suggested-action",
                                     set_halign: gtk::Align::End,
                                     set_valign: gtk::Align::Center,
-                                    set_hexpand: true,
+                                    set_hexpand: false,
                                     set_vexpand: false,
                                     #[watch]
                                     set_visible: model.play_next_label.is_some() && model.play_next_media.is_some(),
@@ -185,11 +215,11 @@ impl Component for MediaDetailsHeader {
         }
     }
 
-    fn init(
+    async fn init(
         init: Self::Init,
         root: Self::Root,
-        sender: ComponentSender<Self>,
-    ) -> ComponentParts<Self> {
+        sender: AsyncComponentSender<Self>,
+    ) -> AsyncComponentParts<Self> {
         let MediaDetailsHeaderInit {
             api_client,
             media,
@@ -210,19 +240,16 @@ impl Component for MediaDetailsHeader {
             });
         }
 
-        sender.oneshot_command({
-            async move {
-                let play_next = get_play_next(&api_client, &item).await;
-                MediaDetailsHeaderCommandOutput::PlayNextLoaded(Box::new(play_next))
-            }
-        });
-
         let model = MediaDetailsHeader {
+            api_client,
             media,
+            item,
             backdrop: None,
             play_next_label: None,
             play_next_media: None,
         };
+
+        model.update_play_next(&sender);
 
         let title = model
             .media
@@ -233,23 +260,55 @@ impl Component for MediaDetailsHeader {
 
         let widgets = view_output!();
 
-        ComponentParts { model, widgets }
+        AsyncComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
+    async fn update(
+        &mut self,
+        message: Self::Input,
+        sender: AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         match message {
             MediaDetailsHeaderInput::PlayNext => {
                 if let Some(play_next_media) = &self.play_next_media {
                     APP_BROKER.send(crate::app::AppInput::PlayVideo(play_next_media.clone()));
                 }
             }
+            MediaDetailsHeaderInput::ToggleWatched(watched) => {
+                self.item.user_data = match toggle_watched(&self.item, &self.api_client, watched)
+                    .await
+                {
+                    Ok(user_data) => Some(user_data),
+                    Err(err) => {
+                        tracing::error!(
+                            "Failed to mark media as {}: {err}",
+                            watched_label(watched)
+                        );
+                        APP_BROKER.send(AppInput::Toast(
+                                tr!("media-details-toggle-watched-error", {
+                                    "type" => if let Some(BaseItemKind::Movie) = self.item.type_ { "movie" } else { "series" },
+                                    "watched" => watched.to_string(),
+                                })
+                                .to_owned(),
+                            ));
+                        return;
+                    }
+                };
+                let _ = sender.output(MediaDetailsHeaderOutput::RefreshEpisodes);
+                self.update_play_next(&sender);
+                *LIBRARY_REFRESH_QUEUED.write() = true;
+            }
+            MediaDetailsHeaderInput::UpdatePlayNext => {
+                self.update_play_next(&sender);
+            }
         }
     }
 
-    fn update_cmd(
+    async fn update_cmd(
         &mut self,
         message: Self::CommandOutput,
-        _sender: ComponentSender<Self>,
+        _sender: AsyncComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match message {
@@ -264,6 +323,19 @@ impl Component for MediaDetailsHeader {
                 self.backdrop = Some(Texture::for_pixbuf(&pixbuf));
             }
         }
+    }
+}
+
+impl MediaDetailsHeader {
+    fn update_play_next(&self, sender: &AsyncComponentSender<Self>) {
+        sender.oneshot_command({
+            let api_client = self.api_client.clone();
+            let item = self.item.clone();
+            async move {
+                let play_next = get_play_next(&api_client, &item).await;
+                MediaDetailsHeaderCommandOutput::PlayNextLoaded(Box::new(play_next))
+            }
+        });
     }
 }
 

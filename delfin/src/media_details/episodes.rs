@@ -19,7 +19,7 @@ use super::episode::Episode;
 
 pub(crate) struct Episodes {
     episodes: Vec<BaseItemDto>,
-    episode_components: Vec<Controller<Episode>>,
+    episode_components: Vec<AsyncController<Episode>>,
 }
 
 pub(crate) struct EpisodesInit {

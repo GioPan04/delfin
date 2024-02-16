@@ -109,4 +109,14 @@
     margin-top: -$outer-margin;
     margin-bottom: $outer-margin;
   }
+
+  .btn-watched {
+    &:checked {
+      color: lighter("@red_3");
+    }
+
+    &.pill {
+      padding: 10px 14px;
+    }
+  }
 }
