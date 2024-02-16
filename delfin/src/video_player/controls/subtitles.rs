@@ -10,13 +10,11 @@ use relm4::{
 use tracing::warn;
 
 use crate::{
+    app::{AppInput, APP_BROKER},
     jellyfin_api::api_client::ApiClient,
     tr,
     utils::message_broker::ResettableMessageBroker,
-    video_player::{
-        backends::{SubtitleTrack, VideoPlayerBackend},
-        VideoPlayerInput, VIDEO_PLAYER_BROKER,
-    },
+    video_player::backends::{SubtitleTrack, VideoPlayerBackend},
 };
 
 pub static SUBTITLES_BROKER: ResettableMessageBroker<SubtitlesInput> =
@@ -183,9 +181,7 @@ impl Component for Subtitles {
             }
             SubtitlesInput::ToggleSubtitles => 'msg_block: {
                 if !self.subtitles_available {
-                    VIDEO_PLAYER_BROKER.send(VideoPlayerInput::Toast(
-                        tr!("vp-no-subtitles-available").into(),
-                    ));
+                    APP_BROKER.send(AppInput::Toast(tr!("vp-no-subtitles-available").into()));
                     break 'msg_block;
                 }
 

@@ -16,8 +16,6 @@ use crate::{
     utils::{item_name::ItemName, playable::get_next_playable_media},
 };
 
-use super::{LibraryInput, LIBRARY_BROKER};
-
 #[derive(Clone, Copy)]
 pub enum MediaTileDisplay {
     Cover,
@@ -238,7 +236,7 @@ impl AsyncComponent for MediaTile {
                                 if let Some(name) = self.media.name.as_ref() {
                                     message += &format!(" for {name}");
                                 }
-                                LIBRARY_BROKER.send(LibraryInput::Toast(message))
+                                APP_BROKER.send(AppInput::Toast(message))
                             }
                         };
                     }

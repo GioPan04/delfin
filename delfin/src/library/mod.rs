@@ -80,7 +80,6 @@ pub enum LibraryInput {
     Shown,
     Hidden,
     ViewStackChildVisible(String),
-    Toast(String),
     SearchChanged(String),
     SearchingChanged(bool),
     ShowSearch,
@@ -158,99 +157,95 @@ impl Component for Library {
                         },
                     },
 
-                    #[name = "toaster"]
                     #[wrap(Some)]
-                    set_content = &adw::ToastOverlay {
-                        #[wrap(Some)]
-                        set_child = &gtk::Box {
-                            set_orientation: gtk::Orientation::Vertical,
+                    set_content = &gtk::Box {
+                        set_orientation: gtk::Orientation::Vertical,
 
-                            #[transition = "Crossfade"]
-                            append = match model.state {
-                                LibraryState::Loading => {
-                                    gtk::Box {
-                                        set_orientation: gtk::Orientation::Vertical,
+                        #[transition = "Crossfade"]
+                        append = match model.state {
+                            LibraryState::Loading => {
+                                gtk::Box {
+                                    set_orientation: gtk::Orientation::Vertical,
 
-                                        adw::Clamp {
-                                            gtk::Box {
-                                                set_orientation: gtk::Orientation::Vertical,
-                                                set_hexpand: true,
-                                                set_vexpand: true,
-                                                set_halign: gtk::Align::Center,
-                                                set_valign: gtk::Align::Center,
-                                                set_spacing: 20,
+                                    adw::Clamp {
+                                        gtk::Box {
+                                            set_orientation: gtk::Orientation::Vertical,
+                                            set_hexpand: true,
+                                            set_vexpand: true,
+                                            set_halign: gtk::Align::Center,
+                                            set_valign: gtk::Align::Center,
+                                            set_spacing: 20,
 
-                                                gtk::Spinner {
-                                                    set_spinning: true,
-                                                    set_size_request: (64, 64),
-                                                },
+                                            gtk::Spinner {
+                                                set_spinning: true,
+                                                set_size_request: (64, 64),
+                                            },
 
-                                                gtk::Label {
-                                                    set_label: tr!("library-loading"),
-                                                    add_css_class: "title-2",
-                                                },
+                                            gtk::Label {
+                                                set_label: tr!("library-loading"),
+                                                add_css_class: "title-2",
+                                            },
+                                        }
+                                    }
+                                }
+                            }
+                            LibraryState::Ready => {
+                                gtk::Box {
+                                    set_orientation: gtk::Orientation::Vertical,
+
+                                    #[name = "view_stack"]
+                                    adw::ViewStack {
+                                        set_valign: gtk::Align::Fill,
+
+                                        add_named: (model.search_results.widget(), Some("search")),
+
+                                        connect_visible_child_notify[sender] => move |stack| {
+                                            if let Some(name) = stack.visible_child_name() {
+                                                sender.input(LibraryInput::ViewStackChildVisible(name.into()));
                                             }
-                                        }
-                                    }
-                                }
-                                LibraryState::Ready => {
-                                    gtk::Box {
-                                        set_orientation: gtk::Orientation::Vertical,
-
-                                        #[name = "view_stack"]
-                                        adw::ViewStack {
-                                            set_valign: gtk::Align::Fill,
-
-                                            add_named: (model.search_results.widget(), Some("search")),
-
-                                            connect_visible_child_notify[sender] => move |stack| {
-                                                if let Some(name) = stack.visible_child_name() {
-                                                    sender.input(LibraryInput::ViewStackChildVisible(name.into()));
-                                                }
-                                            },
                                         },
+                                    },
 
-                                        #[name = "view_switcher_bar"]
-                                        adw::ViewSwitcherBar {
-                                            set_stack: Some(&view_stack),
+                                    #[name = "view_switcher_bar"]
+                                    adw::ViewSwitcherBar {
+                                        set_stack: Some(&view_stack),
+                                    },
+                                }
+                            }
+                            LibraryState::Offline => {
+                                adw::StatusPage {
+                                    set_title: tr!("library-offline.title"),
+                                    set_description: Some(tr!("library-offline.description")),
+
+                                    set_icon_name: Some("warning"),
+                                    #[wrap(Some)]
+                                    set_child = &gtk::Button {
+                                        set_label: tr!("library-status-refresh-button"),
+                                        set_halign: gtk::Align::Center,
+                                        set_css_classes: &["pill", "suggested-action"],
+                                        connect_clicked[sender] => move |_| {
+                                            sender.input(LibraryInput::Refresh);
                                         },
                                     }
                                 }
-                                LibraryState::Offline => {
-                                    adw::StatusPage {
-                                        set_title: tr!("library-offline.title"),
-                                        set_description: Some(tr!("library-offline.description")),
+                            }
+                            LibraryState::Error => {
+                                adw::StatusPage {
+                                    set_title: tr!("library-error.title"),
+                                    set_description: Some(tr!("library-error.description")),
 
-                                        set_icon_name: Some("warning"),
-                                        #[wrap(Some)]
-                                        set_child = &gtk::Button {
-                                            set_label: tr!("library-status-refresh-button"),
-                                            set_halign: gtk::Align::Center,
-                                            set_css_classes: &["pill", "suggested-action"],
-                                            connect_clicked[sender] => move |_| {
-                                                sender.input(LibraryInput::Refresh);
-                                            },
-                                        }
+                                    set_icon_name: Some("warning"),
+                                    #[wrap(Some)]
+                                    set_child = &gtk::Button {
+                                        set_label: tr!("library-status-refresh-button"),
+                                        set_halign: gtk::Align::Center,
+                                        set_css_classes: &["pill", "suggested-action"],
+                                        connect_clicked[sender] => move |_| {
+                                            sender.input(LibraryInput::Refresh);
+                                        },
                                     }
                                 }
-                                LibraryState::Error => {
-                                    adw::StatusPage {
-                                        set_title: tr!("library-error.title"),
-                                        set_description: Some(tr!("library-error.description")),
-
-                                        set_icon_name: Some("warning"),
-                                        #[wrap(Some)]
-                                        set_child = &gtk::Button {
-                                            set_label: tr!("library-status-refresh-button"),
-                                            set_halign: gtk::Align::Center,
-                                            set_css_classes: &["pill", "suggested-action"],
-                                            connect_clicked[sender] => move |_| {
-                                                sender.input(LibraryInput::Refresh);
-                                            },
-                                        }
-                                    }
-                                }
-                            },
+                            }
                         },
                     },
                 },
@@ -409,10 +404,6 @@ impl Component for Library {
                 if name != "search" {
                     self.searching.set_value(false);
                 }
-            }
-            LibraryInput::Toast(message) => {
-                let toast = adw::Toast::new(&message);
-                widgets.toaster.add_toast(toast);
             }
             LibraryInput::SearchChanged(search_text) => {
                 self.search_results

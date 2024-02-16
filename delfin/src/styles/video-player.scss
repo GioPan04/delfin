@@ -9,9 +9,7 @@
 }
 
 .video-player {
-  & > overlay {
-    background-color: black;
-  }
+  background-color: black;
 
   .video-player-controls {
     .scrubber-position-label {

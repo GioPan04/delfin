@@ -3,6 +3,7 @@ use gtk::glib;
 use jellyfin_api::types::BaseItemDto;
 use relm4::{
     actions::{AccelsPlus, RelmAction, RelmActionGroup},
+    adw::Toast,
     prelude::*,
     MessageBroker,
 };
@@ -90,6 +91,7 @@ pub enum AppInput {
     SetThemeDark(bool),
     PagePopped(Option<String>),
     ShowPreferences,
+    Toast(String),
 }
 
 #[relm4::component(pub)]
@@ -122,18 +124,23 @@ impl Component for App {
             #[wrap(Some)]
             set_help_overlay = &keyboard_shortcuts(),
 
-            #[name = "navigation"]
-            #[wrap(Some)]
-            set_content = &adw::NavigationView {
-                add = model.servers.widget() {
-                    set_tag: Some(&AppPage::Servers.to_string()),
-                },
-                add = model.account_list.widget() {
-                    set_tag: Some(&AppPage::Accounts.to_string()),
-                },
 
-                connect_popped[sender] => move |_, page| {
-                    sender.input(AppInput::PagePopped(page.tag().map(|s| s.to_string())));
+            #[name = "toaster"]
+            #[wrap(Some)]
+            set_content = &adw::ToastOverlay {
+                #[name = "navigation"]
+                #[wrap(Some)]
+                set_child = &adw::NavigationView {
+                    add = model.servers.widget() {
+                        set_tag: Some(&AppPage::Servers.to_string()),
+                    },
+                    add = model.account_list.widget() {
+                        set_tag: Some(&AppPage::Accounts.to_string()),
+                    },
+
+                    connect_popped[sender] => move |_, page| {
+                        sender.input(AppInput::PagePopped(page.tag().map(|s| s.to_string())));
+                    },
                 },
             },
         }
@@ -343,6 +350,11 @@ impl Component for App {
                         .launch(())
                         .detach(),
                 );
+            }
+            AppInput::Toast(toast) => {
+                widgets
+                    .toaster
+                    .add_toast(Toast::builder().title(toast).timeout(3).build());
             }
         }
 
