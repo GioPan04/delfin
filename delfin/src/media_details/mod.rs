@@ -15,7 +15,7 @@ use crate::{
     jellyfin_api::api_client::ApiClient,
     media_details::media_details_contents::MediaDetailsContents,
     tr,
-    utils::main_window::get_main_window,
+    utils::{main_window::get_main_window, message_broker::ResettableMessageBroker},
 };
 
 use self::media_details_contents::MediaDetailsContentsInput;
@@ -27,7 +27,10 @@ mod media_details_contents;
 mod media_details_header;
 mod season_buttons;
 mod seasons;
+pub(crate) mod watched_state;
 
+pub static MEDIA_DETAILS_BROKER: ResettableMessageBroker<MediaDetailsInput> =
+    ResettableMessageBroker::new();
 pub static MEDIA_DETAILS_REFRESH_QUEUED: SharedState<bool> = SharedState::new();
 
 pub struct MediaDetails {
@@ -39,6 +42,7 @@ pub struct MediaDetails {
 pub enum MediaDetailsInput {
     Shown,
     Refresh,
+    UpdatePlayNext,
 }
 
 #[relm4::component(pub)]
@@ -128,6 +132,10 @@ impl SimpleComponent for MediaDetails {
                     sender.input(MediaDetailsInput::Refresh);
                 }
                 *MEDIA_DETAILS_REFRESH_QUEUED.write() = false;
+            }
+            MediaDetailsInput::UpdatePlayNext => {
+                self.media_details_contents
+                    .emit(MediaDetailsContentsInput::UpdatePlayNext);
             }
         }
     }

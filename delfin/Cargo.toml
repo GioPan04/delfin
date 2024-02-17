@@ -44,6 +44,7 @@ relm4-icons = { version = "0.7.0-alpha.2", features = [
   "movies-and-tv-filled",
   "tv-filled",
   "music-note-2-filled",
+  "eye-open-negative-filled",
 ] }
 reqwest = { version = "0.11.24", features = ["json"] }
 serde = { version = "1.0.196", features = ["derive"] }

@@ -80,7 +80,6 @@ pub struct VideoPlayer {
 #[derive(Debug)]
 pub enum VideoPlayerInput {
     ConfigUpdated(VideoPlayerConfig),
-    Toast(String),
     PlayVideo(Arc<ApiClient>, Box<BaseItemDto>),
     SetShowControls { show: bool, locked: bool },
     ToggleControls,
@@ -133,63 +132,60 @@ impl Component for VideoPlayer {
                 .unwrap_or(tr!("app-name").to_string()),
 
             #[wrap(Some)]
-            #[name = "toaster"]
-            set_child = &adw::ToastOverlay {
+            set_child = &gtk::Overlay {
                 add_css_class: "video-player",
 
-                gtk::Overlay {
-                    #[local_ref]
-                    video_player -> gtk::Widget {
-                        #[watch]
-                        set_visible: !matches!(model.player_state, PlayerState::Loading),
+                #[local_ref]
+                video_player -> gtk::Widget {
+                    #[watch]
+                    set_visible: !matches!(model.player_state, PlayerState::Loading),
 
-                        add_controller = gtk::GestureClick {
-                            connect_released[sender] => move |_, n_press, _, _| {
-                                sender.input(VideoPlayerInput::MouseClick(n_press));
-                            },
+                    add_controller = gtk::GestureClick {
+                        connect_released[sender] => move |_, n_press, _, _| {
+                            sender.input(VideoPlayerInput::MouseClick(n_press));
                         },
                     },
-
-                    #[name = "revealer"]
-                    add_overlay = &gtk::Revealer {
-                        #[watch]
-                        set_visible: model.show_controls || model.revealer_reveal_child,
-                        #[watch]
-                        set_reveal_child: model.show_controls,
-                        set_transition_type: gtk::RevealerTransitionType::Crossfade,
-                        set_valign: gtk::Align::Start,
-
-                        #[wrap(Some)]
-                        set_child = &adw::HeaderBar {
-                            add_css_class: "osd",
-                        },
-                    },
-
-                    #[name = "spinner"]
-                    add_overlay = &gtk::Spinner {
-                        #[watch]
-                        set_visible: matches!(model.player_state, PlayerState::Loading | PlayerState::Buffering),
-                        set_spinning: true,
-                        set_halign: gtk::Align::Center,
-                        set_valign: gtk::Align::Center,
-                        set_width_request: 48,
-                        set_height_request: 48,
-                    },
-
-                    add_overlay = &gtk::Box {
-                        set_orientation: gtk::Orientation::Vertical,
-                        set_halign: gtk::Align::Fill,
-                        set_valign: gtk::Align::End,
-                        set_margin_start: 24,
-                        set_margin_end: 24,
-                        set_margin_bottom: 24,
-
-                        append = model.skip_intro.widget(),
-                        append = model.controls.widget(),
-                    },
-
-                    add_overlay: model.next_up.widget(),
                 },
+
+                #[name = "revealer"]
+                add_overlay = &gtk::Revealer {
+                    #[watch]
+                    set_visible: model.show_controls || model.revealer_reveal_child,
+                    #[watch]
+                    set_reveal_child: model.show_controls,
+                    set_transition_type: gtk::RevealerTransitionType::Crossfade,
+                    set_valign: gtk::Align::Start,
+
+                    #[wrap(Some)]
+                    set_child = &adw::HeaderBar {
+                        add_css_class: "osd",
+                    },
+                },
+
+                #[name = "spinner"]
+                add_overlay = &gtk::Spinner {
+                    #[watch]
+                    set_visible: matches!(model.player_state, PlayerState::Loading | PlayerState::Buffering),
+                    set_spinning: true,
+                    set_halign: gtk::Align::Center,
+                    set_valign: gtk::Align::Center,
+                    set_width_request: 48,
+                    set_height_request: 48,
+                },
+
+                add_overlay = &gtk::Box {
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_halign: gtk::Align::Fill,
+                    set_valign: gtk::Align::End,
+                    set_margin_start: 24,
+                    set_margin_end: 24,
+                    set_margin_bottom: 24,
+
+                    append = model.skip_intro.widget(),
+                    append = model.controls.widget(),
+                },
+
+                add_overlay: model.next_up.widget(),
             },
 
             connect_hiding[sender] => move |_| {
@@ -354,10 +350,6 @@ impl Component for VideoPlayer {
         match message {
             VideoPlayerInput::ConfigUpdated(video_player_config) => {
                 self.configure_player(&video_player_config);
-            }
-            VideoPlayerInput::Toast(message) => {
-                let toast = adw::Toast::new(&message);
-                widgets.toaster.add_toast(toast);
             }
             VideoPlayerInput::PlayVideo(api_client, item) => {
                 self.inhibit_cookie = InhibitCookie::new().ok();

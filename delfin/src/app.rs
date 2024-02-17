@@ -3,6 +3,7 @@ use gtk::glib;
 use jellyfin_api::types::BaseItemDto;
 use relm4::{
     actions::{AccelsPlus, RelmAction, RelmActionGroup},
+    adw::Toast,
     prelude::*,
     MessageBroker,
 };
@@ -20,7 +21,7 @@ use crate::{
     jellyfin_api::api_client::ApiClient,
     library::{collection::Collection, Library, LibraryOutput, LIBRARY_BROKER},
     locales::tera_tr,
-    media_details::MediaDetails,
+    media_details::{MediaDetails, MEDIA_DETAILS_BROKER},
     meson_config::APP_ID,
     preferences::Preferences,
     servers::server_list::{ServerList, ServerListOutput},
@@ -90,6 +91,7 @@ pub enum AppInput {
     SetThemeDark(bool),
     PagePopped(Option<String>),
     ShowPreferences,
+    Toast(String),
 }
 
 #[relm4::component(pub)]
@@ -122,18 +124,23 @@ impl Component for App {
             #[wrap(Some)]
             set_help_overlay = &keyboard_shortcuts(),
 
-            #[name = "navigation"]
-            #[wrap(Some)]
-            set_content = &adw::NavigationView {
-                add = model.servers.widget() {
-                    set_tag: Some(&AppPage::Servers.to_string()),
-                },
-                add = model.account_list.widget() {
-                    set_tag: Some(&AppPage::Accounts.to_string()),
-                },
 
-                connect_popped[sender] => move |_, page| {
-                    sender.input(AppInput::PagePopped(page.tag().map(|s| s.to_string())));
+            #[name = "toaster"]
+            #[wrap(Some)]
+            set_content = &adw::ToastOverlay {
+                #[name = "navigation"]
+                #[wrap(Some)]
+                set_child = &adw::NavigationView {
+                    add = model.servers.widget() {
+                        set_tag: Some(&AppPage::Servers.to_string()),
+                    },
+                    add = model.account_list.widget() {
+                        set_tag: Some(&AppPage::Accounts.to_string()),
+                    },
+
+                    connect_popped[sender] => move |_, page| {
+                        sender.input(AppInput::PagePopped(page.tag().map(|s| s.to_string())));
+                    },
                 },
             },
         }
@@ -261,8 +268,12 @@ impl Component for App {
                 if let (Some(api_client), Some(server), Some(account)) =
                     (&self.api_client, &self.server, &self.account)
                 {
+                    MEDIA_DETAILS_BROKER.reset();
                     let media_details = MediaDetails::builder()
-                        .launch((api_client.clone(), media, server.clone(), account.clone()))
+                        .launch_with_broker(
+                            (api_client.clone(), media, server.clone(), account.clone()),
+                            &MEDIA_DETAILS_BROKER.read(),
+                        )
                         .detach();
                     media_details
                         .widget()
@@ -343,6 +354,11 @@ impl Component for App {
                         .launch(())
                         .detach(),
                 );
+            }
+            AppInput::Toast(toast) => {
+                widgets
+                    .toaster
+                    .add_toast(Toast::builder().title(toast).timeout(3).build());
             }
         }
 
