@@ -1,0 +1,11 @@
+@import "overrides";
+
+.media-carousel {
+  .clickable-title {
+    border-bottom: solid 1px transparent;
+    transition: border-bottom-color 150ms;
+    &:hover {
+      border-bottom-color: "@window_fg_color";
+    }
+  }
+}
