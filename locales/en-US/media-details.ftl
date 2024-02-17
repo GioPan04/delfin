@@ -33,3 +33,4 @@ media-details-toggle-watched-error = Failed to mark { $type ->
         [true] watched
         *[false] not watched
     }
+media-details-backdrop-error = Failed to load media backdrop

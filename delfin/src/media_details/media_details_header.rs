@@ -318,8 +318,16 @@ impl AsyncComponent for MediaDetailsHeader {
                 self.play_next_media = play_next_media;
             }
             MediaDetailsHeaderCommandOutput::BackdropLoaded(img_bytes) => {
-                let pixbuf = Pixbuf::from_read(img_bytes)
-                    .expect("Error creating media tile pixbuf: {img_url}");
+                let pixbuf = match Pixbuf::from_read(img_bytes) {
+                    Ok(pixbuf) => pixbuf,
+                    Err(err) => {
+                        APP_BROKER.send(AppInput::Toast(
+                            tr!("media-details-backdrop-error").to_owned(),
+                        ));
+                        tracing::error!("Error creating media tile pixbuf: {err}");
+                        return;
+                    }
+                };
                 self.backdrop = Some(Texture::for_pixbuf(&pixbuf));
             }
         }
