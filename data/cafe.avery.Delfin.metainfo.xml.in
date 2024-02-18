@@ -85,6 +85,20 @@
   </provides>
 
   <releases>
+    <release version="0.4.1" date="2024-02-18">
+      <description>
+        <ul>
+          <li>You can now mark movies, series, and episodes as watched or not watched</li>
+          <li>You can now click on My Media and Latest home section headings to see the rest of the collection</li>
+          <li>Movie runtime is now displayed above the description</li>
+          <li>The year that an item was released/in production is now displayed below its thumbnail</li>
+          <li>Fix app crashing when you try to close it</li>
+          <li>Updated dependencies</li>
+          <li>Translation updates from Weblate – thanks to Codeberg users Filipe Motta, Fjuro, gallegonovato, Heimen Stoffels, ThetaDev, and yareg</li>
+        </ul>
+      </description>
+    </release>
+
     <release version="0.4.0" date="2024-01-28">
       <description>
         <p>Features:</p>
