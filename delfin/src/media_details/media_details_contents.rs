@@ -18,6 +18,7 @@ use crate::{
 use super::{
     display_years::DisplayYears,
     media_details_header::{MediaDetailsHeader, MediaDetailsHeaderInput, MediaDetailsHeaderOutput},
+    run_time::RunTime,
     seasons::{Seasons, SeasonsOutput},
 };
 
@@ -214,6 +215,13 @@ impl MediaDetailsContents {
             )));
 
             info_box.append(&rating_box);
+        }
+
+        if let Some(BaseItemKind::Movie) = &item.type_ {
+            if let Some(run_time) = &item.run_time() {
+                add_separator(false);
+                info_box.append(&gtk::Label::new(Some(run_time)));
+            }
         }
 
         if let Some(official_rating) = &item.official_rating {

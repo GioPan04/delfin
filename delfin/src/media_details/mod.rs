@@ -25,6 +25,7 @@ pub mod episode;
 mod episodes;
 mod media_details_contents;
 mod media_details_header;
+mod run_time;
 mod season_buttons;
 mod seasons;
 pub(crate) mod watched_state;
