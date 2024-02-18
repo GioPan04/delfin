@@ -81,12 +81,15 @@ impl Component for MediaCarousel {
             set_orientation: gtk::Orientation::Vertical,
             set_spacing: 16,
 
+            add_css_class: "media-carousel",
+
             gtk::Box {
                 set_orientation: gtk::Orientation::Horizontal,
 
                 gtk::Box {
                     set_spacing: 4,
                     set_cursor_from_name: if label_clickable { Some("pointer") } else { None },
+                    add_css_class?: label_clickable.then_some("clickable-title"),
 
                     gtk::Label {
                         set_label: label.as_str(),

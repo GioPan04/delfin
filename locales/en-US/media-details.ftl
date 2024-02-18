@@ -17,6 +17,10 @@ media-details-episode-list-empty = No episodes were found for this season.
 media-details-years = { $startYear } – { $endYear }
     .until-present = { $startYear } – Present
     .present = Present
+media-details-run-time = { $hours ->
+        [0] { $minutes }m
+        *[other] { $hours }h { $minutes }m
+    }
 media-details-season-tooltip =
     This season has { $unplayedItemCount } unplayed { $unplayedItemCount ->
         [one] episode

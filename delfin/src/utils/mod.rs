@@ -2,6 +2,7 @@ pub mod bif;
 pub mod constants;
 pub mod debounce;
 pub mod device_profile;
+pub mod display_years;
 pub mod empty_component;
 pub mod inhibit;
 pub mod item_name;
