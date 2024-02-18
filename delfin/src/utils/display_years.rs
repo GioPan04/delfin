@@ -3,7 +3,7 @@ use jellyfin_api::types::{BaseItemDto, BaseItemKind};
 
 use crate::tr;
 
-pub(crate) trait DisplayYears {
+pub trait DisplayYears {
     fn display_years(&self) -> Option<String>;
 }
 

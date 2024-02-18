@@ -13,7 +13,7 @@ use crate::{
     app::{AppInput, APP_BROKER},
     jellyfin_api::api_client::ApiClient,
     tr,
-    utils::{item_name::ItemName, playable::get_next_playable_media},
+    utils::{display_years::DisplayYears, item_name::ItemName, playable::get_next_playable_media},
 };
 
 #[derive(Clone, Copy)]
@@ -44,22 +44,6 @@ impl MediaTileDisplay {
             Self::CollectionWide => 175,
             Self::Buttons => 0,
         }
-    }
-}
-
-fn get_item_label(item: &BaseItemDto) -> String {
-    match (
-        &item.series_name.as_ref().map(|s| markup_escape_text(s)),
-        item.episode_name_with_number()
-            .as_ref()
-            .map(|s| markup_escape_text(s)),
-    ) {
-        (Some(series_name), Some(name)) => format!(
-            r#"{series_name}
-<span size="small">{name}</span>"#
-        ),
-        (_, Some(name)) => name.to_string(),
-        _ => tr!("library-media-tile-unnamed-item").to_string(),
     }
 }
 
@@ -177,7 +161,7 @@ impl AsyncComponent for MediaTile {
                 set_max_width_chars: 1,
                 set_width_request: tile_display.width(),
                 #[watch]
-                set_markup: &get_item_label(&model.media),
+                set_markup: &model.get_item_label(),
 
                 add_controller = gtk::GestureClick {
                     connect_released[sender] => move |_, _, _, _| {
@@ -265,6 +249,33 @@ impl AsyncComponent for MediaTile {
             MediaTileCommandOutput::ThumbnailLoaded(thumbnail) => {
                 self.thumbnail = thumbnail;
             }
+        }
+    }
+}
+
+impl MediaTile {
+    fn get_item_label(&self) -> String {
+        match (
+            self.media
+                .series_name
+                .as_ref()
+                .map(|s| markup_escape_text(s)),
+            self.media
+                .episode_name_with_number()
+                .as_ref()
+                .map(|s| markup_escape_text(s)),
+            self.media.display_years(),
+        ) {
+            (Some(series_name), Some(name), _) => format!(
+                r#"{series_name}
+<span size="small">{name}</span>"#
+            ),
+            (_, Some(name), Some(display_years)) => format!(
+                r#"{name}
+<span size="small">{display_years}</span>"#
+            ),
+            (_, Some(name), _) => name.to_string(),
+            _ => tr!("library-media-tile-unnamed-item").to_string(),
         }
     }
 }

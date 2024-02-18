@@ -13,10 +13,10 @@ use uuid::Uuid;
 use crate::{
     jellyfin_api::api_client::ApiClient,
     media_details::{media_details_header::MediaDetailsHeaderInit, seasons::SeasonsInit},
+    utils::display_years::DisplayYears,
 };
 
 use super::{
-    display_years::DisplayYears,
     media_details_header::{MediaDetailsHeader, MediaDetailsHeaderInput, MediaDetailsHeaderOutput},
     run_time::RunTime,
     seasons::{Seasons, SeasonsOutput},

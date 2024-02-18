@@ -20,7 +20,6 @@ use crate::{
 
 use self::media_details_contents::MediaDetailsContentsInput;
 
-mod display_years;
 pub mod episode;
 mod episodes;
 mod media_details_contents;
