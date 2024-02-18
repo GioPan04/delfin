@@ -18,3 +18,5 @@ sc-gen-quit = Sair
 # Library
 # =======
 sc-lib = Biblioteca
+sc-gen-menu = Abrir menu
+sc-lib-refresh = Atualizar

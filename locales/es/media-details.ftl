@@ -23,3 +23,20 @@ media-details-season-tooltip =
     .unknown-item-count = Esta temporada tiene episodios sin reproducir
 media-details-episode-list-empty = No se han encontrado episodios de esta temporada.
 media-details-unnamed-season = Temporada sin nombre
+media-details-backdrop-error = Error al cargar el fondo multimedia
+media-details-watched = Visto
+media-details-unwatched = Sin ver
+media-details-run-time =
+    { $hours ->
+        [0] { $minutes }min
+       *[other] { $hours }h { $minutes }min
+    }
+media-details-toggle-watched-error =
+    Fallo al marcar { $type ->
+       *[episode] episodio
+        [series] series
+        [movie] película
+    } como { $watched ->
+        [true] visto
+       *[false] no visto
+    }

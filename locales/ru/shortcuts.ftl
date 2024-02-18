@@ -19,3 +19,4 @@ sc-lib-search = Поиск по медиатеке
 sc-lib = Медиатека
 sc-gen-menu = Открыть меню
 sc-lib-refresh = Обновить
+sc-gen-quit = Закрыть приложение

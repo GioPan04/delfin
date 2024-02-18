@@ -84,3 +84,6 @@ prefs-vp-intro-skipper =
     .subtitle =
         Mostra um botão Pular Abertura durante as aberturas de episódios.
         Isso requer que o plugin <a href="{ $introSkipperUrl }">Intro Skipper</a> esteja instalado no seu servidor.
+prefs-general-restore-most-recent =
+    .title = Conectar-se automaticamente ao iniciar o { app-name }
+    .subtitle = Ao iniciar, você se conectará com última conta utilizada

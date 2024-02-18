@@ -50,7 +50,9 @@ prefs-vp-skip-backwards =
     .title = Porcentaje de salto hacia atrás
     .subtitle = Cuántos segundos retroceder cada vez
 prefs-vp-subs-style = Estilo de subtítulos
-prefs-vp-hls-playback = Reproducción HLS
+prefs-vp-hls-playback =
+    .title = Reproducción HLS
+    .subtitle = Puede interrumpir la selección de pistas de audio y subtítulos.
 prefs-vp-subs-colour =
     .title = Color del texto del subtítulo
 prefs-vp-subs-background-colour =
@@ -82,3 +84,6 @@ prefs-vp-intro-skipper =
     .subtitle =
         Muestra un botón de «Saltar Intro» durante las intros de los episodios.
         Esto requiere que el plugin <a href="{ $introSkipperUrl }">Intro Skipper</a> esté instalado en tu servidor.
+prefs-general-restore-most-recent =
+    .title = Iniciar sesión automáticamente al iniciarse { app-name }
+    .subtitle = Al iniciarse, iniciará sesión con la cuenta que haya utilizado más recientemente

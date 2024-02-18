@@ -84,3 +84,6 @@ prefs-vp-intro-skipper =
     .subtitle =
         Zeige während dem Vorspann einer Folge eine Taste an, um den Vorspann zu überspringen.
         Hierfür muss das <a href="{ $introSkipperUrl }">Intro Skipper</a>-Plugin auf deinem Server installiert sein.
+prefs-general-restore-most-recent =
+    .title = Beim Start von { app-name } automatisch anmelden
+    .subtitle = Beim Start wirst du mit dem letzten verwendeten Konto angemeldet

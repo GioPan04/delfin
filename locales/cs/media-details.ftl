@@ -24,3 +24,20 @@ media-details-season-tooltip =
     .unknown-item-count = Tato série má nepřehrané epizody
 media-details-episode-list-empty = U této série nebyly nalezeny žádné epizody.
 media-details-unnamed-season = Nepojmenovaná série
+media-details-backdrop-error = Nepodařilo se načíst pozadí média
+media-details-watched = Zhlédnuto
+media-details-unwatched = Nezhlédnuto
+media-details-run-time =
+    { $hours ->
+        [0] { $minutes }m
+       *[other] { $hours }h { $minutes }m
+    }
+media-details-toggle-watched-error =
+    Nepodařilo se nastavit stav { $type ->
+       *[episode] epizody
+        [series] série
+        [movie] filmu
+    } na { $watched ->
+        [true] zhlédnutý
+       *[false] nezhlédnutý
+    }
