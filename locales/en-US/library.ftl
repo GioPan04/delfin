@@ -10,6 +10,7 @@ library-error =
     .description = Check the console for errors or try again.
 library-status-refresh-button = Refresh
 library-page-home-title = Home
+library-page-collections-title = Collections
 library-section-title =
     .continue-watching = Continue Watching
     .next-up = Next Up

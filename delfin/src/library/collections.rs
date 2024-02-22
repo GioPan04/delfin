@@ -11,6 +11,7 @@ use crate::{
         media_page::{MediaPageInit, MediaPageInput},
         media_tile::MediaTileDisplay,
     },
+    tr,
     utils::empty_component::EmptyComponent,
 };
 
@@ -80,6 +81,6 @@ impl Fetcher for CollectionsFetcher {
     }
 
     fn title(&self) -> String {
-        "Collections".into()
+        tr!("library-page-collections-title").to_owned()
     }
 }
