@@ -522,7 +522,7 @@ impl Library {
         view_stack.add_titled_with_icon(
             collections.widget(),
             Some("collections"),
-            "Collections",
+            tr!("library-page-collections-title"),
             "library",
         );
 
