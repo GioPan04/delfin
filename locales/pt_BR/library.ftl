@@ -27,3 +27,4 @@ library-search-button = Pesquisar na biblioteca
 library-unnamed-collection = Coleção Sem Nome
 library-status-refresh-button = Atualizar
 library-collection-refresh-button = Atualizar coleção
+library-page-collections-title = Coleções
