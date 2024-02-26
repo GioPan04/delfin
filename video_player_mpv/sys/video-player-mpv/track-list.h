@@ -15,8 +15,8 @@ typedef struct {
 GType vpm_track_list_get_type(void);
 VpmTrackList *vpm_track_list_copy(VpmTrackList *t);
 void vpm_track_list_free(VpmTrackList *self);
-uint vpm_track_list_len(const VpmTrackList *self);
+guint vpm_track_list_len(const VpmTrackList *self);
 gboolean vpm_track_list_is_empty(const VpmTrackList *self);
-VpmTrack *vpm_track_list_track(const VpmTrackList *self, uint index);
+VpmTrack *vpm_track_list_track(const VpmTrackList *self, guint index);
 
 G_END_DECLS

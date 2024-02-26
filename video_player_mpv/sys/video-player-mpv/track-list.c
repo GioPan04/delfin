@@ -17,7 +17,7 @@ void vpm_track_list_free(VpmTrackList *self) {
   g_free(self);
 }
 
-uint vpm_track_list_len(const VpmTrackList *self) {
+guint vpm_track_list_len(const VpmTrackList *self) {
   return g_list_length(self->tracks);
 }
 
@@ -25,6 +25,6 @@ gboolean vpm_track_list_is_empty(const VpmTrackList *self) {
   return vpm_track_list_len(self) == 0;
 }
 
-VpmTrack *vpm_track_list_track(const VpmTrackList *self, uint index) {
+VpmTrack *vpm_track_list_track(const VpmTrackList *self, guint index) {
   return vpm_track_copy(g_list_nth_data(self->tracks, index));
 }
