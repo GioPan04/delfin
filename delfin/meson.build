@@ -34,7 +34,6 @@ custom_target(
   console: true,
   command: [
     cargo, 'build', cargo_options,
-    '&&', 'cp', 'delfin' / rust_target / meson.project_name(), '@OUTPUT@',
   ],
   install: true,
   install_dir: bindir,
