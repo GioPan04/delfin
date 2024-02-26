@@ -14,6 +14,7 @@ const SUB_FORMATS: &[&str] = &["srt", "ass", "sub", "vtt"];
 fn device_profile_direct_play() -> Result<DeviceProfile, String> {
     let profile = DeviceProfile::builder()
         .name("Delfin Direct Play Profile".to_string())
+        .max_streaming_bitrate(140000000)
         .direct_play_profiles(vec![
             DirectPlayProfile::builder()
                 .type_(DlnaProfileType::Video)
