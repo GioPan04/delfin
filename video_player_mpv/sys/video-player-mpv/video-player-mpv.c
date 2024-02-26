@@ -1,8 +1,6 @@
 #include "video-player-mpv.h"
 #include "video-player-mpv/track.h"
 
-#include <epoxy/egl.h>
-#include <epoxy/glx.h>
 #include <gtk/gtk.h>
 #include <locale.h>
 #include <mpv/client.h>
@@ -14,10 +12,16 @@
 #include <string.h>
 
 #ifdef GDK_WINDOWING_WAYLAND
+#include <epoxy/egl.h>
 #include <gdk/wayland/gdkwayland.h>
 #endif
 #ifdef GDK_WINDOWING_X11
+#include <epoxy/glx.h>
 #include <gdk/x11/gdkx.h>
+#endif
+#ifdef GDK_WINDOWING_WIN32
+#include <epoxy/wgl.h>
+#include <gdk/win32/gdkwin32.h>
 #endif
 
 #include "video-player-mpv/track-list.h"
