@@ -26,6 +26,10 @@ if get_option('profile') == 'release'
   rust_target = 'release'
 endif
 
+if get_option('gst')
+  cargo_options += ['--features', 'gst']
+endif
+
 custom_target(
   'cargo-build',
   build_by_default: true,

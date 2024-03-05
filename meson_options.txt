@@ -10,3 +10,10 @@ option(
   type: 'boolean',
   value: false,
 )
+
+option(
+  'gst',
+  type: 'boolean',
+  value: false,
+  description: 'Enable GStreamer video player backend',
+)
