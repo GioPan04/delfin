@@ -74,14 +74,10 @@ impl WidgetImpl for GstVideoPlayer {}
 
 fn load_css() {
     let provider = gtk::CssProvider::new();
-    provider.load_from_data(
+    provider.load_from_string(
         r#"
         .gst-video-player {
             background: black;
-        }
-
-        .gst-video-player__video-out {
-            border-radius: 12px;
         }
     "#,
     );
