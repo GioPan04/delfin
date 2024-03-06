@@ -1,11 +1,15 @@
 use gst::{glib::SignalHandlerId, prelude::Cast};
 use gstplay::{traits::PlayStreamInfoExt, PlayAudioInfo, PlaySubtitleInfo};
+use relm4::gtk;
 use uuid::Uuid;
 use video_player_gst::{gst, gstplay, GstVideoPlayer};
 
-use crate::tr;
+use crate::{tr, utils::rgba::RGBA};
 
-use super::{AudioTrack, PlayerStateChangedCallback, SubtitleTrack, VideoPlayerBackend};
+use super::{
+    AudioTrack, PlayerStateChangedCallback, SubtitleTrack, VideoPlayerBackend,
+    VideoPlayerSubtitleFont,
+};
 
 #[derive(Debug)]
 pub struct VideoPlayerBackendGst {
@@ -24,7 +28,7 @@ impl Default for VideoPlayerBackendGst {
 }
 
 impl VideoPlayerBackend for VideoPlayerBackendGst {
-    fn widget(&self) -> &libadwaita::gtk::Widget {
+    fn widget(&self) -> &gtk::Widget {
         self.player.upcast_ref()
     }
 
@@ -76,6 +80,14 @@ impl VideoPlayerBackend for VideoPlayerBackendGst {
         }
     }
 
+    fn frame_step_forwards(&self) {
+        todo!();
+    }
+
+    fn frame_step_backwards(&self) {
+        todo!();
+    }
+
     fn muted(&self) -> bool {
         todo!();
     }
@@ -99,10 +111,6 @@ impl VideoPlayerBackend for VideoPlayerBackendGst {
             .unwrap_or(0)
     }
 
-    fn disconnect_signal_handler(&mut self, _id: &Uuid) {
-        // TODO
-    }
-
     fn current_subtitle_track(&self) -> Option<usize> {
         self.player
             .current_subtitle_track()
@@ -121,6 +129,10 @@ impl VideoPlayerBackend for VideoPlayerBackendGst {
                 self.player.set_subtitle_track_enabled(false);
             }
         };
+    }
+
+    fn add_subtitle_track(&self, _url: &str, _title: &str) {
+        todo!();
     }
 
     fn current_audio_track(&self) -> Option<usize> {
@@ -143,9 +155,31 @@ impl VideoPlayerBackend for VideoPlayerBackendGst {
         };
     }
 
-    fn connect_end_of_stream(&mut self, callback: Box<dyn Fn() + Send + 'static>) {
+    fn set_subtitle_scale(&self, _subtitle_scale: f64) {
+        todo!();
+    }
+
+    fn set_subtitle_colour(&self, _colour: RGBA) {
+        todo!();
+    }
+
+    fn set_subtitle_background_colour(&self, _colour: RGBA) {
+        todo!();
+    }
+
+    fn set_subtitle_position(&self, _position: u32) {
+        todo!();
+    }
+
+    fn set_subtitle_font(&self, _font: &VideoPlayerSubtitleFont) {
+        todo!();
+    }
+
+    fn connect_end_of_stream(&mut self, callback: Box<dyn Fn() + Send + 'static>) -> Uuid {
         self.signal_handler_ids
             .push(self.player.connect_end_of_stream(callback));
+        // TODO
+        Uuid::new_v4()
     }
 
     fn connect_position_updated(
@@ -160,32 +194,51 @@ impl VideoPlayerBackend for VideoPlayerBackendGst {
         Uuid::new_v4()
     }
 
-    fn connect_duration_updated(&mut self, callback: Box<dyn Fn(usize) + Send + Sync + 'static>) {
+    fn connect_duration_updated(
+        &mut self,
+        callback: Box<dyn Fn(usize) + Send + Sync + 'static>,
+    ) -> Uuid {
         self.signal_handler_ids
             .push(self.player.connect_duration_changed(move |duration| {
                 callback(duration.seconds() as usize);
             }));
+        // TODO
+        Uuid::new_v4()
     }
 
-    fn connect_mute_updated(&mut self, callback: Box<dyn Fn(bool) + Send + Sync + 'static>) {
+    fn connect_mute_updated(
+        &mut self,
+        callback: Box<dyn Fn(bool) + Send + Sync + 'static>,
+    ) -> Uuid {
         self.player.connect_mute_changed(callback);
+        // TODO
+        Uuid::new_v4()
     }
 
-    fn connect_volume_updated(&mut self, callback: Box<dyn Fn(f64) + Send + Sync + 'static>) {
+    fn connect_volume_updated(
+        &mut self,
+        callback: Box<dyn Fn(f64) + Send + Sync + 'static>,
+    ) -> Uuid {
         self.player.connect_volume_changed(callback);
+        // TODO
+        Uuid::new_v4()
     }
 
     fn connect_subtitle_tracks_updated(
         &mut self,
         _callback: Box<dyn Fn(Vec<SubtitleTrack>) + Send + Sync + 'static>,
-    ) {
+    ) -> Uuid {
         todo!();
     }
 
     fn connect_audio_tracks_updated(
         &mut self,
         _callback: Box<dyn Fn(Vec<AudioTrack>) + Send + Sync + 'static>,
-    ) {
+    ) -> Uuid {
+        todo!();
+    }
+
+    fn disconnect_signal_handler(&mut self, _id: &Uuid) {
         todo!();
     }
 }
