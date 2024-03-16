@@ -85,6 +85,17 @@
   </provides>
 
   <releases>
+    <release version="0.4.2" date="2024-03-16">
+      <description>
+        <ul>
+          <li>Map escape key to exit fullscreen instead of back in video player</li>
+          <li>Fix high bitrate media not being direct played</li>
+          <li>Fix collections page title not being localized</li>
+          <li>Translation updates from Weblate – thanks to Codeberg users Application-Maker, Dirk, Filipe Motta, Fjuro, gallegonovato, Heimen Stoffels, and ThetaDev</li>
+        </ul>
+      </description>
+    </release>
+
     <release version="0.4.1" date="2024-02-18">
       <description>
         <ul>
