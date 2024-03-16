@@ -38,6 +38,9 @@ pub fn keybindings_controller() -> EventControllerKey {
             gdk::Key::f => {
                 FULLSCREEN_BROKER.send(FullscreenInput::ToggleFullscreen);
             }
+            gdk::Key::Escape => {
+                FULLSCREEN_BROKER.send(FullscreenInput::ExitFullscreen);
+            }
             gdk::Key::c => {
                 SUBTITLES_BROKER
                     .read()
