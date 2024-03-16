@@ -23,3 +23,20 @@ media-details-season-tooltip =
     .unknown-item-count = В этом сезоне есть непросмотренные серии
 media-details-episode-list-empty = Не найдены серии для этого сезона.
 media-details-unnamed-season = Сезон без названия
+media-details-unwatched = Не просмотрено
+media-details-watched = Просмотрено
+media-details-run-time =
+    { $hours ->
+        [0] { $minutes }мин
+       *[other] { $hours }ч { $minutes }мин
+    }
+media-details-toggle-watched-error =
+    Не удалось отметить { $type ->
+       *[episode] эпизод
+        [series] сериал
+        [movie] фильм
+    } as { $watched ->
+        [true] просмотренным
+       *[false] не просмотренным
+    }
+media-details-backdrop-error = Не удалось загрузить медиа-фон

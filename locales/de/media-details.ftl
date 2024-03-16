@@ -23,3 +23,20 @@ media-details-season-tooltip =
     .unknown-item-count = Du hast einige Folgen dieser Staffel noch nicht gesehen
 media-details-episode-list-empty = Diese Staffel enthält keine Folgen.
 media-details-unnamed-season = Unbenannte Staffel
+media-details-watched = Angesehen
+media-details-run-time =
+    { $hours ->
+        [0] { $minutes }m
+       *[other] { $hours }h { $minutes }m
+    }
+media-details-unwatched = Nicht gesehen
+media-details-backdrop-error = Hintergrundbild konnte nicht geladen werden
+media-details-toggle-watched-error =
+    { $type ->
+       *[episode] Die Folge
+        [series] Die Serie
+        [movie] Der Film
+    } konnte nicht als { $watched ->
+        [true] gesehen
+       *[false] nicht gesehen
+    } markiert werden

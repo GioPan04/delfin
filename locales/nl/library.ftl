@@ -27,3 +27,4 @@ library-search-button = Verzameling doorzoeken
 library-unnamed-collection = Naamloze verzameling
 library-collection-refresh-button = Verzameling herladen
 library-status-refresh-button = Herladen
+library-page-collections-title = Verzamelingen
