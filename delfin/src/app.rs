@@ -218,6 +218,21 @@ impl Component for App {
             }
         }
 
+        // Disable back on escape in video player
+        let navigation = &widgets.navigation;
+        navigation
+            .bind_property("visible-page", navigation, "pop-on-escape")
+            .transform_to(|_, page: Option<adw::NavigationPage>| {
+                let Some(page) = page else {
+                    return Some(true);
+                };
+                let Some(tag) = page.tag().map(|str| str.to_string()) else {
+                    return Some(true);
+                };
+                Some(tag != AppPage::VideoPlayer.to_string())
+            })
+            .build();
+
         ComponentParts { model, widgets }
     }
 
