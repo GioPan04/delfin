@@ -25,3 +25,6 @@ library-search-button = Keresés a könyvtárban
 library-page-home-title = Kezdőlap
 library-media-tile-unnamed-item = Névtelen elem
 library-collection-refresh-button = Gyűjtemény frissítése
+library-status-refresh-button = Frissítés
+library-item-count = { $start } - { $end } / { $total }
+library-page-collections-title = Gyűjtemények
