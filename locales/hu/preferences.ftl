@@ -64,3 +64,14 @@ prefs-vp-subs-more-ass-warning =
         Ha csak egyéb formátumú feliratok kinézetét szeretnéd módosítani, akkor ajánlott hogy
         csak a "{ prefs-vp-subs-style }" menü alatti beállításokat módosítsd.
 prefs-vp-subs-more = További beállítások
+prefs-vp-intro-skipper =
+    .title = Intro Skipper bővítmény
+    .subtitle =
+        Az epizódbevezetők alatt egy Bevezető Átugrása gombot mutat.
+        Szükséges az <a href="{ $introSkipperUrl }">Intro Skipper</a> bővítmény telepítése a szerveren is.
+prefs-vp-intro-skipper-auto-skip =
+    .title = Bevezetők automatikus átugrása
+    .subtitle = A bevezetők átugrása a Bevezető Átugrása gomb megnyomása nélkül
+prefs-general-restore-most-recent =
+    .title = Automatikus bejelentkezés a { app-name } indulásakor
+    .subtitle = A legutoljára használt fiókodba leszel beléptetve
