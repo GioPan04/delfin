@@ -18,3 +18,5 @@ sc-lib-search = Keresés a könyvtárban
 # Library
 # =======
 sc-lib = Könyvtár
+sc-lib-refresh = Frissítés
+sc-gen-menu = Menü megnyitása
