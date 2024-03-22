@@ -133,6 +133,7 @@ extern "C" {
     pub fn vpm_video_player_mpv_pause(self_: *mut VpmVideoPlayerMpv);
     pub fn vpm_video_player_mpv_play(self_: *mut VpmVideoPlayerMpv);
     pub fn vpm_video_player_mpv_play_uri(self_: *mut VpmVideoPlayerMpv, uri: *const c_char);
+    pub fn vpm_video_player_mpv_playback_speed(self_: *mut VpmVideoPlayerMpv) -> c_double;
     pub fn vpm_video_player_mpv_position(self_: *mut VpmVideoPlayerMpv) -> c_double;
     pub fn vpm_video_player_mpv_seek_by(self_: *mut VpmVideoPlayerMpv, seconds: c_int);
     pub fn vpm_video_player_mpv_seek_to(self_: *mut VpmVideoPlayerMpv, seconds: c_uint);
@@ -141,6 +142,10 @@ extern "C" {
         audio_track_id: c_uint,
     );
     pub fn vpm_video_player_mpv_set_mute(self_: *mut VpmVideoPlayerMpv, mute: bool);
+    pub fn vpm_video_player_mpv_set_playback_speed(
+        self_: *mut VpmVideoPlayerMpv,
+        playback_speed: c_double,
+    );
     pub fn vpm_video_player_mpv_set_subtitle_background_colour(
         self_: *mut VpmVideoPlayerMpv,
         colour: *mut c_char,

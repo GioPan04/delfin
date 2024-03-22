@@ -429,6 +429,24 @@ void vpm_video_player_mpv_set_volume(VpmVideoPlayerMpv *self, double volume) {
                    &volume);
 }
 
+double vpm_video_player_mpv_playback_speed(VpmVideoPlayerMpv *self) {
+  double playback_speed = 1;
+  if (mpv_set_property(self->mpv_ctx->handle, "speed", MPV_FORMAT_DOUBLE,
+                       &playback_speed) < 0) {
+    fprintf(stderr, "Error getting speed.\n");
+  }
+  return playback_speed;
+}
+
+void vpm_video_player_mpv_set_playback_speed(VpmVideoPlayerMpv *self,
+                                             double playback_speed) {
+  int err = mpv_set_property(self->mpv_ctx->handle, "speed", MPV_FORMAT_DOUBLE,
+                             &playback_speed);
+  if (err < 0) {
+    printf("Error setting playback speed: %d\n", err);
+  }
+}
+
 int vpm_video_player_mpv_current_audio_track(VpmVideoPlayerMpv *self) {
   static int id;
   if (mpv_get_property(self->mpv_ctx->handle, "current-tracks/audio/id",

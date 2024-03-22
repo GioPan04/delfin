@@ -186,6 +186,14 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
         self.widget.position() as usize
     }
 
+    fn playback_speed(&self) -> f64 {
+        self.widget.playback_speed()
+    }
+
+    fn set_playback_speed(&self, playback_speed: f64) {
+        self.widget.set_playback_speed(playback_speed);
+    }
+
     fn current_subtitle_track(&self) -> Option<usize> {
         match self.widget.current_subtitle_track() {
             id @ 0.. => Some(id as usize),
