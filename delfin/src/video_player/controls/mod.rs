@@ -2,6 +2,7 @@ mod audio_tracks;
 pub(super) mod fullscreen;
 pub(super) mod next_prev_episode;
 pub(super) mod play_pause;
+pub(super) mod playback_speed;
 pub(super) mod scrubber;
 pub(super) mod skip_forwards_backwards;
 pub(super) mod subtitles;
@@ -43,6 +44,7 @@ use self::{
     fullscreen::Fullscreen,
     next_prev_episode::{NextPrevEpisode, NextPrevEpisodeInput},
     play_pause::PlayPause,
+    playback_speed::PlaybackSpeed,
     scrubber::Scrubber,
     skip_forwards_backwards::SkipForwardsBackwards,
     subtitles::{Subtitles, SubtitlesInput},
@@ -65,6 +67,7 @@ pub struct VideoPlayerControls {
     subtitles: OnceCell<Controller<Subtitles>>,
     audio_tracks: OnceCell<Controller<AudioTracks>>,
     _fullscreen: Option<Controller<Fullscreen>>,
+    playback_speed: OnceCell<Controller<PlaybackSpeed>>,
 }
 
 pub struct VideoPlayerControlsInit {
@@ -145,6 +148,7 @@ impl SimpleComponent for VideoPlayerControls {
             subtitles: OnceCell::new(),
             audio_tracks: OnceCell::new(),
             _fullscreen: None,
+            playback_speed: OnceCell::new(),
         };
 
         let widgets = view_output!();
@@ -216,6 +220,10 @@ impl SimpleComponent for VideoPlayerControls {
 
         // Push remaining controls to end
         second_row.append(&gtk::Box::builder().hexpand(true).build());
+
+        let playback_speed = PlaybackSpeed::builder().launch(player.clone()).detach();
+        second_row.append(playback_speed.widget());
+        model.playback_speed.set(playback_speed).unwrap();
 
         let subtitles = Subtitles::builder()
             .launch_with_broker(player.clone(), &SUBTITLES_BROKER.read())

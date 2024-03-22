@@ -28,6 +28,10 @@ void vpm_video_player_mpv_set_mute(VpmVideoPlayerMpv *self, bool mute);
 double vpm_video_player_mpv_volume(VpmVideoPlayerMpv *self);
 void vpm_video_player_mpv_set_volume(VpmVideoPlayerMpv *self, double volume);
 
+double vpm_video_player_mpv_playback_speed(VpmVideoPlayerMpv *self);
+void vpm_video_player_mpv_set_playback_speed(VpmVideoPlayerMpv *self,
+                                             double playback_speed);
+
 int vpm_video_player_mpv_current_audio_track(VpmVideoPlayerMpv *self);
 void vpm_video_player_mpv_set_audio_track(VpmVideoPlayerMpv *self,
                                           uint audio_track_id);

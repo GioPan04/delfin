@@ -89,6 +89,11 @@ impl VideoPlayerMpv {
         }
     }
 
+    #[doc(alias = "vpm_video_player_mpv_playback_speed")]
+    pub fn playback_speed(&self) -> f64 {
+        unsafe { ffi::vpm_video_player_mpv_playback_speed(self.to_glib_none().0) }
+    }
+
     #[doc(alias = "vpm_video_player_mpv_position")]
     pub fn position(&self) -> f64 {
         unsafe { ffi::vpm_video_player_mpv_position(self.to_glib_none().0) }
@@ -119,6 +124,13 @@ impl VideoPlayerMpv {
     pub fn set_mute(&self, mute: bool) {
         unsafe {
             ffi::vpm_video_player_mpv_set_mute(self.to_glib_none().0, mute);
+        }
+    }
+
+    #[doc(alias = "vpm_video_player_mpv_set_playback_speed")]
+    pub fn set_playback_speed(&self, playback_speed: f64) {
+        unsafe {
+            ffi::vpm_video_player_mpv_set_playback_speed(self.to_glib_none().0, playback_speed);
         }
     }
 

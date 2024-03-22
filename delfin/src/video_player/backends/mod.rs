@@ -81,6 +81,12 @@ pub trait VideoPlayerBackend: fmt::Debug {
     /// Get current video position in seconds.
     fn position(&self) -> usize;
 
+    /// Get the current playback speed.
+    fn playback_speed(&self) -> f64;
+
+    /// Set the playback speed.
+    fn set_playback_speed(&self, playback_speed: f64);
+
     /// Get the current subtitle track ID.
     fn current_subtitle_track(&self) -> Option<usize>;
 
