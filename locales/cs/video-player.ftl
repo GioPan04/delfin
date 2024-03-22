@@ -60,3 +60,5 @@ vp-backend-mpv-track-name =
 vp-next-up-action =
     .play = Přehrát nyní
     .hide = Skrýt
+vp-playback-speed-tooltip = Rychlost přehrávání
+vp-playback-speed-normal = Normální
