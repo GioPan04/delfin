@@ -59,7 +59,7 @@ impl SimpleComponent for PlaybackSpeed {
             .for_each(|menu_item| playback_speed_menu.append_item(&menu_item));
         model
             .menu
-            .append_section(Some("Playback Speed"), &playback_speed_menu);
+            .append_section(Some(tr!("vp-playback-speed-tooltip")), &playback_speed_menu);
 
         let playback_speed_action: RelmAction<PlaybackSpeedAction> =
             RelmAction::new_stateful_with_target_value(&1.0, {
