@@ -18,3 +18,5 @@ sc-gen-quit = Wyjdź
 # Library
 # =======
 sc-lib = Biblioteka
+sc-lib-refresh = Odśwież
+sc-gen-menu = Otwórz menu
