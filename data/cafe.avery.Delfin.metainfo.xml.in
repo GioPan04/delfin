@@ -85,6 +85,16 @@
   </provides>
 
   <releases>
+    <release version="0.4.3" date="2024-03-26">
+      <description>
+        <ul>
+          <li>Added playback speed control to video player</li>
+          <li>Updated dependencies</li>
+          <li>Translation updates – thanks to Codeberg users Eryk Michalak, Fjuro, Kenxu2022, smrtrfszm, Vistaus</li>
+        </ul>
+      </description>
+    </release>
+
     <release version="0.4.2" date="2024-03-16">
       <description>
         <ul>
