@@ -50,3 +50,5 @@ vp-next-up-action =
     .play = Odtwórz teraz
     .hide = Ukryj
 vp-unnamed-item = Nienazwany element
+vp-playback-speed-tooltip = Prędkość odtwarzania
+vp-playback-speed-normal = Normalna

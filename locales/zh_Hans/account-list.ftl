@@ -1,0 +1,12 @@
+account-list-page-title = 账户
+account-list =
+    .title = 登录 { $serverName }
+    .description = 选择你想要登录的账户
+account-list-empty =
+    .title = 无可用的账号
+    .subtitle = 添加一个账号以开始观看
+account-list-add-account-button = 添加一个账号
+account-list-add-account-title = 添加一个账号
+account-list-add-account-username = 用户名
+account-list-add-account-password = 密码
+account-list-add-account-submit-button = 登录
