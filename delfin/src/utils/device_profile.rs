@@ -1,3 +1,4 @@
+use anyhow::Result;
 use fluent_templates::lazy_static::lazy_static;
 use jellyfin_api::types::{
     DeviceProfile, DirectPlayProfile, DlnaProfileType, SubtitleDeliveryMethod, SubtitleProfile,
@@ -11,7 +12,7 @@ lazy_static! {
 const SUB_FORMATS: &[&str] = &["srt", "ass", "sub", "vtt"];
 
 /// Generates a device profile for direct play, similar to the one that Jellyfin Media Player uses.
-fn device_profile_direct_play() -> Result<DeviceProfile, String> {
+fn device_profile_direct_play() -> Result<DeviceProfile> {
     let profile = DeviceProfile::builder()
         .name("Delfin Direct Play Profile".to_string())
         .max_streaming_bitrate(140000000)
@@ -40,5 +41,5 @@ fn device_profile_direct_play() -> Result<DeviceProfile, String> {
         );
     }
 
-    profile.subtitle_profiles(subtitle_profiles).try_into()
+    Ok(profile.subtitle_profiles(subtitle_profiles).try_into()?)
 }

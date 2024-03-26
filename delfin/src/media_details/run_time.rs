@@ -13,7 +13,9 @@ impl RunTime for BaseItemDto {
             return None;
         };
 
-        let run_time = TimeDelta::seconds(ticks_to_seconds(run_time_ticks) as i64);
+        let Some(run_time) = TimeDelta::try_seconds(ticks_to_seconds(run_time_ticks) as i64) else {
+            return None;
+        };
         let hours = run_time.num_hours();
         let minutes = run_time.num_minutes() - (60 * hours);
 
@@ -34,7 +36,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_run_time_hours_minutes() -> Result<(), String> {
+    fn test_run_time_hours_minutes() -> anyhow::Result<()> {
         let item: BaseItemDto = BaseItemDto::builder()
             .run_time_ticks(Some(seconds_to_ticks(8088) as i64))
             .try_into()?;
@@ -43,7 +45,7 @@ mod tests {
     }
 
     #[test]
-    fn test_run_time_minutes() -> Result<(), String> {
+    fn test_run_time_minutes() -> anyhow::Result<()> {
         let item: BaseItemDto = BaseItemDto::builder()
             .run_time_ticks(Some(seconds_to_ticks(420) as i64))
             .try_into()?;
