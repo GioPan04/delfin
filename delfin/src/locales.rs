@@ -40,7 +40,6 @@ macro_rules! tr {
 
         &LOCALES
             .lookup(&current_language(), $id)
-            .expect(&format!("Error looking up message for identifier: {}", $id))
     }};
 
     // Lookup message with arguments
@@ -54,7 +53,6 @@ macro_rules! tr {
             $id,
             &HashMap::from([$(($k, $v.into()),)*]),
         )
-        .expect(&format!("Error looking up message for identifier: {}", $id))
     }};
 }
 
