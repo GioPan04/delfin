@@ -60,19 +60,21 @@ impl Component for AccountList {
                 #[wrap(Some)]
                 set_content = &adw::Clamp {
                     set_margin_top: PAGE_MARGIN,
+                    set_margin_end: 12,
+                    set_margin_start: 12,
 
                     adw::PreferencesGroup {
                         #[watch]
                         set_title: tr!("account-list.title", { "serverName" => &*model.server.name }),
                         set_description: Some(tr!("account-list.description")),
                         #[wrap(Some)]
-                        set_header_suffix = &gtk::Button {
+
+                        set_header_suffix = &gtk::Button::from_icon_name("list-add-symbolic") {
+                            set_margin_start: 10,
+                            set_valign: gtk::Align::Start,
+                            set_tooltip: tr!("account-list-add-account-button"),
                             connect_clicked[sender] => move |_| {
                                 sender.input(AccountListInput::AddAccount);
-                            },
-                            adw::ButtonContent {
-                                set_icon_name: "list-add-symbolic",
-                                set_label: tr!("account-list-add-account-button"),
                             },
                         },
 

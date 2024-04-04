@@ -53,18 +53,20 @@ impl Component for ServerList {
                 #[wrap(Some)]
                 set_content = &adw::Clamp {
                     set_margin_top: PAGE_MARGIN,
+                    set_margin_end: 12,
+                    set_margin_start: 12,
 
                     adw::PreferencesGroup {
                         set_title: tr!("server-list.title"),
                         set_description: Some(tr!("server-list.description")),
                         #[wrap(Some)]
-                        set_header_suffix = &gtk::Button {
+
+                        set_header_suffix = &gtk::Button::from_icon_name("list-add-symbolic") {
+                            set_margin_start: 10,
+                            set_valign: gtk::Align::Start,
+                            set_tooltip: tr!("server-list-add-server-button"),
                             connect_clicked[sender] => move |_| {
                                 sender.input(ServerListInput::AddServer);
-                            },
-                            adw::ButtonContent {
-                                set_icon_name: "list-add-symbolic",
-                                set_label: tr!("server-list-add-server-button"),
                             },
                         },
 
