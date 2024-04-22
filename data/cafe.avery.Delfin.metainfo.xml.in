@@ -85,6 +85,15 @@
   </provides>
 
   <releases>
+    <release version="0.4.4" date="2024-04-22">
+      <description>
+        <ul>
+          <li>Fix video playback opening a separate window with MPV 0.38.0</li>
+          <li>Translation updates – thanks to Codeberg users gallegonovato, Medzik, ThetaDev, and Tuba2</li>
+        </ul>
+      </description>
+    </release>
+
     <release version="0.4.3" date="2024-03-26">
       <description>
         <ul>
