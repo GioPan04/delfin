@@ -23,3 +23,5 @@ media-details-season-tooltip =
 media-details-episode-list-empty = Nie znaleziono odcinków dla tego sezonu.
 media-details-unnamed-season = Nienazwany sezon
 media-details-unnamed-item = Nienazwany element
+media-details-unwatched = Nieobejrzany
+media-details-watched = Obejrzany

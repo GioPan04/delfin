@@ -84,3 +84,6 @@ prefs-vp-intro-skipper =
     .subtitle =
         Wyświetla przycisk Pomiń czołówkę podczas czołówki odcinka.
         Wymaga zainstalowanej na twoim serwerze wtyczki <a href="{ $introSkipperUrl }">Pomijacz czołowek</a>.
+prefs-general-restore-most-recent =
+    .title = Zaloguj się automatycznie po uruchomieniu { app-name }
+    .subtitle = Po uruchomieniu zostaniesz zalogowany do ostatnio używanego konta

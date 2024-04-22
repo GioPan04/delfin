@@ -58,3 +58,5 @@ vp-backend-mpv-track-name =
 vp-next-up-action =
     .play = Reproducir ahora
     .hide = Ocultar
+vp-playback-speed-tooltip = Velocidad de la reproducción
+vp-playback-speed-normal = Normal
