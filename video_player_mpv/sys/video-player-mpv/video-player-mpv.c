@@ -277,6 +277,7 @@ static void vpm_video_player_mpv_init(VpmVideoPlayerMpv *widget) {
   struct MpvCtx *mpv_ctx = malloc(sizeof *mpv_ctx);
 
   mpv_ctx->handle = mpv_create();
+  mpv_set_property_string(mpv_ctx->handle, "vo", "libmpv");
   mpv_initialize(mpv_ctx->handle);
   mpv_request_log_messages(mpv_ctx->handle, "debug");
 
