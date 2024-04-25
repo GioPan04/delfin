@@ -9,13 +9,9 @@ pub(crate) trait RunTime {
 
 impl RunTime for BaseItemDto {
     fn run_time(&self) -> Option<String> {
-        let Some(run_time_ticks) = self.run_time_ticks else {
-            return None;
-        };
+        let run_time_ticks = self.run_time_ticks?;
 
-        let Some(run_time) = TimeDelta::try_seconds(ticks_to_seconds(run_time_ticks) as i64) else {
-            return None;
-        };
+        let run_time = TimeDelta::try_seconds(ticks_to_seconds(run_time_ticks) as i64)?;
         let hours = run_time.num_hours();
         let minutes = run_time.num_minutes() - (60 * hours);
 

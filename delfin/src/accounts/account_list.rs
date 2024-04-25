@@ -68,7 +68,6 @@ impl Component for AccountList {
                         set_title: tr!("account-list.title", { "serverName" => &*model.server.name }),
                         set_description: Some(tr!("account-list.description")),
                         #[wrap(Some)]
-
                         set_header_suffix = &gtk::Button::from_icon_name("list-add-symbolic") {
                             set_margin_start: 10,
                             set_valign: gtk::Align::Start,

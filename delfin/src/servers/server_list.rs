@@ -60,7 +60,6 @@ impl Component for ServerList {
                         set_title: tr!("server-list.title"),
                         set_description: Some(tr!("server-list.description")),
                         #[wrap(Some)]
-
                         set_header_suffix = &gtk::Button::from_icon_name("list-add-symbolic") {
                             set_margin_start: 10,
                             set_valign: gtk::Align::Start,

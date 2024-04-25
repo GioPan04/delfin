@@ -17,6 +17,7 @@ use super::{
     media_tile::MediaTileDisplay,
 };
 
+#[allow(dead_code)]
 enum MediaListContents {
     // Grid(Controller<MediaGrid>),
     Carousel(Controller<MediaCarousel>),
