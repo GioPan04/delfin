@@ -1,4 +1,5 @@
 use bytes::Buf;
+use chrono::TimeDelta;
 use std::{cell::RefCell, sync::Arc};
 use tracing::warn;
 
@@ -312,9 +313,20 @@ impl Scrubber {
 }
 
 fn seconds_to_timestamp(seconds: usize) -> String {
-    let minutes = seconds / 60;
-    let seconds = seconds % 60;
-    format!("{minutes:0>2}:{seconds:0>2}")
+    let Some(time) = TimeDelta::try_seconds(seconds as i64) else {
+        warn!("Could not convert seconds to TimeDelta");
+        return String::new();
+    };
+
+    let hours = time.num_hours();
+    let minutes = time.num_minutes() - (60 * hours);
+    let seconds = time.num_seconds() % 60;
+
+    if hours > 0 {
+        format!("{hours}:{minutes:0>2}:{seconds:0>2}")
+    } else {
+        format!("{minutes:0>2}:{seconds:0>2}")
+    }
 }
 
 fn duration_to_timestamp(
