@@ -48,7 +48,7 @@ impl SimpleComponent for PlaybackSpeed {
             .iter()
             .map(|speed| {
                 RelmAction::<PlaybackSpeedAction>::to_menu_item_with_target_value(
-                    &if *speed == 1.0 {
+                    &if (*speed - 1.0).abs() < f64::EPSILON {
                         tr!("vp-playback-speed-normal").into()
                     } else {
                         format!("{speed}x")

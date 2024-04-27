@@ -20,7 +20,7 @@ pub struct Thumbnail {
     pub image: Bytes,
 }
 
-pub fn decode_bif(bif: Bytes) -> Result<Vec<Thumbnail>> {
+pub fn decode_bif(bif: &Bytes) -> Result<Vec<Thumbnail>> {
     let (timestamp_multiplier, thumbnail_indices) = {
         // Create a mutable copy of the data in this block for easy reading
         let mut bif = bif.clone();

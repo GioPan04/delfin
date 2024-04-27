@@ -35,7 +35,7 @@ impl State {
             Self::AutoSkipCountdown(seconds) => {
                 tr!("vp-skip-intro.auto", { "seconds" => seconds }).to_string()
             }
-            _ => String::default(),
+            State::Hidden => String::default(),
         }
     }
 }
@@ -104,7 +104,7 @@ impl AsyncComponent for SkipIntro {
             auto_skip: CONFIG.read().video_player.intro_skipper_auto_skip,
         };
 
-        model.subscribe_to_config(&sender);
+        SkipIntro::subscribe_to_config(&sender);
 
         let widgets = view_output!();
 
@@ -129,12 +129,9 @@ impl AsyncComponent for SkipIntro {
                 self.already_skipped = false;
             }
             SkipIntroInput::PositionUpdate(position) => 'msg_block: {
-                let intro_timestamps = match (self.enabled, &self.intro_timestamps) {
-                    (true, Some(intro_timestamps)) => intro_timestamps,
-                    _ => {
-                        self.state = State::Hidden;
-                        break 'msg_block;
-                    }
+                let (true, Some(intro_timestamps)) = (self.enabled, &self.intro_timestamps) else {
+                    self.state = State::Hidden;
+                    break 'msg_block;
                 };
 
                 self.state = match (self.auto_skip, self.already_skipped) {
@@ -185,7 +182,7 @@ impl AsyncComponent for SkipIntro {
 }
 
 impl SkipIntro {
-    fn subscribe_to_config(&self, sender: &AsyncComponentSender<Self>) {
+    fn subscribe_to_config(sender: &AsyncComponentSender<Self>) {
         CONFIG.subscribe(sender.input_sender(), |config| {
             SkipIntroInput::ConfigUpdated(
                 config.video_player.intro_skipper,

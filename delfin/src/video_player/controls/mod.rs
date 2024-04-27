@@ -55,18 +55,18 @@ pub struct VideoPlayerControls {
     show_controls: bool,
     next_prev_episodes: (Option<BaseItemDto>, Option<BaseItemDto>),
     // We need to keep these controllers around, even if we don't read them
-    _scrubber: Option<Controller<Scrubber>>,
-    _play_pause: Option<Controller<PlayPause>>,
-    _skip_forwards_backwards: OnceCell<(
+    scrubber: Option<Controller<Scrubber>>,
+    play_pause: Option<Controller<PlayPause>>,
+    skip_forwards_backwards: OnceCell<(
         Controller<SkipForwardsBackwards>,
         Controller<SkipForwardsBackwards>,
     )>,
     next_prev_episode_controls:
         OnceCell<(Controller<NextPrevEpisode>, Controller<NextPrevEpisode>)>,
-    _volume: Option<Controller<Volume>>,
+    volume: Option<Controller<Volume>>,
     subtitles: OnceCell<Controller<Subtitles>>,
     audio_tracks: OnceCell<Controller<AudioTracks>>,
-    _fullscreen: Option<Controller<Fullscreen>>,
+    fullscreen: Option<Controller<Fullscreen>>,
     playback_speed: OnceCell<Controller<PlaybackSpeed>>,
 }
 
@@ -139,15 +139,15 @@ impl SimpleComponent for VideoPlayerControls {
 
         let mut model = VideoPlayerControls {
             show_controls: default_show_controls,
-            _skip_forwards_backwards: OnceCell::new(),
+            skip_forwards_backwards: OnceCell::new(),
             next_prev_episodes: (None, None),
-            _scrubber: None,
-            _play_pause: None,
+            scrubber: None,
+            play_pause: None,
             next_prev_episode_controls: OnceCell::new(),
-            _volume: None,
+            volume: None,
             subtitles: OnceCell::new(),
             audio_tracks: OnceCell::new(),
-            _fullscreen: None,
+            fullscreen: None,
             playback_speed: OnceCell::new(),
         };
 
@@ -169,7 +169,7 @@ impl SimpleComponent for VideoPlayerControls {
             .launch_with_broker(player.clone(), &SCRUBBER_BROKER.read())
             .detach();
         controls.prepend(scrubber.widget());
-        model._scrubber = Some(scrubber);
+        model.scrubber = Some(scrubber);
 
         let prev_episode = NextPrevEpisode::builder()
             .launch_with_broker(
@@ -193,7 +193,7 @@ impl SimpleComponent for VideoPlayerControls {
             .launch_with_broker(player.clone(), &PLAY_PAUSE_BROKER.read())
             .detach();
         second_row.append(play_pause.widget());
-        model._play_pause = Some(play_pause);
+        model.play_pause = Some(play_pause);
 
         let skip_forwards = SkipForwardsBackwards::builder()
             .launch_with_broker(
@@ -203,7 +203,7 @@ impl SimpleComponent for VideoPlayerControls {
             .detach();
         second_row.append(skip_forwards.widget());
         model
-            ._skip_forwards_backwards
+            .skip_forwards_backwards
             .set((skip_backwards, skip_forwards))
             .unwrap();
 
@@ -239,13 +239,13 @@ impl SimpleComponent for VideoPlayerControls {
             .launch_with_broker(player, &VOLUME_BROKER.read())
             .detach();
         second_row.append(volume.widget());
-        model._volume = Some(volume);
+        model.volume = Some(volume);
 
         let fullscreen = Fullscreen::builder()
             .launch_with_broker((), &FULLSCREEN_BROKER.read())
             .detach();
         second_row.append(fullscreen.widget());
-        model._fullscreen = Some(fullscreen);
+        model.fullscreen = Some(fullscreen);
 
         NEXT_UP_VISIBILE.subscribe(sender.input_sender(), |visible| {
             if *visible {
@@ -261,7 +261,7 @@ impl SimpleComponent for VideoPlayerControls {
     fn update(&mut self, message: Self::Input, sender: relm4::ComponentSender<Self>) {
         match message {
             VideoPlayerControlsInput::SetShowControls(show_controls) => {
-                self.show_controls = show_controls
+                self.show_controls = show_controls;
             }
             VideoPlayerControlsInput::SetPlaying { api_client, item } => {
                 if let Some(subtitles) = self.subtitles.get() {

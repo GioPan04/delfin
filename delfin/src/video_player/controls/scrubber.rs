@@ -141,8 +141,7 @@ impl Component for Scrubber {
                         #[watch]
                         set_label: &model.popover
                             .as_ref()
-                            .map(|p| seconds_to_timestamp(p.timestamp))
-                            .unwrap_or("".to_string()),
+                            .map_or(String::new(), |p| seconds_to_timestamp(p.timestamp)),
                     },
                 },
             },
@@ -197,7 +196,7 @@ impl Component for Scrubber {
             thumbnails: None,
         };
 
-        model.subscribe_to_config(&sender);
+        Scrubber::subscribe_to_config(&sender);
 
         let widgets = view_output!();
 
@@ -259,7 +258,7 @@ impl Component for Scrubber {
                     scrubber.compute_point(popover, &Point::new(position as f32, 0.0));
 
                 self.popover = Some(ScrubberPopover {
-                    position: popover_position.map(|p| p.x()).unwrap_or(0.0) as f64,
+                    position: popover_position.map_or(0.0, |p| p.x()) as f64,
                     timestamp,
                     thumbnail: self.get_thumbnail(timestamp),
                 });
@@ -278,24 +277,20 @@ impl Component for Scrubber {
 
 impl Scrubber {
     fn get_thumbnail(&self, timestamp: usize) -> Option<Texture> {
-        let thumbnails = match &self.thumbnails {
-            Some(thumbnails) => thumbnails,
-            None => return None,
-        };
+        let thumbnails = self.thumbnails.as_ref()?;
 
         let mut nearest_thumbnail_idx = 0;
         for (i, thumbnail) in thumbnails.iter().enumerate() {
             if thumbnail.timestamp < timestamp {
-                nearest_thumbnail_idx = i
+                nearest_thumbnail_idx = i;
             }
         }
 
-        let image = match thumbnails.get(nearest_thumbnail_idx) {
-            Some(thumbnail) => &thumbnail.image,
-            _ => {
-                warn!("Error getting trickplay thumbnail");
-                return None;
-            }
+        let image = if let Some(thumbnail) = thumbnails.get(nearest_thumbnail_idx) {
+            &thumbnail.image
+        } else {
+            warn!("Error getting trickplay thumbnail");
+            return None;
         };
         let pixbuf = match gdk_pixbuf::Pixbuf::from_read(image.clone().reader()) {
             Ok(pixbuf) => pixbuf,
@@ -309,7 +304,7 @@ impl Scrubber {
         Some(Texture::for_pixbuf(&pixbuf))
     }
 
-    fn subscribe_to_config(&self, sender: &ComponentSender<Self>) {
+    fn subscribe_to_config(sender: &ComponentSender<Self>) {
         CONFIG.subscribe(sender.input_sender(), |config| {
             ScrubberInput::DurationDisplayUpdated(config.video_player.duration_display)
         });
@@ -319,7 +314,7 @@ impl Scrubber {
 fn seconds_to_timestamp(seconds: usize) -> String {
     let minutes = seconds / 60;
     let seconds = seconds % 60;
-    format!("{:0>2}:{:0>2}", minutes, seconds)
+    format!("{minutes:0>2}:{seconds:0>2}")
 }
 
 fn duration_to_timestamp(

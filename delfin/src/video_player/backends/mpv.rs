@@ -43,7 +43,7 @@ impl std::fmt::Debug for VideoPlayerBackendMpv {
             .field("widget", &self.widget)
             .field("state", &self.state)
             .field("signal_handler_ids", &self.signal_handler_ids)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 
@@ -203,7 +203,7 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
 
     fn set_subtitle_track(&self, subtitle_track_id: Option<usize>) {
         self.widget
-            .set_subtitle_track(subtitle_track_id.map(|id| id as u32).unwrap_or(0));
+            .set_subtitle_track(subtitle_track_id.map_or(0, |id| id as u32));
     }
 
     fn add_subtitle_track(&self, url: &str, title: &str) {
@@ -219,7 +219,7 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
 
     fn set_audio_track(&self, audio_track_id: Option<usize>) {
         self.widget
-            .set_audio_track(audio_track_id.map(|id| id as u32).unwrap_or(0));
+            .set_audio_track(audio_track_id.map_or(0, |id| id as u32));
     }
 
     fn set_subtitle_scale(&self, subtitle_scale: f64) {
@@ -375,7 +375,7 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
     }
 }
 
-fn get_track_name(track: Track) -> String {
+fn get_track_name(track: &Track) -> String {
     let id = track.id() as usize;
     let title = track.title().map(|s| s.to_string());
     let language = track.language().map(|s| s.to_string());
@@ -407,7 +407,7 @@ impl From<Track> for SubtitleTrack {
         assert!(value.type_() == TrackType::Subtitle);
         Self {
             id: value.id() as usize,
-            name: get_track_name(value),
+            name: get_track_name(&value),
         }
     }
 }
@@ -417,7 +417,7 @@ impl From<Track> for AudioTrack {
         assert!(value.type_() == TrackType::Audio);
         Self {
             id: value.id() as usize,
-            name: get_track_name(value),
+            name: get_track_name(&value),
         }
     }
 }

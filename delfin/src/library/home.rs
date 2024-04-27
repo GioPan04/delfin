@@ -15,6 +15,7 @@ use super::home_sections::my_media::{HomeSectionMyMedia, HomeSectionMyMediaInit}
 use super::home_sections::next_up::HomeSectionNextUp;
 use super::library_container::LibraryContainer;
 
+#[allow(dead_code)]
 enum HomeSectionController {
     ContinueWatching(Controller<HomeSectionContinueWatching>),
     Latest(Controller<HomeSectionLatest>),

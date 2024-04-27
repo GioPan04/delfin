@@ -3,6 +3,7 @@ use relm4::{adw, gtk};
 
 pub const MAIN_APP_WINDOW_NAME: &str = "main_app_window";
 
+#[must_use]
 pub fn get_main_window() -> Option<adw::ApplicationWindow> {
     let toplevels = gtk::Window::toplevels();
     for i in 0..toplevels.n_items() {

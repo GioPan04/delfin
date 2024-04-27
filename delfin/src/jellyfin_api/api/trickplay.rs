@@ -42,7 +42,7 @@ impl ApiClient {
         }
 
         let bif = res.bytes().await?;
-        let thumbnails = decode_bif(bif)?;
+        let thumbnails = decode_bif(&bif)?;
 
         Ok(Some(thumbnails))
     }

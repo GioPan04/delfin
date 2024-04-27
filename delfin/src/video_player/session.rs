@@ -22,15 +22,15 @@ pub struct SessionPlaybackReporter(Option<(Uuid, Uuid)>);
 impl SessionPlaybackReporter {
     pub fn start(
         &mut self,
-        api_client: Arc<ApiClient>,
+        api_client: &Arc<ApiClient>,
         item_id: &Uuid,
-        video_player: Arc<RefCell<dyn VideoPlayerBackend>>,
+        video_player: &Arc<RefCell<dyn VideoPlayerBackend>>,
     ) {
-        self.stop(video_player.clone());
+        self.stop(video_player);
         self.0 = Some(start_session_reporting(api_client, item_id, video_player));
     }
 
-    pub fn stop(&mut self, video_player: Arc<RefCell<dyn VideoPlayerBackend>>) {
+    pub fn stop(&mut self, video_player: &Arc<RefCell<dyn VideoPlayerBackend>>) {
         if let Some((position_updated_signal_handler_id, player_state_signal_handler_id)) =
             self.0.take()
         {
@@ -42,9 +42,9 @@ impl SessionPlaybackReporter {
 }
 
 fn start_session_reporting(
-    api_client: Arc<ApiClient>,
+    api_client: &Arc<ApiClient>,
     item_id: &Uuid,
-    video_player: Arc<RefCell<dyn VideoPlayerBackend>>,
+    video_player: &Arc<RefCell<dyn VideoPlayerBackend>>,
 ) -> (Uuid, Uuid) {
     let config = CONFIG.read();
 

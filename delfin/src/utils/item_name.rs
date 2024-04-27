@@ -23,12 +23,7 @@ impl ItemName for BaseItemDto {
     }
 
     fn episode_name_with_number(&self) -> Option<String> {
-        let name = match &self.name {
-            Some(name) => name,
-            _ => {
-                return None;
-            }
-        };
+        let name = self.name.as_ref()?;
 
         if let (Some(index_number), Some(parent_index_number)) =
             (self.index_number, self.parent_index_number)

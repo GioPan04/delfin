@@ -133,7 +133,7 @@ impl Component for Subtitles {
             SubtitlesInput::Reset { api_client, item } => {
                 self.subtitles_available = false;
                 self.previous_track = None;
-                self.load_external_subtitles(&sender, &api_client, item);
+                Subtitles::load_external_subtitles(&sender, &api_client, &item);
             }
             SubtitlesInput::SubtitlesUpdated(subtitle_streams) => {
                 if subtitle_streams.is_empty() {
@@ -224,15 +224,11 @@ impl Component for Subtitles {
 
 impl Subtitles {
     fn load_external_subtitles(
-        &self,
         sender: &ComponentSender<Self>,
         api_client: &Arc<ApiClient>,
-        item: Box<BaseItemDto>,
+        item: &BaseItemDto,
     ) {
-        let item_id = match item.id {
-            Some(id) => id,
-            None => return,
-        };
+        let Some(item_id) = item.id else { return };
 
         sender.oneshot_command({
             let api_client = api_client.clone();

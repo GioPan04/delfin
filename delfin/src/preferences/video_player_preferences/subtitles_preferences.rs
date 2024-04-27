@@ -109,7 +109,7 @@ impl SimpleComponent for SubtitlesPreferences {
                         set_font_desc: &model.video_player_config.subtitles.font.clone().into(),
                         set_use_font: true,
                         set_dialog = &gtk::FontDialog {
-                            set_filter: Some(&model.font_filter()),
+                            set_filter: Some(&SubtitlesPreferences::font_filter()),
                         },
 
                         connect_font_desc_notify[sender] => move |fdb| {
@@ -261,7 +261,7 @@ impl SubtitlesPreferences {
             || (video_player_config.subtitles.font != default.subtitles.font)
     }
 
-    fn font_filter(&self) -> CustomFilter {
+    fn font_filter() -> CustomFilter {
         use gtk::pango::{FontFace, Style, Weight};
 
         CustomFilter::new(|arg| {

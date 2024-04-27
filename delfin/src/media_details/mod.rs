@@ -116,7 +116,7 @@ impl SimpleComponent for MediaDetails {
 
         container.set_child(Some(model.media_details_contents.widget()));
 
-        model.register_actions(&sender);
+        MediaDetails::register_actions(&sender);
 
         ComponentParts { model, widgets }
     }
@@ -141,12 +141,12 @@ impl SimpleComponent for MediaDetails {
     }
 
     fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
-        self.unregister_actions();
+        MediaDetails::unregister_actions();
     }
 }
 
 impl MediaDetails {
-    fn register_actions(&self, sender: &ComponentSender<Self>) {
+    fn register_actions(sender: &ComponentSender<Self>) {
         relm4::main_application().set_accelerators_for_action::<RefreshAction>(&["<Ctrl>r"]);
 
         let refresh_action: RelmAction<RefreshAction> = RelmAction::new_stateless({
@@ -162,7 +162,7 @@ impl MediaDetails {
         }
     }
 
-    fn unregister_actions(&self) {
+    fn unregister_actions() {
         relm4::main_application().set_accelerators_for_action::<RefreshAction>(&[]);
     }
 }

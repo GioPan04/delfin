@@ -18,6 +18,7 @@ pub struct Debounce {
 }
 
 impl Debounce {
+    #[must_use]
     pub fn new(timeout: Duration, callback: Box<dyn Fn() + Send>) -> Self {
         Self {
             timeout,

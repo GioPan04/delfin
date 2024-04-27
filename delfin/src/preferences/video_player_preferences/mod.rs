@@ -189,7 +189,7 @@ impl Component for VideoPlayerPreferences {
             video_player_config: video_player_config.clone(),
             subtitles_preferences: SubtitlesPreferences::builder().launch(()).detach(),
         };
-        model.subscribe_to_config(&sender);
+        VideoPlayerPreferences::subscribe_to_config(&sender);
 
         let widgets = view_output!();
 
@@ -263,7 +263,7 @@ impl Component for VideoPlayerPreferences {
 }
 
 impl VideoPlayerPreferences {
-    fn subscribe_to_config(&self, sender: &ComponentSender<Self>) {
+    fn subscribe_to_config(sender: &ComponentSender<Self>) {
         CONFIG.subscribe(sender.input_sender(), |config| {
             VideoPlayerPreferencesInput::UpdateConfig(config.video_player.clone())
         });
