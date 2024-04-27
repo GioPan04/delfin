@@ -51,7 +51,7 @@ impl fmt::Display for MaybeNextUpItem {
             .as_ref()
             .and_then(|n| n.name.clone())
             .unwrap_or(tr!("vp-unnamed-item").to_string());
-        write!(f, "{}", name)
+        write!(f, "{name}")
     }
 }
 
@@ -142,7 +142,7 @@ impl Component for NextUp {
                 #[watch]
                 set_tooltip_text: Some(&model.next_up.to_string()),
                 #[watch]
-                set_visible: model.next_up.0.as_ref().map(|n| n.name.is_some()).unwrap_or(false),
+                set_visible: model.next_up.0.as_ref().map_or(false, |n| n.name.is_some()),
 
                 set_halign: gtk::Align::Start,
                 set_ellipsize: gtk::pango::EllipsizeMode::End,
@@ -236,7 +236,7 @@ impl Component for NextUp {
                         self.state = NextUpState::Shown(duration.saturating_sub(position));
                     }
                 }
-                _ => {}
+                NextUpState::Hidden => {}
             },
             NextUpInput::PlayNext => {
                 if let Some(next_up) = &self.next_up.0 {

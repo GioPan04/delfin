@@ -253,7 +253,7 @@ impl Component for VideoPlayer {
         };
 
         model.configure_player(&CONFIG.read().video_player);
-        model.subscribe_to_config(&sender);
+        VideoPlayer::subscribe_to_config(&sender);
 
         model.backend.borrow_mut().connect_player_state_changed({
             let sender = sender.clone();
@@ -319,7 +319,7 @@ impl Component for VideoPlayer {
         let position = self.backend.borrow().position();
 
         self.backend.borrow_mut().stop();
-        self.session_playback_reporter.stop(self.backend.clone());
+        self.session_playback_reporter.stop(&self.backend);
 
         // Don't uninhibit when cookie is dropped, otherwise application will
         // crash as it's shutting down
@@ -369,7 +369,11 @@ impl Component for VideoPlayer {
                     .and_then(|user_data| user_data.playback_position_ticks)
                 {
                     let playback_position = ticks_to_seconds(playback_position_ticks);
-                    self.backend.borrow().seek_to(playback_position as usize);
+                    self.backend.borrow().seek_to(
+                        playback_position
+                            .try_into()
+                            .expect("Playback position should be positive"),
+                    );
                 }
 
                 self.controls.emit(VideoPlayerControlsInput::SetPlaying {
@@ -392,11 +396,8 @@ impl Component for VideoPlayer {
                 }
 
                 // Starts a background task that continuously reports playback progress
-                self.session_playback_reporter.start(
-                    api_client.clone(),
-                    &item.id.unwrap(),
-                    self.backend.clone(),
-                );
+                self.session_playback_reporter
+                    .start(&api_client, &item.id.unwrap(), &self.backend);
 
                 self.mpris_playback_reporter = Some(MprisPlaybackReporter::new(
                     api_client.clone(),
@@ -474,7 +475,7 @@ impl Component for VideoPlayer {
                 }
 
                 // Stop background playback progress reporter
-                self.session_playback_reporter.stop(self.backend.clone());
+                self.session_playback_reporter.stop(&self.backend);
 
                 self.mpris_playback_reporter = None;
 
@@ -566,7 +567,7 @@ impl Component for VideoPlayer {
 }
 
 impl VideoPlayer {
-    fn subscribe_to_config(&self, sender: &ComponentSender<Self>) {
+    fn subscribe_to_config(sender: &ComponentSender<Self>) {
         CONFIG.subscribe(sender.input_sender(), |config| {
             VideoPlayerInput::ConfigUpdated(config.video_player.clone())
         });
@@ -618,7 +619,11 @@ impl VideoPlayer {
                 .and_then(|user_data| user_data.playback_position_ticks)
             {
                 let playback_position = ticks_to_seconds(playback_position_ticks);
-                self.backend.borrow().seek_to(playback_position as usize);
+                self.backend.borrow().seek_to(
+                    playback_position
+                        .try_into()
+                        .expect("Playback position should be positive"),
+                );
             }
 
             // Load volume settings once playback starts
@@ -649,7 +654,7 @@ impl VideoPlayer {
                     .read()
                     .send(SkipForwardsBackwardsInput::SetLoading(false));
             }
-            _ => {}
+            PlayerState::Buffering => {}
         }
 
         self.player_state = new_state;
@@ -663,7 +668,7 @@ impl VideoPlayer {
                 let api_client = api_client.clone();
 
                 async move {
-                    let res = match api_client
+                    let Ok(res) = api_client
                         .get_episodes(
                             &GetEpisodesOptionsBuilder::default()
                                 .series_id(series_id)
@@ -674,11 +679,8 @@ impl VideoPlayer {
                                 .unwrap(),
                         )
                         .await
-                    {
-                        Ok(res) => res,
-                        _ => {
-                            return VideoPlayerCommandOutput::LoadedNextPrev((None, None));
-                        }
+                    else {
+                        return VideoPlayerCommandOutput::LoadedNextPrev((None, None));
                     };
 
                     match &res[..] {
@@ -702,9 +704,8 @@ impl VideoPlayer {
     }
 
     fn fetch_trickplay(&self, sender: &ComponentSender<Self>, item: &BaseItemDto) {
-        let (api_client, id) = match (&self.api_client, item.id) {
-            (Some(api_client), Some(id)) => (api_client, id),
-            _ => return,
+        let (Some(api_client), Some(id)) = (&self.api_client, item.id) else {
+            return;
         };
 
         sender.oneshot_command({
@@ -725,9 +726,8 @@ impl VideoPlayer {
                     }
                 };
 
-                let width = match manifest.width_resolutions.iter().max() {
-                    Some(width) => width,
-                    _ => return VideoPlayerCommandOutput::LoadedTrickplay(None),
+                let Some(width) = manifest.width_resolutions.iter().max() else {
+                    return VideoPlayerCommandOutput::LoadedTrickplay(None);
                 };
 
                 let thumbnails = match api_client.get_trickplay_thumbnails(&id, *width).await {

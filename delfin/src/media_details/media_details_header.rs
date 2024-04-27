@@ -351,14 +351,12 @@ async fn get_play_next(
     api_client: &Arc<ApiClient>,
     item: &BaseItemDto,
 ) -> (String, Option<BaseItemDto>) {
-    let next_playable = match get_next_playable_media(api_client.clone(), item.clone()).await {
-        Some(next_playable) => next_playable,
-        None => {
-            return (
-                tr!("media-details-play-button.next-episode").to_string(),
-                None,
-            )
-        }
+    let Some(next_playable) = get_next_playable_media(api_client.clone(), item.clone()).await
+    else {
+        return (
+            tr!("media-details-play-button.next-episode").to_string(),
+            None,
+        );
     };
 
     let resume = next_playable

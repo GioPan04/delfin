@@ -19,6 +19,7 @@ impl TryFrom<String> for RGBA {
 
 impl RGBA {
     /// Converts to a hexadecimal string in the format #RRGGBBAA
+    #[must_use]
     pub fn to_hex(&self) -> String {
         format!(
             "#{:02X}{:02X}{:02X}{:02X}",
@@ -30,6 +31,7 @@ impl RGBA {
     }
 
     /// Converts to a hexadecimal string in the format #AARRGGBB (used by MPV)
+    #[must_use]
     pub fn to_mpv_hex(&self) -> String {
         format!(
             "#{:02X}{:02X}{:02X}{:02X}",

@@ -68,16 +68,15 @@ impl SimpleComponent for PlayPause {
 
     fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
         match message {
-            PlayPauseInput::TogglePlaying => match self.playing {
-                true => {
+            PlayPauseInput::TogglePlaying => {
+                if self.playing {
                     self.video_player.borrow().pause();
                     self.playing = false;
-                }
-                false => {
+                } else {
                     self.video_player.borrow().play();
                     self.playing = true;
                 }
-            },
+            }
             PlayPauseInput::SetLoading => {
                 self.loading = true;
             }

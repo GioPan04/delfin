@@ -259,9 +259,11 @@ fn attach_media_control_events(controls: &mut MediaControls) {
                 MediaControlEvent::Raise => {
                     APP_BROKER.send(AppInput::Present);
                 }
+                #[allow(clippy::match_same_arms)]
                 MediaControlEvent::SetVolume(_) => {
                     // TODO
                 }
+                #[allow(clippy::match_same_arms)]
                 MediaControlEvent::OpenUri(_) => {
                     // not supported
                 }

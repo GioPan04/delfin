@@ -250,7 +250,7 @@ impl MediaDetailsContents {
 
             let genres_label = &gtk::Label::new(Some(genres_str.as_ref()));
             // Show full list in tooltip in case any were truncated
-            genres_label.set_tooltip_text(Some(genres.to_vec().join(", ").as_str()));
+            genres_label.set_tooltip_text(Some(genres.clone().join(", ").as_str()));
             info_box.append(genres_label);
         }
     }

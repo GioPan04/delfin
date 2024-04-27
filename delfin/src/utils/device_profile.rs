@@ -29,13 +29,13 @@ fn device_profile_direct_play() -> Result<DeviceProfile> {
     for sub_format in SUB_FORMATS {
         subtitle_profiles.push(
             SubtitleProfile::builder()
-                .format(Some(sub_format.to_string()))
+                .format(Some((*sub_format).to_string()))
                 .method(Some(SubtitleDeliveryMethod::External))
                 .try_into()?,
         );
         subtitle_profiles.push(
             SubtitleProfile::builder()
-                .format(Some(sub_format.to_string()))
+                .format(Some((*sub_format).to_string()))
                 .method(Some(SubtitleDeliveryMethod::Embed))
                 .try_into()?,
         );

@@ -11,11 +11,13 @@ pub struct ShiftState {
 }
 
 impl ShiftState {
+    #[must_use]
     pub fn pressed(&self) -> bool {
         self.left || self.right
     }
 }
 
+#[must_use]
 pub fn shift_state_controller() -> gtk::EventControllerKey {
     let controller = gtk::EventControllerKey::new();
 
