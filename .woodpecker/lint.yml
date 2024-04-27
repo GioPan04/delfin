@@ -1,0 +1,18 @@
+steps:
+  lint:
+    image: archlinux:base-devel
+    commands:
+      - pacman -Syu --noconfirm
+      - pacman -S --noconfirm
+        clang
+        git
+        gtk4
+        libadwaita
+        meson
+        mpv
+        ninja
+        pre-commit
+        rustup
+      - meson setup build
+      - meson compile -C build
+      - pre-commit run --all-files
