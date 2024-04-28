@@ -1,4 +1,5 @@
 use bytes::Buf;
+use chrono::TimeDelta;
 use std::{cell::RefCell, sync::Arc};
 use tracing::warn;
 
@@ -312,9 +313,20 @@ impl Scrubber {
 }
 
 fn seconds_to_timestamp(seconds: usize) -> String {
-    let minutes = seconds / 60;
-    let seconds = seconds % 60;
-    format!("{minutes:0>2}:{seconds:0>2}")
+    let Some(time) = TimeDelta::try_seconds(seconds as i64) else {
+        warn!("Could not convert seconds to TimeDelta");
+        return String::new();
+    };
+
+    let hours = time.num_hours();
+    let minutes = time.num_minutes() - (60 * hours);
+    let seconds = time.num_seconds() % 60;
+
+    if hours > 0 {
+        format!("{hours}:{minutes:0>2}:{seconds:0>2}")
+    } else {
+        format!("{minutes:0>2}:{seconds:0>2}")
+    }
 }
 
 fn duration_to_timestamp(
@@ -327,5 +339,40 @@ fn duration_to_timestamp(
         DurationDisplay::Remaining => {
             format!("-{}", seconds_to_timestamp(duration.wrapping_sub(position)))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_seconds_to_timestamp() {
+        assert_eq!(seconds_to_timestamp(8624), "2:23:44");
+        assert_eq!(seconds_to_timestamp(345), "05:45");
+    }
+
+    #[test]
+    fn test_duration_to_timestamp_total() {
+        assert_eq!(
+            duration_to_timestamp(345, 8624, DurationDisplay::Total),
+            "2:23:44"
+        );
+        assert_eq!(
+            duration_to_timestamp(345, 345, DurationDisplay::Total),
+            "05:45"
+        );
+    }
+
+    #[test]
+    fn test_duration_to_timestamp_remaining() {
+        assert_eq!(
+            duration_to_timestamp(345, 8624, DurationDisplay::Remaining),
+            "-2:17:59"
+        );
+        assert_eq!(
+            duration_to_timestamp(24, 345, DurationDisplay::Remaining),
+            "-05:21"
+        );
     }
 }
