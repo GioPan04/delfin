@@ -341,3 +341,38 @@ fn duration_to_timestamp(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_seconds_to_timestamp() {
+        assert_eq!(seconds_to_timestamp(8624), "2:23:44");
+        assert_eq!(seconds_to_timestamp(345), "05:45");
+    }
+
+    #[test]
+    fn test_duration_to_timestamp_total() {
+        assert_eq!(
+            duration_to_timestamp(345, 8624, DurationDisplay::Total),
+            "2:23:44"
+        );
+        assert_eq!(
+            duration_to_timestamp(345, 345, DurationDisplay::Total),
+            "05:45"
+        );
+    }
+
+    #[test]
+    fn test_duration_to_timestamp_remaining() {
+        assert_eq!(
+            duration_to_timestamp(345, 8624, DurationDisplay::Remaining),
+            "-2:17:59"
+        );
+        assert_eq!(
+            duration_to_timestamp(24, 345, DurationDisplay::Remaining),
+            "-05:21"
+        );
+    }
+}
