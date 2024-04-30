@@ -79,11 +79,20 @@ impl AsyncComponent for MediaTile {
             set_spacing: 8,
             add_css_class: "media-tile",
 
-
             #[name = "overlay"]
             gtk::Overlay {
                 set_halign: gtk::Align::Center,
                 set_cursor_from_name: Some("pointer"),
+
+                set_accessible_role: gtk::AccessibleRole::Button,
+                set_focusable: true,
+                connect_has_focus_notify[root, media] => move |overlay| {
+                    if overlay.has_focus() && !matches!(media.type_, Some(BaseItemKind::CollectionFolder)) {
+                        root.add_css_class("hover");
+                    } else {
+                        root.remove_css_class("hover");
+                    }
+                },
 
                 // TODO: progress bar overflows media tile. Hiding the overflow is a workaround, but it makes the
                 // progress bar percentage look wrong.
@@ -93,6 +102,14 @@ impl AsyncComponent for MediaTile {
                 add_controller = gtk::GestureClick {
                     connect_released[sender] => move |_, _, _, _| {
                         sender.input(MediaTileInput::Play);
+                    },
+                },
+
+                add_controller = gtk::EventControllerKey {
+                    connect_key_released[sender] => move |_, key, _, _| {
+                        if matches!(key, gdk::Key::Return | gdk::Key::space) {
+                            sender.input(MediaTileInput::Play);
+                        }
                     },
                 },
 
