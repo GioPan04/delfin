@@ -107,7 +107,7 @@ impl SearchBar {
         glib::Object::new()
     }
 
-    pub fn set_key_capture_widget(&self, widget: Option<&impl glib::IsA<gtk::Widget>>) {
+    pub fn set_key_capture_widget(&self, widget: Option<&impl IsA<gtk::Widget>>) {
         self.imp().search_bar.set_key_capture_widget(widget);
     }
 }
