@@ -158,7 +158,12 @@ impl Component for MediaCarousel {
                     #[name = "carousel"]
                     adw::Carousel {
                         set_allow_scroll_wheel: false,
-                        set_focusable: true,
+
+                        connect_page_changed => move |carousel, page_index| {
+                            for i in 0..carousel.n_pages() {
+                                carousel.nth_page(i).set_can_focus(i == page_index);
+                            }
+                        },
 
                         add_controller = gtk::EventControllerScroll {
                             // TODO: Might need a separate controller for Horizontal scrolling that doesn't check if shift is pressed
@@ -257,12 +262,13 @@ impl Component for MediaCarousel {
                 let media_tile_chunks: Vec<&[MediaCarouselItem]> =
                     self.media_tiles.chunks(tiles_per_page as usize).collect();
 
-                for chunk in media_tile_chunks {
+                for (i, &chunk) in media_tile_chunks.iter().enumerate() {
                     let page = gtk::Box::builder()
                         .orientation(gtk::Orientation::Horizontal)
                         .homogeneous(true)
                         .hexpand(true)
                         .spacing(MIN_PADDING)
+                        .can_focus(i == 0)
                         .build();
 
                     // Not a full page, we don't want the tiles to be spaced out across the screen

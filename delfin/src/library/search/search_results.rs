@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
+use adw::prelude::*;
 use anyhow::Result;
-use gtk::prelude::*;
 use jellyfin_api::types::BaseItemDto;
-use relm4::{adw::traits::ActionRowExt, gtk::traits::BoxExt, prelude::*};
+use relm4::prelude::*;
 use tracing::warn;
 
 use crate::{

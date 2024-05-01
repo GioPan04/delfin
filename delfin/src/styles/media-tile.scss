@@ -3,6 +3,11 @@
 
   overlay {
     border-radius: $media-tile-br;
+
+    &:focus {
+      outline: solid 2px "@accent_color";
+      outline-offset: -2px;
+    }
   }
 
   .hover-overlay {

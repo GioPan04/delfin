@@ -18,35 +18,7 @@ env_logger = "0.11.3"
 fluent-templates = { version = "0.9.1", features = ["tera"] }
 jellyfin_api = "10.8.13-2"
 relm4 = { workspace = true }
-relm4-icons = { version = "0.7.0-alpha.2", features = [
-  "check-round-outline",
-  "tag-multiple-filled",
-  "home-filled",
-  "closed-captioning",
-  "music-note-single",
-  "star-large",
-  "play-filled",
-  "pause-filled",
-  "fast-forward-filled",
-  "rewind-filled",
-  "skip-forward-10",
-  "skip-forward-30",
-  "skip-backwards-10",
-  "skip-backwards-30",
-  "left",
-  "right",
-  "refresh",
-  "settings",
-  "warning",
-  "folder-filled",
-  "loupe",
-  "library",
-  "movies-and-tv-filled",
-  "tv-filled",
-  "music-note-2-filled",
-  "eye-open-negative-filled",
-  "playback-speed",
-] }
+relm4-icons = { version = "0.8.2" }
 reqwest = { version = "0.12.2", features = ["json"] }
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.115"

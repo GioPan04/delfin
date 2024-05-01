@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 relm4 = { workspace = true }
-gst = { package = "gstreamer", version = "0.21.0" }
-gstgtk4 = { package = "gst-plugin-gtk4", version = "0.11.0" }
-gstplay = { package = "gstreamer-play", version = "0.21.0" }
+gst = { package = "gstreamer", version = "0.22.4" }
+gstgtk4 = { package = "gst-plugin-gtk4", version = "0.12.5" }
+gstplay = { package = "gstreamer-play", version = "0.22.0" }
