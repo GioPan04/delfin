@@ -13,3 +13,4 @@ media-details-play-button =
         } S{ $seasonNumber }:E{ $episodeNumber }
     .next-episode = Lancer le prochain épisode
 media-details-unnamed-season = Nom de saison inconnu
+media-details-episode-list-empty = Aucun épisode n'a été trouvé pour cette saison.
