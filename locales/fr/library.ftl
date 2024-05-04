@@ -11,3 +11,5 @@ library-episode-name-with-season-and-episode = S{ $seasonNumber }:E{ $episodeNum
 library-page-home-title = Accueil
 library-status-refresh-button = Rafraichir
 library-search-button = Rechercher dans la bibliothèque
+library-collection-refresh-button = Rafraîchir la collection
+library-page-collections-title = Collections
