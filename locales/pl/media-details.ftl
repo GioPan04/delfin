@@ -39,3 +39,4 @@ media-details-toggle-watched-error =
         [true] obejrzane
        *[false] nie obejrzane
     }
+media-details-backdrop-error = Nie udało się załadować tła odtwarzacza
