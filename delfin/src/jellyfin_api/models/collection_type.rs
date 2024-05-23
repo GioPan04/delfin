@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use jellyfin_api::types::BaseItemKind;
+use jellyfin_api::types::{BaseItemKind, CollectionType as JFCollectionType};
 
 #[derive(Debug, Clone, Copy)]
 pub enum CollectionType {
@@ -11,15 +11,18 @@ pub enum CollectionType {
     Other,
 }
 
-impl From<Option<String>> for CollectionType {
-    fn from(value: Option<String>) -> Self {
-        match value.as_deref() {
-            Some("movies") => CollectionType::Movies,
-            Some("tvshows") => CollectionType::TvShows,
-            Some("music") => CollectionType::Music,
-            Some("playlists") => CollectionType::Playlists,
-            Some(_) | None => CollectionType::Other,
-        }
+// TODO: Get rid of our own CollectionType
+impl From<Option<JFCollectionType>> for CollectionType {
+    fn from(value: Option<JFCollectionType>) -> Self {
+        value
+            .map(|value| match value {
+                JFCollectionType::Movies => CollectionType::Movies,
+                JFCollectionType::Tvshows => CollectionType::TvShows,
+                JFCollectionType::Music => CollectionType::Music,
+                JFCollectionType::Playlists => CollectionType::Playlists,
+                _ => CollectionType::Other,
+            })
+            .unwrap_or(CollectionType::Other)
     }
 }
 
