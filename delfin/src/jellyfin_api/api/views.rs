@@ -46,7 +46,7 @@ impl ApiClient {
         start_index: usize,
         limit: usize,
     ) -> Result<(Vec<BaseItemDto>, usize)> {
-        let collection_type = CollectionType::from(collection.collection_type.clone());
+        let collection_type = CollectionType::from(collection.collection_type);
 
         let mut url = self
             .root

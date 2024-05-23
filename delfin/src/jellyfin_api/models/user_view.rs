@@ -22,7 +22,7 @@ impl UserView {
     }
 
     pub fn collection_type(&self) -> CollectionType {
-        self.0.collection_type.clone().into()
+        self.0.collection_type.into()
     }
 }
 
