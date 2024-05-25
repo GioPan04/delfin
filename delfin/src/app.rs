@@ -30,11 +30,6 @@ use crate::{
     video_player::{VideoPlayer, VideoPlayerInput, VideoPlayerOutput, VIDEO_PLAYER_BROKER},
 };
 
-#[derive(Debug)]
-pub enum AppBrokerMessage {
-    PlayVideo(BaseItemDto),
-}
-
 pub static APP_BROKER: MessageBroker<AppInput> = MessageBroker::new();
 
 #[derive(Clone, Copy, Debug)]
