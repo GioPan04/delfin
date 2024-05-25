@@ -1,6 +1,7 @@
 use std::format;
 
 use anyhow::Result;
+use bytes::Bytes;
 use reqwest::StatusCode;
 use serde::Deserialize;
 use uuid::Uuid;
@@ -17,6 +18,18 @@ pub struct TrickplayManifest {
 }
 
 impl ApiClient {
+    pub async fn get_trickplay_tile(
+        &self,
+        item_id: &Uuid,
+        width: usize,
+        index: usize,
+    ) -> Result<Bytes> {
+        let url = self
+            .root
+            .join(&format!("Videos/{item_id}/Trickplay/{width}/{index}.jpg"))?;
+        Ok(self.client.get(url).send().await?.bytes().await?)
+    }
+
     pub async fn get_trickplay_manifest(&self, id: &Uuid) -> Result<Option<TrickplayManifest>> {
         let url = self.root.join(&format!("Trickplay/{id}/GetManifest"))?;
 

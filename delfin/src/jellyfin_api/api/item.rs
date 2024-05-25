@@ -26,9 +26,10 @@ impl ApiClient {
     }
 
     pub async fn get_item(&self, item_id: &Uuid) -> Result<BaseItemDto> {
-        let url = self
+        let mut url = self
             .root
             .join(&format!("Users/{}/Items/{item_id}", self.account.id))?;
+        url.query_pairs_mut().append_pair("fields", "Trickplay");
 
         let res = self.client.get(url).send().await?.json().await?;
         Ok(res)
