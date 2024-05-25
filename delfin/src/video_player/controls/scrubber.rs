@@ -219,6 +219,7 @@ impl Component for Scrubber {
                 self.loading = true;
                 self.position = 0;
                 self.duration = 0;
+                self.thumbnails = None;
             }
             ScrubberInput::SetPosition(position) => {
                 if !self.scrubbing {
