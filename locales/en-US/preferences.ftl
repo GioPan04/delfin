@@ -95,6 +95,7 @@ prefs-vp-jellyscrub =
     .subtitle =
         Show thumbnails while hovering over the video progress bar.
         This requires the <a href="{ $jellyscrubUrl }">Jellyscrub</a> plugin to be installed on your server.
+        Jellyfin's native trickplay will be used instead on supported servers.
 
 # Other
 # =====

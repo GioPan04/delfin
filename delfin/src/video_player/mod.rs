@@ -5,10 +5,12 @@ mod mpris;
 mod next_up;
 mod session;
 mod skip_intro;
+mod trickplay;
 
 use crate::config::video_player_config::{VideoPlayerConfig, VideoPlayerOnLeftClick};
 use crate::utils::inhibit::InhibitCookie;
 use crate::video_player::keybindings::keybindings_controller;
+use crate::video_player::trickplay::fetch_trickplay;
 use std::cell::RefCell;
 use std::sync::atomic::{self, AtomicBool};
 use std::sync::Arc;
@@ -20,7 +22,7 @@ use jellyfin_api::types::{BaseItemDto, BaseItemKind};
 use relm4::component::{AsyncComponent, AsyncComponentController, AsyncController};
 use relm4::{gtk, ComponentParts};
 use relm4::{prelude::*, MessageBroker};
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 use crate::app::{AppInput, APP_BROKER};
 use crate::globals::CONFIG;
@@ -408,7 +410,7 @@ impl Component for VideoPlayer {
                 self.api_client = Some(api_client);
 
                 self.fetch_next_prev(&sender, &item);
-                self.fetch_trickplay(&sender, &item);
+                fetch_trickplay(&self.api_client, &sender, &item);
             }
             VideoPlayerInput::SetShowControls { show, locked } => {
                 self.show_controls = show;
@@ -701,49 +703,6 @@ impl VideoPlayer {
         }
 
         sender.oneshot_command(async { VideoPlayerCommandOutput::LoadedNextPrev((None, None)) });
-    }
-
-    fn fetch_trickplay(&self, sender: &ComponentSender<Self>, item: &BaseItemDto) {
-        let (Some(api_client), Some(id)) = (&self.api_client, item.id) else {
-            return;
-        };
-
-        sender.oneshot_command({
-            let api_client = api_client.clone();
-            async move {
-                if !CONFIG.read().video_player.jellyscrub {
-                    return VideoPlayerCommandOutput::LoadedTrickplay(None);
-                }
-
-                let manifest = match api_client.get_trickplay_manifest(&id).await {
-                    Ok(Some(manifest)) if !manifest.width_resolutions.is_empty() => manifest,
-                    Ok(None) | Ok(Some(_)) => {
-                        return VideoPlayerCommandOutput::LoadedTrickplay(None);
-                    }
-                    Err(err) => {
-                        warn!("Error fetching trickplay manifest: {err}");
-                        return VideoPlayerCommandOutput::LoadedTrickplay(None);
-                    }
-                };
-
-                let Some(width) = manifest.width_resolutions.iter().max() else {
-                    return VideoPlayerCommandOutput::LoadedTrickplay(None);
-                };
-
-                let thumbnails = match api_client.get_trickplay_thumbnails(&id, *width).await {
-                    Ok(Some(thumbnails)) => thumbnails,
-                    Ok(None) => {
-                        return VideoPlayerCommandOutput::LoadedTrickplay(None);
-                    }
-                    Err(err) => {
-                        warn!("Error fetching trickplay thumbnails: {err}");
-                        return VideoPlayerCommandOutput::LoadedTrickplay(None);
-                    }
-                };
-
-                VideoPlayerCommandOutput::LoadedTrickplay(Some(thumbnails))
-            }
-        });
     }
 }
 
