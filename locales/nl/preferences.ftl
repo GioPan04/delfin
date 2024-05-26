@@ -45,6 +45,7 @@ prefs-vp-jellyscrub =
     .subtitle =
         Toon miniaturen door de cursor op de voortgangsbalk te houden.
         Hiervoor dient de <a href="{ $jellyscrubUrl }">Jellyscrub</a>-plug-in geïnstalleerd te zijn op uw server.
+        Jellyfin's trickplay wordt op ondersteunde servers gebruikt.
 prefs-vp-on-left-click =
     .title = Na aanklikken
     .subtitle = Welke actie dient te worden uitgevoerd na linksklikken in de videospeler
