@@ -25,3 +25,18 @@ media-details-unnamed-season = Nienazwany sezon
 media-details-unnamed-item = Nienazwany element
 media-details-unwatched = Nieobejrzany
 media-details-watched = Obejrzany
+media-details-run-time =
+    { $hours ->
+        [0] { $minutes }min
+       *[other] { $hours }godz { $minutes }min
+    }
+media-details-toggle-watched-error =
+    Failed to mark { $type ->
+       *[episode] odcinek
+        [series] seria
+        [movie] film
+    } as { $watched ->
+        [true] obejrzane
+       *[false] nie obejrzane
+    }
+media-details-backdrop-error = Nie udało się załadować tła odtwarzacza

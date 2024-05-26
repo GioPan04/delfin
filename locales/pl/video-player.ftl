@@ -52,3 +52,11 @@ vp-next-up-action =
 vp-unnamed-item = Nienazwany element
 vp-playback-speed-tooltip = Prędkość odtwarzania
 vp-playback-speed-normal = Normalna
+vp-skip-forwards-backwards-tooltip =
+    Przewiń { $direction ->
+        [forwards] do przodu
+       *[backwards] do tyły
+    } { $seconds } { $seconds ->
+        [one] sekundę
+       *[other] sekundy
+    }
