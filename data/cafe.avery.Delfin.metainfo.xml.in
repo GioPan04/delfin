@@ -85,6 +85,20 @@
   </provides>
 
   <releases>
+    <release version="0.4.5" date="2024-05-27">
+      <description>
+        <ul>
+          <li>Support Jellyfin 10.9 API</li>
+          <li>Support Jellyfin 10.9 trickplay</li>
+          <li>Account and server list design improvements - thanks to Ashley Rudelsheim</li>
+          <li>Show hours in video player timestamp</li>
+          <li>Add 1.75x playback speed</li>
+          <li>Keyboard navigation improvements</li>
+          <li>Translation updates from Weblate - thanks to Eryk Michalak, Fjuro, owofied, Tuba2, Vistaus, yanndvd, and yareg</li>
+        </ul>
+      </description>
+    </release>
+
     <release version="0.4.4" date="2024-04-22">
       <description>
         <ul>
