@@ -40,6 +40,7 @@ prefs-vp-jellyscrub =
     .subtitle =
         Zobrazit náhledy při přejetí myší přes lištu přehrávače videa.
         Tato možnost vyžaduje nainstalovaný doplněk <a href="{ $jellyscrubUrl }">Jellyscrub</a> na vašem serveru.
+        Na podporovaných serverech se místo toho použije nativní trikplay Jellyfin.
 prefs-vp-on-left-click =
     .title = Po kliknutí myší
     .subtitle = Co se stane po kliknutí myší uvnitř přehrávače videa
