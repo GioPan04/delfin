@@ -39,6 +39,7 @@ prefs-vp-jellyscrub =
     .subtitle =
         Mostra miniaturas ao passar o mouse sobre a barra de progressão de vídeo.
         Isso requer que o plugin <a href="{ $jellyscrubUrl }">Jellyscrub</a> esteja instalado no seu servidor.
+        O trickplay nativo do Jellyfin será usado em vez disso nos servidores com suporte a ele.
 prefs-vp-on-left-click =
     .title = Ao clicar
     .subtitle = O que acontece ao clicar com o botão esquerdo dentro do reprodutor de vídeo
