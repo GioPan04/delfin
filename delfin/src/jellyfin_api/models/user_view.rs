@@ -53,7 +53,7 @@ impl FilterSupported for Vec<UserView> {
             .filter(|view| {
                 matches!(
                     view.collection_type(),
-                    CollectionType::Movies | CollectionType::TvShows
+                    CollectionType::Movies | CollectionType::TvShows | CollectionType::Other
                 )
             })
             .collect()

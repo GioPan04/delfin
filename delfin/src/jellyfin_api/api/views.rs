@@ -61,10 +61,15 @@ impl ApiClient {
             .append_pair("StartIndex", &start_index.to_string())
             .append_pair("Limit", &limit.to_string());
 
-        if let Some(item_type) = collection_type.item_type() {
-            url.query_pairs_mut()
-                .append_pair("IncludeItemTypes", &item_type.to_string());
-        }
+        url.query_pairs_mut().append_pair(
+            "IncludeItemTypes",
+            &collection_type
+                .item_type()
+                .iter()
+                .map(|t| t.to_string())
+                .collect::<Vec<String>>()
+                .join(","),
+        );
 
         let res: BaseItemDtoQueryResult = self.client.get(url).send().await?.json().await?;
 
