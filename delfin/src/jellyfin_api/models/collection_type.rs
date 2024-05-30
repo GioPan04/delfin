@@ -54,13 +54,13 @@ impl CollectionType {
         .to_string()
     }
 
-    pub fn item_type(&self) -> Option<BaseItemKind> {
+    pub fn item_type(&self) -> Vec<BaseItemKind> {
         match self {
-            Self::Movies => Some(BaseItemKind::Movie),
-            Self::TvShows => Some(BaseItemKind::Series),
-            Self::Music => Some(BaseItemKind::MusicAlbum),
-            Self::Playlists => Some(BaseItemKind::Playlist),
-            Self::Other => None,
+            Self::Movies => vec![BaseItemKind::Movie],
+            Self::TvShows => vec![BaseItemKind::Series],
+            Self::Music => vec![BaseItemKind::MusicAlbum],
+            Self::Playlists => vec![BaseItemKind::Playlist],
+            Self::Other => vec![BaseItemKind::Movie, BaseItemKind::Series],
         }
     }
 }
