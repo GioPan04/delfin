@@ -545,7 +545,7 @@ impl Component for VideoPlayer {
     ) {
         match message {
             VideoPlayerCommandOutput::LoadedNextPrev((prev, next)) => {
-                self.next = next.clone();
+                self.next.clone_from(&next);
 
                 let next = Box::new(next);
                 self.controls

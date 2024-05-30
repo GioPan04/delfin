@@ -47,7 +47,7 @@ impl SimpleComponent for GeneralPreferences {
                             .map(|l| l.to_string())
                             .collect::<gtk::StringList>();
                         // Add system default option to top
-                        sl.splice(0, 0, &[&tr!("prefs-general-language.option-default", {
+                        sl.splice(0, 0, &[tr!("prefs-general-language.option-default", {
                             "languageId" => *DEFAULT_LANGUAGE.to_string(),
                         })]);
                         sl

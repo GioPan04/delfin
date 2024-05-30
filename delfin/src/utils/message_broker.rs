@@ -7,6 +7,12 @@ use relm4::MessageBroker;
 
 pub struct ResettableMessageBroker<T: Debug>(RwLock<MessageBroker<T>>);
 
+impl<T: Debug> Default for ResettableMessageBroker<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T: Debug> ResettableMessageBroker<T> {
     #[must_use]
     pub const fn new() -> Self {
