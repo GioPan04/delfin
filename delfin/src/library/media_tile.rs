@@ -196,11 +196,7 @@ impl AsyncComponent for MediaTile {
     ) -> AsyncComponentParts<Self> {
         let (media, tile_display, api_client) = init;
 
-        let model = MediaTile {
-            media: media.clone(),
-            api_client: api_client.clone(),
-            thumbnail: None,
-        };
+        let model = Self::new(media.clone(), api_client.clone()).init_title_tooltip(&root);
 
         let widgets = view_output!();
 
@@ -271,6 +267,30 @@ impl AsyncComponent for MediaTile {
 }
 
 impl MediaTile {
+    pub fn new(media: BaseItemDto, api_client: Arc<ApiClient>) -> Self {
+        Self {
+            media,
+            api_client,
+            thumbnail: None,
+        }
+    }
+
+    fn init_title_tooltip(self, root: &gtk::Box) -> Self {
+        root.set_has_tooltip(true);
+        let item_label = self.get_item_label();
+        root.connect_query_tooltip(move |_, _, _, _, tooltip| {
+            let label = gtk::Label::builder()
+                .justify(gtk::Justification::Center)
+                .build();
+            label.set_markup(&item_label);
+
+            tooltip.set_custom(Some(&label));
+            true
+        });
+
+        self
+    }
+
     fn get_item_label(&self) -> String {
         match (
             self.media
