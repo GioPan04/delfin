@@ -22,6 +22,7 @@ pub struct VideoPlayerConfig {
     pub skip_forwards_amount: VideoPlayerSkipAmount,
     pub on_left_click: VideoPlayerOnLeftClick,
     pub duration_display: DurationDisplay,
+	pub double_click_interval: Duration,
 
     pub subtitles: VideoPlayerSubtitlesConfig,
 
@@ -44,6 +45,7 @@ impl Default for VideoPlayerConfig {
             skip_forwards_amount: VideoPlayerSkipAmount::Thirty,
             on_left_click: VideoPlayerOnLeftClick::default(),
             duration_display: DurationDisplay::default(),
+            double_click_interval: Duration::from_millis(400),
 
             subtitles: VideoPlayerSubtitlesConfig::default(),
 

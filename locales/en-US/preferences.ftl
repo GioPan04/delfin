@@ -41,6 +41,9 @@ prefs-vp-on-left-click =
 prefs-vp-on-left-click-options =
     .play-pause = Play/pause video
     .toggle-controls = Show/hide controls
+prefs-vp-double-click-interval =
+    .title = Double click interval
+    .subtitle = How many milliseconds between clicks constitute a double click
 
 # Subtitles
 # =========

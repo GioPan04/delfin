@@ -1,4 +1,4 @@
-use std::{cell::RefCell, sync::Arc, time::Duration};
+use std::{cell::RefCell, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::{gtk, gtk::glib::{ControlFlow, timeout_add}, ComponentParts, ComponentSender, SimpleComponent};
@@ -104,7 +104,7 @@ impl SimpleComponent for PlayPause {
             PlayPauseInput::LeftClick => {
                 if !self.first_click {
                     self.first_click = true;
-                    _ = timeout_add(Duration::from_millis(400), || {
+                    _ = timeout_add(CONFIG.read().video_player.double_click_interval, || {
                         PLAY_PAUSE_BROKER.send(PlayPauseInput::LeftClickTimeout);
                         ControlFlow::Break
                     });
