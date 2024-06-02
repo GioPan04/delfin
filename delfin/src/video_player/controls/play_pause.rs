@@ -1,10 +1,11 @@
-use std::{cell::RefCell, sync::Arc};
+use std::{cell::RefCell, sync::Arc, time::Duration};
 
 use gtk::prelude::*;
-use relm4::{gtk, ComponentParts, ComponentSender, SimpleComponent};
+use relm4::{gtk, gtk::glib::{ControlFlow, timeout_add}, ComponentParts, ComponentSender, SimpleComponent};
 
 use crate::{
     tr, utils::message_broker::ResettableMessageBroker, video_player::backends::VideoPlayerBackend,
+    globals::CONFIG,
 };
 
 pub static PLAY_PAUSE_BROKER: ResettableMessageBroker<PlayPauseInput> =
@@ -14,6 +15,7 @@ pub(crate) struct PlayPause {
     video_player: Arc<RefCell<dyn VideoPlayerBackend>>,
     loading: bool,
     playing: bool,
+    first_click: bool,
 }
 
 #[derive(Debug)]
@@ -21,6 +23,21 @@ pub enum PlayPauseInput {
     TogglePlaying,
     SetLoading,
     SetPlaying(bool),
+    LeftClick,
+    LeftClickTimeout,
+}
+
+impl PlayPause {
+    fn toggle_playing(&mut self)
+    {
+        if self.playing {
+            self.video_player.borrow().pause();
+            self.playing = false;
+        } else {
+            self.video_player.borrow().play();
+            self.playing = true;
+        }
+    }
 }
 
 #[relm4::component(pub(crate))]
@@ -61,6 +78,7 @@ impl SimpleComponent for PlayPause {
             video_player,
             loading: true,
             playing: true,
+            first_click: false,
         };
         let widgets = view_output!();
         ComponentParts { model, widgets }
@@ -69,13 +87,7 @@ impl SimpleComponent for PlayPause {
     fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
         match message {
             PlayPauseInput::TogglePlaying => {
-                if self.playing {
-                    self.video_player.borrow().pause();
-                    self.playing = false;
-                } else {
-                    self.video_player.borrow().play();
-                    self.playing = true;
-                }
+                self.toggle_playing();
             }
             PlayPauseInput::SetLoading => {
                 self.loading = true;
@@ -87,6 +99,23 @@ impl SimpleComponent for PlayPause {
                     self.video_player.borrow().play();
                 } else {
                     self.video_player.borrow().pause();
+                }
+            }
+            PlayPauseInput::LeftClick => {
+                if !self.first_click {
+                    self.first_click = true;
+                    _ = timeout_add(Duration::from_millis(400), || {
+                        PLAY_PAUSE_BROKER.send(PlayPauseInput::LeftClickTimeout);
+                        ControlFlow::Break
+                    });
+                } else {
+                    self.first_click = false;
+                }
+            }
+            PlayPauseInput::LeftClickTimeout => {
+                if self.first_click {
+                    self.first_click = false;
+                    self.toggle_playing();
                 }
             }
         }
