@@ -248,7 +248,7 @@ impl Component for VideoPlayerPreferences {
                 };
             }
             VideoPlayerPreferencesInput::DoubleClickInterval(index) => {
-                config.video_player.double_click_interval = Duration::from_millis(index as u64);
+                config.video_player.double_click_interval = Duration::from_millis(index.into());
             }
 
             VideoPlayerPreferencesInput::IntroSkipper(intro_skipper) => {
