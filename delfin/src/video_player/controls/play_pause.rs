@@ -27,19 +27,6 @@ pub enum PlayPauseInput {
     LeftClickTimeout,
 }
 
-impl PlayPause {
-    fn toggle_playing(&mut self)
-    {
-        if self.playing {
-            self.video_player.borrow().pause();
-            self.playing = false;
-        } else {
-            self.video_player.borrow().play();
-            self.playing = true;
-        }
-    }
-}
-
 #[relm4::component(pub(crate))]
 impl SimpleComponent for PlayPause {
     type Init = Arc<RefCell<dyn VideoPlayerBackend>>;
@@ -84,10 +71,16 @@ impl SimpleComponent for PlayPause {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
             PlayPauseInput::TogglePlaying => {
-                self.toggle_playing();
+                if self.playing {
+                    self.video_player.borrow().pause();
+                    self.playing = false;
+                } else {
+                    self.video_player.borrow().play();
+                    self.playing = true;
+                }
             }
             PlayPauseInput::SetLoading => {
                 self.loading = true;
@@ -115,7 +108,7 @@ impl SimpleComponent for PlayPause {
             PlayPauseInput::LeftClickTimeout => {
                 if self.first_click {
                     self.first_click = false;
-                    self.toggle_playing();
+                    self.update(PlayPauseInput::TogglePlaying, sender);
                 }
             }
         }
