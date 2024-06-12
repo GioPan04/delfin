@@ -5,7 +5,9 @@ use uuid::Uuid;
 
 use crate::{
     config::Server,
-    jellyfin_api::api::user::{authenticate_by_name, authenticate_by_pin, authenticate_pin_init, AuthenticateByNameRes},
+    jellyfin_api::api::user::{
+        authenticate_by_name, authenticate_by_pin, authenticate_pin_init, AuthenticateByNameRes,
+    },
     tr,
 };
 
@@ -76,8 +78,8 @@ impl Component for AddAccountDialog {
 
                             adw::PreferencesGroup {
                                 adw::ActionRow {
-                                    set_title: "Use Quick Connect",// change this later!
-                                    set_subtitle: "Use a PIN to connect to your Jellyfin Instance",
+                                    set_title: tr!("account-list-quick-connect.title"),
+                                    set_subtitle: tr!("account-list-quick-connect.subtitle"),
                                     set_activatable: true,
                                     connect_activated[sender] => move |_| {
                                         sender.input(AddAccountInput::QuickConnectEnabled);
@@ -155,16 +157,18 @@ impl Component for AddAccountDialog {
                 sender.oneshot_command(async move {
                     match authenticate_pin_init(&url, &device_id).await {
                         Ok(auth_info) => {
-                            sender_clone.input(AddAccountInput::Toast(format!("Enter code {} in your account to log in.", auth_info.code), 300));
+                            sender_clone.input(AddAccountInput::Toast(
+                                format!("Enter code {} on another device", auth_info.code), // change this to a translation later!
+                                300,
+                            )); // translate this?
                             match authenticate_by_pin(&url, &device_id, &auth_info.secret).await {
                                 Ok(response) => AddAccountCommandOutput::SignInSuccess(response),
-                                Err(err) => AddAccountCommandOutput::SignInFail(err)
+                                Err(err) => AddAccountCommandOutput::SignInFail(err),
                             }
-                        },
-                        Err(err) => AddAccountCommandOutput::SignInFail(err)    
+                        }
+                        Err(err) => AddAccountCommandOutput::SignInFail(err),
                     }
                 });
-
             }
             AddAccountInput::Toast(message, duration) => {
                 let toast = adw::Toast::new(&message);
