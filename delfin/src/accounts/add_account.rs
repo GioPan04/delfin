@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::{
     config::Server,
-    jellyfin_api::api::user::{authenticate_by_name, AuthenticateByNameRes, authenticate_by_pin},
+    jellyfin_api::api::user::{authenticate_by_name, authenticate_by_pin, authenticate_pin_init, AuthenticateByNameRes},
     tr,
 };
 
@@ -83,7 +83,7 @@ impl Component for AddAccountDialog {
                                         sender.input(AddAccountInput::QuickConnectEnabled);
                                     },
                                     add_suffix = &gtk::Image {
-                                        set_icon_next: Some("go-next-symbolic")
+                                        set_icon_name: Some("go-next-symbolic")
                                     }
                                 },
                                 adw::EntryRow {
@@ -151,11 +151,26 @@ impl Component for AddAccountDialog {
                 let url = self.server.url.clone();
                 sender.oneshot_command(async move {
                     let device_id = self.device_id;
-                    let auth_info = authenticate_by_pin(&url, &device_id).await;
-                    match auth_info {
-                        Ok(auth_info) => AddAccountCommandOutput::SignInSuccess(auth_info),
+                    let quick_connect_info = authenticate_pin_init(&url, &device_id).await;
+                    match quick_connect_info {
+                        Ok(quick_connect_info) => {
+                            let toast = adw::Toast::new(&format!("Enter code {} on your device to log in.", quick_connect_info.code).as_str());
+                            toast.set_timeout(300);
+                            self.valid = ValidationState::Loading;
+                            self.toaster.add_toast(toast);
+
+                            let auth_info = authenticate_by_pin(&url, &device_id, &quick_connect_info.secret).await;
+                            match auth_info {
+                                Ok(auth_info) => AddAccountCommandOutput::SignInSuccess(auth_info),
+                                Err(err) => AddAccountCommandOutput::SignInFail(err)
+                            }
+                        },
                         Err(err) => AddAccountCommandOutput::SignInFail(err)
                     }
+                    // match auth_info {
+                    //     Ok(auth_info) => AddAccountCommandOutput::SignInSuccess(auth_info),
+                    //     Err(err) => AddAccountCommandOutput::SignInFail(err)
+                    // }
                 });
 
             }

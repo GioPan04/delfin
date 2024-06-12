@@ -14,15 +14,15 @@ use crate::jellyfin_api::{
 #[derive(Deserialize)]
 #[serde(rename_all = "PascalCase")]
 struct QuickConnectProgressRes {
-    secret: String,
-    code: String,
+    pub secret: String,
+    pub code: String,
     // #[serde(deserialize_with = "deserialize_bool")]
-    authenticated: bool
+    authenticated: bool,
 }
 #[derive(Serialize)]
-#[serde(rename_all="PascalCase")]
+#[serde(rename_all = "PascalCase")]
 struct AuthenticateByQuickConnectReqBody {
-    secret: String
+    secret: String,
 }
 // #[derive(Deserialize)]
 // #[serde(rename_all = "PascalCase")]
@@ -92,47 +92,31 @@ pub async fn authenticate_by_name(
         }
     }
 }
-pub async fn authenticate_by_pin(url: &str, device_id: &Uuid) -> Result<AuthenticateByNameRes> {
+pub async fn authenticate_pin_init(url: &str, device_id: &Uuid) -> Result<QuickConnectProgressRes> {
     let client = get_unauthed_client();
     let initiate_url: String = httpify(url);
     let initiate_url = format!("{}QuickConnect/Initiate", url);
 
-    let mut res: QuickConnectProgressRes = client
-    .get(initiate_url)
-    .header("authorization", get_auth_header(device_id, None))
-    .send()
-    .await?
-    .json()
-    .await?;
+    Ok(client.get(initiate_url).send().await?.json().await?)
+
+}
+pub async fn authenticate_by_pin(url: &str, device_id: &Uuid, secret: &str) -> Result<AuthenticateByNameRes> {
+    let client = get_unauthed_client();
+    let connect_url = httpify(url);
+    let connect_url = format!("{}/QuickConnect/Connect?Secret={}", url, secret);
+    let mut res: QuickConnectProgressRes = client.get(connect_url.clone()).send().await?.json().await?;
 
     while !res.authenticated {
-        let connect_url = httpify(url);
-        let connect_url = format!("{}/QuickConnect/Connect?Secret={}", url, res.secret);
-        res = client
-        .get(initiate_url)
-        .header("authorization", get_auth_header(device_id, None))
-        .send()
-        .await?
-        .json()
-        .await?;
-
-        thread::sleep(Duration::from_millis(250)); // change this to be 
+        thread::sleep(Duration::from_millis(250)); // change this to use callbacks instead of pin
+        res = client.get(connect_url.clone()).send().await?.json().await?;
     }
     let authenticate_url = httpify(url);
     let authenticate_url = format!("{}/Users/AuthenticateWithQuickConnect", url);
-    let auth_res: Result<AuthenticateByNameRes> = client
-    .post(authenticate_url)
-    .header("authorization", get_auth_header(device_id, None))
-    .json(&AuthenticateByQuickConnectReqBody {
+    let auth_res = client.post(authenticate_url).header("authorization", get_auth_header(device_id, None)).json(&AuthenticateByQuickConnectReqBody {
         secret: res.secret
-    })
-    .send()
-    .await?
-    .json()
-    .await?;
+    }).send().await?.json().await?;
 
-    auth_res
-
+    Ok(auth_res)
 }
 pub async fn get_user_avatar(url: &str, user_id: &Uuid) -> Result<VecDeque<u8>> {
     let client = get_unauthed_client();
