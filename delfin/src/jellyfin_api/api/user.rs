@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, thread, time::Duration};
 
 use anyhow::Result;
 use reqwest::{StatusCode, Url};
@@ -11,7 +11,24 @@ use crate::jellyfin_api::{
     unauthed_client::get_unauthed_client,
     util::{auth_header::get_auth_header, url::httpify},
 };
+#[derive(Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct QuickConnectProgressRes {
+    secret: String,
+    code: String,
+    // #[serde(deserialize_with = "deserialize_bool")]
+    authenticated: bool
+}
+#[derive(Serialize)]
+#[serde(rename_all="PascalCase")]
+struct AuthenticateByQuickConnectReqBody {
+    secret: String
+}
+// #[derive(Deserialize)]
+// #[serde(rename_all = "PascalCase")]
+// struct AuthenticateByQuickConnectRes {
 
+// }
 #[derive(Serialize)]
 #[serde(rename_all = "PascalCase")]
 struct AuthenticateByNameReqBody {
@@ -75,7 +92,48 @@ pub async fn authenticate_by_name(
         }
     }
 }
+pub async fn authenticate_by_pin(url: &str, device_id: &Uuid) -> Result<AuthenticateByNameRes> {
+    let client = get_unauthed_client();
+    let initiate_url: String = httpify(url);
+    let initiate_url = format!("{}QuickConnect/Initiate", url);
 
+    let mut res: QuickConnectProgressRes = client
+    .get(initiate_url)
+    .header("authorization", get_auth_header(device_id, None))
+    .send()
+    .await?
+    .json()
+    .await?;
+
+    while !res.authenticated {
+        let connect_url = httpify(url);
+        let connect_url = format!("{}/QuickConnect/Connect?Secret={}", url, res.secret);
+        res = client
+        .get(initiate_url)
+        .header("authorization", get_auth_header(device_id, None))
+        .send()
+        .await?
+        .json()
+        .await?;
+
+        thread::sleep(Duration::from_millis(250)); // change this to be 
+    }
+    let authenticate_url = httpify(url);
+    let authenticate_url = format!("{}/Users/AuthenticateWithQuickConnect", url);
+    let auth_res: Result<AuthenticateByNameRes> = client
+    .post(authenticate_url)
+    .header("authorization", get_auth_header(device_id, None))
+    .json(&AuthenticateByQuickConnectReqBody {
+        secret: res.secret
+    })
+    .send()
+    .await?
+    .json()
+    .await?;
+
+    auth_res
+
+}
 pub async fn get_user_avatar(url: &str, user_id: &Uuid) -> Result<VecDeque<u8>> {
     let client = get_unauthed_client();
 
