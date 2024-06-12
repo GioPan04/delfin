@@ -28,7 +28,7 @@ pub struct AddAccountDialog {
 
 #[derive(Debug)]
 pub enum AddAccountInput {
-    Toast(String),
+    Toast(String, u32),
     UsernameChanged(String),
     PasswordChanged(String),
     QuickConnectEnabled,
@@ -148,35 +148,27 @@ impl Component for AddAccountDialog {
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match message {
             AddAccountInput::QuickConnectEnabled => {
+                self.valid = ValidationState::Loading;
                 let url = self.server.url.clone();
+                let sender_clone = sender.clone();
+                let device_id = self.device_id;
                 sender.oneshot_command(async move {
-                    let device_id = self.device_id;
-                    let quick_connect_info = authenticate_pin_init(&url, &device_id).await;
-                    match quick_connect_info {
-                        Ok(quick_connect_info) => {
-                            let toast = adw::Toast::new(&format!("Enter code {} on your device to log in.", quick_connect_info.code).as_str());
-                            toast.set_timeout(300);
-                            self.valid = ValidationState::Loading;
-                            self.toaster.add_toast(toast);
-
-                            let auth_info = authenticate_by_pin(&url, &device_id, &quick_connect_info.secret).await;
-                            match auth_info {
-                                Ok(auth_info) => AddAccountCommandOutput::SignInSuccess(auth_info),
+                    match authenticate_pin_init(&url, &device_id).await {
+                        Ok(auth_info) => {
+                            sender_clone.input(AddAccountInput::Toast(format!("Enter code {} in your account to log in.", auth_info.code), 300));
+                            match authenticate_by_pin(&url, &device_id, &auth_info.secret).await {
+                                Ok(response) => AddAccountCommandOutput::SignInSuccess(response),
                                 Err(err) => AddAccountCommandOutput::SignInFail(err)
                             }
                         },
-                        Err(err) => AddAccountCommandOutput::SignInFail(err)
+                        Err(err) => AddAccountCommandOutput::SignInFail(err)    
                     }
-                    // match auth_info {
-                    //     Ok(auth_info) => AddAccountCommandOutput::SignInSuccess(auth_info),
-                    //     Err(err) => AddAccountCommandOutput::SignInFail(err)
-                    // }
                 });
 
             }
-            AddAccountInput::Toast(message) => {
+            AddAccountInput::Toast(message, duration) => {
                 let toast = adw::Toast::new(&message);
-                toast.set_timeout(3);
+                toast.set_timeout(duration);
                 self.toaster.add_toast(toast);
             }
             AddAccountInput::UsernameChanged(username) => self.username = username,
@@ -212,7 +204,7 @@ impl Component for AddAccountDialog {
             }
             AddAccountCommandOutput::SignInFail(err) => {
                 error!("Sign in failed: {:#?}", err);
-                sender.input(AddAccountInput::Toast(err.to_string()));
+                sender.input(AddAccountInput::Toast(err.to_string(), 3));
                 self.valid = ValidationState::Invalid;
             }
         }
