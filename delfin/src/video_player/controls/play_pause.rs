@@ -1,7 +1,11 @@
 use std::{cell::RefCell, sync::Arc, time::Duration};
 
 use gtk::prelude::*;
-use relm4::{gtk, gtk::glib::{ControlFlow, timeout_add}, ComponentParts, ComponentSender, SimpleComponent};
+use relm4::{
+    gtk,
+    gtk::glib::{timeout_add, ControlFlow},
+    ComponentParts, ComponentSender, SimpleComponent,
+};
 
 use crate::{
     tr, utils::message_broker::ResettableMessageBroker, video_player::backends::VideoPlayerBackend,
