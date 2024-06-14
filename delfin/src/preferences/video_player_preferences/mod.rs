@@ -1,9 +1,7 @@
 mod subtitles_preferences;
 
-use std::time::Duration;
 use adw::prelude::*;
 use relm4::prelude::*;
-use relm4::gtk::Adjustment;
 
 use crate::{
     config::video_player_config::{
@@ -28,7 +26,6 @@ pub enum VideoPlayerPreferencesInput {
     SkipBackwardsAmount(u32),
     SkipForwardsAmount(u32),
     OnLeftClick(u32),
-	DoubleClickInterval(u32),
 
     IntroSkipper(bool),
     IntroSkipperAutoSkip(bool),
@@ -92,16 +89,6 @@ impl Component for VideoPlayerPreferences {
                     set_selected: if let VideoPlayerOnLeftClick::PlayPause = video_player_config.on_left_click { 0 } else { 1 },
                     connect_selected_notify[sender] => move |cb| {
                         sender.input(VideoPlayerPreferencesInput::OnLeftClick(cb.selected()));
-                    },
-                },
-
-                add = &adw::SpinRow {
-                    set_title: tr!("prefs-vp-double-click-interval.title"),
-                    set_subtitle: tr!("prefs-vp-double-click-interval.subtitle"),
-                    set_adjustment: Some(&Adjustment::new(video_player_config.double_click_interval.as_millis() as f64, 150.0, 1000.0, 50.0, 50.0, 0.0)),
-                    set_wrap: false,
-                    connect_value_notify[sender] => move |cb| {
-                        sender.input(VideoPlayerPreferencesInput::DoubleClickInterval(cb.value() as u32));
                     },
                 },
             },
@@ -246,9 +233,6 @@ impl Component for VideoPlayerPreferences {
                     0 => VideoPlayerOnLeftClick::PlayPause,
                     _ => VideoPlayerOnLeftClick::ToggleControls,
                 };
-            }
-            VideoPlayerPreferencesInput::DoubleClickInterval(index) => {
-                config.video_player.double_click_interval = Duration::from_millis(index.into());
             }
 
             VideoPlayerPreferencesInput::IntroSkipper(intro_skipper) => {
