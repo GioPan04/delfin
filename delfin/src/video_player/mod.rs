@@ -522,15 +522,22 @@ impl Component for VideoPlayer {
                 }
             }
             VideoPlayerInput::MouseClick(n_press) => match n_press {
-                2 => FULLSCREEN_BROKER.send(FullscreenInput::ToggleFullscreen),
-                _ => match CONFIG.read().video_player.on_left_click {
+                2 => {
+                    if CONFIG.read().video_player.on_left_click == VideoPlayerOnLeftClick::PlayPause
+                    {
+                        PLAY_PAUSE_BROKER.send(PlayPauseInput::LeftClick);
+                    }
+                    FULLSCREEN_BROKER.send(FullscreenInput::ToggleFullscreen);
+                }
+                1 => match CONFIG.read().video_player.on_left_click {
                     VideoPlayerOnLeftClick::PlayPause => {
-                        PLAY_PAUSE_BROKER.send(PlayPauseInput::TogglePlaying);
+                        PLAY_PAUSE_BROKER.send(PlayPauseInput::LeftClick);
                     }
                     VideoPlayerOnLeftClick::ToggleControls => {
                         sender.input(VideoPlayerInput::ToggleControls);
                     }
                 },
+                _ => {}
             },
         }
 
