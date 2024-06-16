@@ -180,6 +180,17 @@ impl AsyncComponent for MediaTile {
                 #[watch]
                 set_markup: &model.get_item_label(),
 
+                set_has_tooltip: true,
+                connect_query_tooltip[item_label] => move |_, _, _, _, tooltip| {
+                    let label = gtk::Label::builder()
+                        .use_markup(true)
+                        .label(&item_label)
+                        .justify(gtk::Justification::Center)
+                        .build();
+                    tooltip.set_custom(Some(&label));
+                    true
+                },
+
                 add_controller = gtk::GestureClick {
                     connect_released[sender] => move |_, _, _, _| {
                         sender.input(MediaTileInput::ShowDetails);
@@ -196,7 +207,8 @@ impl AsyncComponent for MediaTile {
     ) -> AsyncComponentParts<Self> {
         let (media, tile_display, api_client) = init;
 
-        let model = Self::new(media.clone(), api_client.clone()).init_title_tooltip(&root);
+        let model = Self::new(media.clone(), api_client.clone());
+        let item_label = model.get_item_label();
 
         let widgets = view_output!();
 
@@ -273,22 +285,6 @@ impl MediaTile {
             api_client,
             thumbnail: None,
         }
-    }
-
-    fn init_title_tooltip(self, root: &gtk::Box) -> Self {
-        root.set_has_tooltip(true);
-        let item_label = self.get_item_label();
-        root.connect_query_tooltip(move |_, _, _, _, tooltip| {
-            let label = gtk::Label::builder()
-                .justify(gtk::Justification::Center)
-                .build();
-            label.set_markup(&item_label);
-
-            tooltip.set_custom(Some(&label));
-            true
-        });
-
-        self
     }
 
     fn get_item_label(&self) -> String {
