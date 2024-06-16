@@ -180,6 +180,17 @@ impl AsyncComponent for MediaTile {
                 #[watch]
                 set_markup: &model.get_item_label(),
 
+                set_has_tooltip: true,
+                connect_query_tooltip[item_label] => move |_, _, _, _, tooltip| {
+                    let label = gtk::Label::builder()
+                        .use_markup(true)
+                        .label(&item_label)
+                        .justify(gtk::Justification::Center)
+                        .build();
+                    tooltip.set_custom(Some(&label));
+                    true
+                },
+
                 add_controller = gtk::GestureClick {
                     connect_released[sender] => move |_, _, _, _| {
                         sender.input(MediaTileInput::ShowDetails);
@@ -196,11 +207,8 @@ impl AsyncComponent for MediaTile {
     ) -> AsyncComponentParts<Self> {
         let (media, tile_display, api_client) = init;
 
-        let model = MediaTile {
-            media: media.clone(),
-            api_client: api_client.clone(),
-            thumbnail: None,
-        };
+        let model = Self::new(media.clone(), api_client.clone());
+        let item_label = model.get_item_label();
 
         let widgets = view_output!();
 
@@ -271,6 +279,14 @@ impl AsyncComponent for MediaTile {
 }
 
 impl MediaTile {
+    pub fn new(media: BaseItemDto, api_client: Arc<ApiClient>) -> Self {
+        Self {
+            media,
+            api_client,
+            thumbnail: None,
+        }
+    }
+
     fn get_item_label(&self) -> String {
         match (
             self.media
