@@ -29,3 +29,6 @@ version = "*"
 [dependencies.gtk]
 package = "gtk4"
 version = "*"
+
+[lints.clippy]
+missing_transmute_annotations = "allow"
