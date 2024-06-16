@@ -11,23 +11,24 @@ use crate::{globals::CONFIG, jellyfin_api::api_client::ApiClient, utils::bif::Th
 use super::{VideoPlayer, VideoPlayerCommandOutput};
 
 pub(crate) fn fetch_trickplay(
-    api_client: &Option<Arc<ApiClient>>,
+    api_client: &Arc<ApiClient>,
     sender: &ComponentSender<VideoPlayer>,
     item: &BaseItemDto,
 ) {
-    let (Some(api_client), Some(id)) = (api_client, item.id) else {
+    let Some(item_id) = item.id else {
         return;
     };
 
     sender.oneshot_command({
         let api_client = api_client.clone();
+        let item = item.clone();
         async move {
-            if let Some(thumbnails) = load_native_trickplay(&api_client, &id).await {
+            if let Some(thumbnails) = load_native_trickplay(&api_client, &item_id, item).await {
                 return VideoPlayerCommandOutput::LoadedTrickplay(Some(thumbnails));
             }
 
             // If native trickplay wasn't found, fall back on Jellyscrub
-            if let Some(thumbnails) = load_jellyscrub_trickplay(&api_client, &id).await {
+            if let Some(thumbnails) = load_jellyscrub_trickplay(&api_client, &item_id).await {
                 return VideoPlayerCommandOutput::LoadedTrickplay(Some(thumbnails));
             }
 
@@ -39,18 +40,15 @@ pub(crate) fn fetch_trickplay(
 async fn load_native_trickplay(
     api_client: &Arc<ApiClient>,
     item_id: &Uuid,
+    item: BaseItemDto,
 ) -> Option<Vec<Thumbnail>> {
-    // Fetch item to ensure we get the trickplay field
-    // TODO: Ideally all our API calls would include the field
-    let (width, trickplay) = api_client
-        .get_item(item_id)
-        .await
-        .ok()
-        .and_then(|item| item.trickplay)
+    let (width, trickplay) = item
+        .trickplay
+        .as_ref()
         .and_then(|trickplay| {
             trickplay
                 .get(&item_id.simple().to_string())
-                .map(|t| t.to_owned())
+                .map(ToOwned::to_owned)
         })
         // Use the first available width width
         .and_then(|trickplay| trickplay.into_iter().next())?;

@@ -1,5 +1,6 @@
 use bytes::Buf;
 use chrono::TimeDelta;
+use jellyfin_api::types::ChapterInfo;
 use std::{cell::RefCell, sync::Arc};
 use tracing::warn;
 
@@ -12,7 +13,7 @@ use crate::{
     config::video_player_config::DurationDisplay,
     globals::CONFIG,
     tr,
-    utils::{bif::Thumbnail, message_broker::ResettableMessageBroker},
+    utils::{bif::Thumbnail, message_broker::ResettableMessageBroker, ticks::ticks_to_seconds},
     video_player::backends::VideoPlayerBackend,
 };
 
@@ -25,6 +26,13 @@ struct ScrubberPopover {
     position: f64,
     timestamp: usize,
     thumbnail: Option<Texture>,
+    chapter: Option<Chapter>,
+}
+
+#[derive(Clone, Debug)]
+struct Chapter {
+    timestamp: usize,
+    name: Option<String>,
 }
 
 pub(crate) struct Scrubber {
@@ -39,6 +47,7 @@ pub(crate) struct Scrubber {
     scrubbing: bool,
     popover: Option<ScrubberPopover>,
     thumbnails: Option<Vec<Thumbnail>>,
+    chapters: Vec<Chapter>,
 }
 
 #[derive(Debug)]
@@ -53,6 +62,7 @@ pub enum ScrubberInput {
     ScrubberMouseLeave,
     LoadedThumbnails(Option<Vec<Thumbnail>>),
     DurationDisplayUpdated(DurationDisplay),
+    DisplayChapters(Vec<ChapterInfo>),
 }
 
 #[relm4::component(pub(crate))]
@@ -137,7 +147,15 @@ impl Component for Scrubber {
                             .and_then(|p| p.thumbnail.as_ref())
                     },
 
-                    #[name = "popover_label"]
+                    gtk::Label {
+                        #[watch]
+                        set_label: &model.popover
+                            .as_ref()
+                            .and_then(|p| p.chapter.clone())
+                            .and_then(|c| c.name)
+                            .unwrap_or_default(),
+                    },
+
                     gtk::Label {
                         #[watch]
                         set_label: &model.popover
@@ -195,6 +213,7 @@ impl Component for Scrubber {
             scrubbing: false,
             popover: None,
             thumbnails: None,
+            chapters: vec![],
         };
 
         Scrubber::subscribe_to_config(&sender);
@@ -220,6 +239,8 @@ impl Component for Scrubber {
                 self.position = 0;
                 self.duration = 0;
                 self.thumbnails = None;
+                self.chapters.clear();
+                scrubber.clear_marks();
             }
             ScrubberInput::SetPosition(position) => {
                 if !self.scrubbing {
@@ -228,6 +249,8 @@ impl Component for Scrubber {
             }
             ScrubberInput::SetDuration(duration) => {
                 self.duration = duration;
+                // Make sure marks are in the right place after scale range changes
+                self.mark_chapters(scrubber);
             }
             ScrubberInput::SetPlaying => {
                 self.loading = false;
@@ -263,6 +286,7 @@ impl Component for Scrubber {
                     position: popover_position.map_or(0.0, |p| p.x()) as f64,
                     timestamp,
                     thumbnail: self.get_thumbnail(timestamp),
+                    chapter: self.get_chapter(timestamp),
                 });
             }
             ScrubberInput::ScrubberMouseLeave => {
@@ -271,6 +295,23 @@ impl Component for Scrubber {
             ScrubberInput::LoadedThumbnails(thumbnails) => {
                 self.thumbnails = thumbnails;
             }
+            ScrubberInput::DisplayChapters(chapters) => {
+                self.chapters = chapters
+                    .iter()
+                    .filter_map(|c| {
+                        let position = c.start_position_ticks?;
+                        Some(Chapter {
+                            timestamp: ticks_to_seconds(position) as usize,
+                            name: c.name.clone(),
+                        })
+                    })
+                    .collect();
+                // Ensure chapters are in ascending timestamp order, so we can find the chapter for
+                // a given timestamp when scrubbing
+                self.chapters.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
+
+                self.mark_chapters(scrubber);
+            }
         }
 
         self.update_view(widgets, sender);
@@ -278,6 +319,12 @@ impl Component for Scrubber {
 }
 
 impl Scrubber {
+    fn subscribe_to_config(sender: &ComponentSender<Self>) {
+        CONFIG.subscribe(sender.input_sender(), |config| {
+            ScrubberInput::DurationDisplayUpdated(config.video_player.duration_display)
+        });
+    }
+
     fn get_thumbnail(&self, timestamp: usize) -> Option<Texture> {
         let thumbnails = self.thumbnails.as_ref()?;
 
@@ -306,10 +353,25 @@ impl Scrubber {
         Some(Texture::for_pixbuf(&pixbuf))
     }
 
-    fn subscribe_to_config(sender: &ComponentSender<Self>) {
-        CONFIG.subscribe(sender.input_sender(), |config| {
-            ScrubberInput::DurationDisplayUpdated(config.video_player.duration_display)
-        });
+    fn get_chapter(&self, timestamp: usize) -> Option<Chapter> {
+        if self.chapters.is_empty() {
+            return None;
+        }
+
+        let mut nearest_chapter_idx = 0;
+        for (i, chapter) in self.chapters.iter().enumerate() {
+            if chapter.timestamp < timestamp {
+                nearest_chapter_idx = i;
+            }
+        }
+        Some(self.chapters[nearest_chapter_idx].clone())
+    }
+
+    fn mark_chapters(&self, scrubber: &gtk::Scale) {
+        scrubber.clear_marks();
+        for chapter in &self.chapters {
+            scrubber.add_mark(chapter.timestamp as f64, gtk::PositionType::Top, None);
+        }
     }
 }
 

@@ -407,10 +407,26 @@ impl Component for VideoPlayer {
                     self.backend.clone(),
                 ));
 
-                self.api_client = Some(api_client);
+                self.api_client = Some(api_client.clone());
 
                 self.fetch_next_prev(&sender, &item);
-                fetch_trickplay(&self.api_client, &sender, &item);
+
+                if let Some(item_id) = item.id {
+                    relm4::spawn({
+                        let api_client = api_client.clone();
+                        let sender = sender.clone();
+                        async move {
+                            // Fetch item to ensure we have all required fields
+                            let Ok(item) = api_client.get_item(&item_id).await else {
+                                return;
+                            };
+                            fetch_trickplay(&api_client, &sender, &item);
+                            if let Some(chapters) = item.chapters {
+                                SCRUBBER_BROKER.send(ScrubberInput::DisplayChapters(chapters));
+                            }
+                        }
+                    });
+                }
             }
             VideoPlayerInput::SetShowControls { show, locked } => {
                 self.show_controls = show;
