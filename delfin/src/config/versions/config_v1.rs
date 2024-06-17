@@ -205,20 +205,12 @@ impl Migrate<Config> for ConfigV1 {
                 volume: self.video_player.volume,
                 muted: self.video_player.muted,
                 skip_backwards_amount: match self.video_player.skip_backwards_amount {
-                    VideoPlayerSkipAmount::Ten => {
-                        config::video_player_config::VideoPlayerSkipAmount::Ten
-                    }
-                    VideoPlayerSkipAmount::Thirty => {
-                        config::video_player_config::VideoPlayerSkipAmount::Thirty
-                    }
+                    VideoPlayerSkipAmount::Ten => 10,
+                    VideoPlayerSkipAmount::Thirty => 30,
                 },
                 skip_forwards_amount: match self.video_player.skip_forwards_amount {
-                    VideoPlayerSkipAmount::Ten => {
-                        config::video_player_config::VideoPlayerSkipAmount::Ten
-                    }
-                    VideoPlayerSkipAmount::Thirty => {
-                        config::video_player_config::VideoPlayerSkipAmount::Thirty
-                    }
+                    VideoPlayerSkipAmount::Ten => 10,
+                    VideoPlayerSkipAmount::Thirty => 30,
                 },
                 on_left_click: match self.video_player.on_left_click {
                     VideoPlayerOnLeftClick::PlayPause => {

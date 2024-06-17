@@ -4,8 +4,8 @@ use gtk::prelude::*;
 use relm4::{prelude::*, ComponentParts, ComponentSender, SimpleComponent};
 
 use crate::{
-    config::video_player_config::VideoPlayerSkipAmount, globals::CONFIG, tr,
-    utils::message_broker::ResettableMessageBroker, video_player::backends::VideoPlayerBackend,
+    globals::CONFIG, tr, utils::message_broker::ResettableMessageBroker,
+    video_player::backends::VideoPlayerBackend,
 };
 
 use super::scrubber::{ScrubberInput, SCRUBBER_BROKER};
@@ -34,7 +34,7 @@ impl Display for SkipForwardsBackwardsDirection {
 pub(super) struct SkipForwardsBackwards {
     direction: SkipForwardsBackwardsDirection,
     player: Arc<RefCell<dyn VideoPlayerBackend>>,
-    skip_amount: VideoPlayerSkipAmount,
+    skip_amount: usize,
     loading: bool,
 }
 
@@ -44,7 +44,7 @@ pub enum SkipForwardsBackwardsInput {
     SkipByAmount(Duration),
     SkipTo(Duration),
     SetLoading(bool),
-    SkipAmountUpdated(VideoPlayerSkipAmount),
+    SkipAmountUpdated(usize),
     FrameStep,
 }
 
@@ -67,7 +67,7 @@ impl SimpleComponent for SkipForwardsBackwards {
             set_tooltip_text: Some(tr!(
                 "vp-skip-forwards-backwards-tooltip", {
                     "direction" => model.direction.to_string(),
-                    "seconds" => model.skip_amount as usize,
+                    "seconds" => model.skip_amount,
                 },
             )),
             #[watch]
@@ -99,7 +99,7 @@ impl SimpleComponent for SkipForwardsBackwards {
         match message {
             SkipForwardsBackwardsInput::Skip => {
                 sender.input(SkipForwardsBackwardsInput::SkipByAmount(
-                    self.skip_amount.into(),
+                    Duration::from_secs(self.skip_amount as u64),
                 ));
             }
             SkipForwardsBackwardsInput::SkipByAmount(amount) => {
@@ -180,9 +180,9 @@ impl SkipForwardsBackwards {
 
     fn get_icon_name(&self) -> String {
         if let SkipForwardsBackwardsDirection::Forwards = self.direction {
-            format!("skip-forward-{}", self.skip_amount as usize)
+            "skip-forward-large".into()
         } else {
-            format!("skip-backwards-{}", self.skip_amount as usize)
+            "skip-backward-large".into()
         }
     }
 }

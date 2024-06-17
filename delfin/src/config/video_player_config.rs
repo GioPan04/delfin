@@ -1,8 +1,6 @@
-use std::{cell::RefCell, sync::Arc, time::Duration};
+use std::{cell::RefCell, sync::Arc};
 
 use serde::{Deserialize, Serialize};
-use serde_repr::{Deserialize_repr, Serialize_repr};
-use tracing::warn;
 
 use crate::{
     utils::round::round_one_place,
@@ -18,8 +16,8 @@ pub struct VideoPlayerConfig {
     pub volume: f64,
     pub muted: bool,
 
-    pub skip_backwards_amount: VideoPlayerSkipAmount,
-    pub skip_forwards_amount: VideoPlayerSkipAmount,
+    pub skip_backwards_amount: usize,
+    pub skip_forwards_amount: usize,
     pub on_left_click: VideoPlayerOnLeftClick,
     pub duration_display: DurationDisplay,
 
@@ -40,8 +38,8 @@ impl Default for VideoPlayerConfig {
             volume: 1.0,
             muted: false,
 
-            skip_backwards_amount: VideoPlayerSkipAmount::Ten,
-            skip_forwards_amount: VideoPlayerSkipAmount::Thirty,
+            skip_backwards_amount: 10,
+            skip_forwards_amount: 30,
             on_left_click: VideoPlayerOnLeftClick::default(),
             duration_display: DurationDisplay::default(),
 
@@ -53,19 +51,6 @@ impl Default for VideoPlayerConfig {
             intro_skipper_auto_skip: true,
             jellyscrub: true,
         }
-    }
-}
-
-#[derive(Debug, Deserialize_repr, Serialize_repr, PartialEq, Clone, Copy)]
-#[repr(u8)]
-pub enum VideoPlayerSkipAmount {
-    Ten = 10,
-    Thirty = 30,
-}
-
-impl From<VideoPlayerSkipAmount> for Duration {
-    fn from(value: VideoPlayerSkipAmount) -> Self {
-        Duration::from_secs(value as u64)
     }
 }
 
@@ -117,7 +102,7 @@ impl From<VideoPlayerBackendPreference> for Arc<RefCell<dyn VideoPlayerBackend>>
 
                 #[cfg(not(feature = "gst"))]
                 {
-                    warn!("GStreamer backend not available, falling back to MPV backend");
+                    tracing::warn!("GStreamer backend not available, falling back to MPV backend");
                     Arc::<RefCell<VideoPlayerBackendMpv>>::default()
                 }
             }

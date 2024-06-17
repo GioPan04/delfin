@@ -6,7 +6,6 @@ use relm4::prelude::*;
 use crate::{
     config::video_player_config::{
         VideoPlayerBackendPreference, VideoPlayerConfig, VideoPlayerOnLeftClick,
-        VideoPlayerSkipAmount,
     },
     globals::CONFIG,
     tr,
@@ -23,8 +22,8 @@ pub struct VideoPlayerPreferences {
 pub enum VideoPlayerPreferencesInput {
     UpdateConfig(VideoPlayerConfig),
 
-    SkipBackwardsAmount(u32),
-    SkipForwardsAmount(u32),
+    SkipBackwardsAmount(usize),
+    SkipForwardsAmount(usize),
     OnLeftClick(u32),
 
     IntroSkipper(bool),
@@ -50,31 +49,37 @@ impl Component for VideoPlayerPreferences {
             add = &adw::PreferencesGroup {
                 set_title: tr!("prefs-vp-interface"),
 
-                add = &adw::ComboRow {
+                add = &adw::SpinRow::new(
+                    Some(&gtk::Adjustment::new(
+                        model.video_player_config.skip_backwards_amount as f64,
+                        1.0, 60.0, 1.0, 10.0, 0.0,
+                    )),
+                    // Climb rate
+                    1.0,
+                    // Digits
+                    0,
+                ) {
                     set_title: tr!("prefs-vp-skip-backwards.title"),
                     set_subtitle: tr!("prefs-vp-skip-backwards.subtitle"),
-                    #[wrap(Some)]
-                    set_model = &gtk::StringList::new(&[
-                        tr!("prefs-skip-amount", {"seconds" => 10}),
-                        tr!("prefs-skip-amount", {"seconds" => 30}),
-                    ]),
-                    set_selected: if let VideoPlayerSkipAmount::Ten = video_player_config.skip_backwards_amount { 0 } else { 1 },
-                    connect_selected_notify[sender] => move |cb| {
-                        sender.input(VideoPlayerPreferencesInput::SkipBackwardsAmount(cb.selected()));
+                    connect_changed[sender] => move |spinrow| {
+                        sender.input(VideoPlayerPreferencesInput::SkipBackwardsAmount(spinrow.value() as usize));
                     },
                 },
 
-                add = &adw::ComboRow {
+                add = &adw::SpinRow::new(
+                    Some(&gtk::Adjustment::new(
+                        model.video_player_config.skip_forwards_amount as f64,
+                        1.0, 60.0, 1.0, 10.0, 0.0,
+                    )),
+                    // Climb rate
+                    1.0,
+                    // Digits
+                    0,
+                ) {
                     set_title: tr!("prefs-vp-skip-forwards.title"),
                     set_subtitle: tr!("prefs-vp-skip-forwards.subtitle"),
-                    #[wrap(Some)]
-                    set_model = &gtk::StringList::new(&[
-                        tr!("prefs-skip-amount", {"seconds" => 10}),
-                        tr!("prefs-skip-amount", {"seconds" => 30}),
-                    ]),
-                    set_selected: if let VideoPlayerSkipAmount::Ten = video_player_config.skip_forwards_amount { 0 } else { 1 },
-                    connect_selected_notify[sender] => move |cb| {
-                        sender.input(VideoPlayerPreferencesInput::SkipForwardsAmount(cb.selected()));
+                    connect_changed[sender] => move |spinrow| {
+                        sender.input(VideoPlayerPreferencesInput::SkipForwardsAmount(spinrow.value() as usize));
                     },
                 },
 
@@ -216,17 +221,11 @@ impl Component for VideoPlayerPreferences {
                 // Already handled above
                 unreachable!();
             }
-            VideoPlayerPreferencesInput::SkipBackwardsAmount(index) => {
-                config.video_player.skip_backwards_amount = match index {
-                    0 => VideoPlayerSkipAmount::Ten,
-                    _ => VideoPlayerSkipAmount::Thirty,
-                };
+            VideoPlayerPreferencesInput::SkipBackwardsAmount(value) => {
+                config.video_player.skip_backwards_amount = value;
             }
-            VideoPlayerPreferencesInput::SkipForwardsAmount(index) => {
-                config.video_player.skip_forwards_amount = match index {
-                    0 => VideoPlayerSkipAmount::Ten,
-                    _ => VideoPlayerSkipAmount::Thirty,
-                };
+            VideoPlayerPreferencesInput::SkipForwardsAmount(value) => {
+                config.video_player.skip_forwards_amount = value;
             }
             VideoPlayerPreferencesInput::OnLeftClick(index) => {
                 config.video_player.on_left_click = match index {

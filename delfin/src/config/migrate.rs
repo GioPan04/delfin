@@ -40,7 +40,7 @@ mod tests {
 
     use crate::config::{
         general::{GeneralConfig, THEME_DARK},
-        video_player_config::{VideoPlayerConfig, VideoPlayerOnLeftClick, VideoPlayerSkipAmount},
+        video_player_config::{VideoPlayerConfig, VideoPlayerOnLeftClick},
         Account, Server, Window,
     };
 
@@ -152,7 +152,7 @@ italic = false
             video_player: VideoPlayerConfig {
                 volume: 0.0,
                 muted: true,
-                skip_forwards_amount: VideoPlayerSkipAmount::Ten,
+                skip_forwards_amount: 10,
                 on_left_click: VideoPlayerOnLeftClick::ToggleControls,
                 ..Default::default()
             },
