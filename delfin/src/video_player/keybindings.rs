@@ -5,6 +5,7 @@ use relm4::gtk;
 use super::controls::{
     fullscreen::{FullscreenInput, FULLSCREEN_BROKER},
     play_pause::{PlayPauseInput, PLAY_PAUSE_BROKER},
+    playback_speed::{PlaybackSpeedInput, PLAYBACK_SPEED_BROKER},
     skip_forwards_backwards::{
         SkipForwardsBackwardsInput, SKIP_BACKWARDS_BROKER, SKIP_FORWARDS_BROKER,
     },
@@ -51,6 +52,14 @@ pub fn keybindings_controller() -> EventControllerKey {
             }
             gdk::Key::period => {
                 SKIP_FORWARDS_BROKER.send(SkipForwardsBackwardsInput::FrameStep);
+            }
+            // Left angle bracket/Shift + ,
+            gdk::Key::less => {
+                PLAYBACK_SPEED_BROKER.send(PlaybackSpeedInput::SlowDown);
+            }
+            // Right angle bracket/Shift + .
+            gdk::Key::greater => {
+                PLAYBACK_SPEED_BROKER.send(PlaybackSpeedInput::SpeedUp);
             }
             _ => return Propagation::Proceed,
         };

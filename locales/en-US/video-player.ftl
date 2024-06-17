@@ -54,6 +54,7 @@ vp-volume-mute-tooltip =
     }
 vp-playback-speed-tooltip = Playback Speed
 vp-playback-speed-normal = Normal
+vp-playback-speed-toast = Playback speed: { $speed }x
 vp-unnamed-track = Unnamed Track
 vp-backend-mpv-track-name =
     .title-and-language = { $title } – { $language }

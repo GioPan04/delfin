@@ -37,6 +37,7 @@ use crate::{
 };
 use gtk::prelude::*;
 use jellyfin_api::types::BaseItemDto;
+use playback_speed::PLAYBACK_SPEED_BROKER;
 use relm4::{gtk, Component, ComponentController, ComponentParts, Controller, SimpleComponent};
 
 use self::{
@@ -221,7 +222,9 @@ impl SimpleComponent for VideoPlayerControls {
         // Push remaining controls to end
         second_row.append(&gtk::Box::builder().hexpand(true).build());
 
-        let playback_speed = PlaybackSpeed::builder().launch(player.clone()).detach();
+        let playback_speed = PlaybackSpeed::builder()
+            .launch_with_broker(player.clone(), &PLAYBACK_SPEED_BROKER.read())
+            .detach();
         second_row.append(playback_speed.widget());
         model.playback_speed.set(playback_speed).unwrap();
 
