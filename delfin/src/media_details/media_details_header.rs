@@ -291,6 +291,7 @@ impl AsyncComponent for MediaDetailsHeader {
                                     "watched" => watched.to_string(),
                                 })
                                 .to_owned(),
+                                None,
                             ));
                         return;
                     }
@@ -323,6 +324,7 @@ impl AsyncComponent for MediaDetailsHeader {
                     Err(err) => {
                         APP_BROKER.send(AppInput::Toast(
                             tr!("media-details-backdrop-error").to_owned(),
+                            None,
                         ));
                         tracing::error!("Error creating media tile pixbuf: {err}");
                         return;

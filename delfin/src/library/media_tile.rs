@@ -245,7 +245,7 @@ impl AsyncComponent for MediaTile {
                                 if let Some(name) = self.media.name.as_ref() {
                                     message += &format!(" for {name}");
                                 }
-                                APP_BROKER.send(AppInput::Toast(message))
+                                APP_BROKER.send(AppInput::Toast(message, None))
                             }
                         };
                     }

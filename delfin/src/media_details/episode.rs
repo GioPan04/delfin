@@ -127,6 +127,7 @@ impl AsyncComponent for Episode {
                                     "watched" => watched.to_string(),
                                 })
                                 .to_owned(),
+                                None,
                             ));
                             return;
                         }

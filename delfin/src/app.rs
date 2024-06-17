@@ -86,7 +86,7 @@ pub enum AppInput {
     SetThemeDark(bool),
     PagePopped(Option<String>),
     ShowPreferences,
-    Toast(String),
+    Toast(String, Option<u32>),
 }
 
 #[relm4::component(pub)]
@@ -365,10 +365,13 @@ impl Component for App {
                         .detach(),
                 );
             }
-            AppInput::Toast(toast) => {
-                widgets
-                    .toaster
-                    .add_toast(Toast::builder().title(toast).timeout(3).build());
+            AppInput::Toast(toast, timeout) => {
+                widgets.toaster.add_toast(
+                    Toast::builder()
+                        .title(toast)
+                        .timeout(timeout.unwrap_or(3))
+                        .build(),
+                );
             }
         }
 

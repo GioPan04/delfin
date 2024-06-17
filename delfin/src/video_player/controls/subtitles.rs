@@ -181,7 +181,10 @@ impl Component for Subtitles {
             }
             SubtitlesInput::ToggleSubtitles => 'msg_block: {
                 if !self.subtitles_available {
-                    APP_BROKER.send(AppInput::Toast(tr!("vp-no-subtitles-available").into()));
+                    APP_BROKER.send(AppInput::Toast(
+                        tr!("vp-no-subtitles-available").into(),
+                        None,
+                    ));
                     break 'msg_block;
                 }
 
