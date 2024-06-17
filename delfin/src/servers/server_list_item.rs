@@ -3,12 +3,10 @@ use relm4::{
     adw, gtk,
     prelude::{DynamicIndex, FactoryComponent},
 };
-use uuid::Uuid;
 
 use crate::config;
 
 pub struct ServerListItem {
-    pub id: Uuid,
     pub url: String,
     pub name: String,
 }
@@ -48,7 +46,6 @@ impl FactoryComponent for ServerListItem {
         _sender: relm4::FactorySender<Self>,
     ) -> Self {
         Self {
-            id: init.id,
             url: init.url,
             name: init.name,
         }
