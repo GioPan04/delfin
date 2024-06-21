@@ -62,3 +62,4 @@ vp-next-up-action =
     .hide = Skrýt
 vp-playback-speed-tooltip = Rychlost přehrávání
 vp-playback-speed-normal = Normální
+vp-playback-speed-toast = Rychlost přehrávání: { $speed }x
