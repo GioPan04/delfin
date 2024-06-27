@@ -35,14 +35,8 @@ These features aren't planned at the moment (but maybe in the future):
 ### Mold Linker
 
 Using the [mold](https://github.com/rui314/mold/) linker is recommended, as it
-can significantly speed up compile times. To use it, create a file at
-`.cargo/config.toml` in the root of this repository with the following contents:
-
-```toml
-[target.x86_64-unknown-linux-gnu]
-linker = "clang"
-rustflags = ["-C", "link-arg=-fuse-ld=/usr/bin/mold"]
-```
+can significantly speed up compile times. It will be used automatically when
+available.
 
 ## Translations
 
