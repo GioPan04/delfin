@@ -16,7 +16,13 @@ run_command(
   check: true
 )
 
+env = environment()
+env.set('MESON_BUILD_ROOT', meson.project_build_root())
+env.set('FLATPAK', get_option('flatpak') ? 'true' : 'false')
+
 cargo = find_program('cargo', required: true)
+clang = find_program('clang', required: false)
+mold = find_program('mold', required: false)
 
 cargo_options = ['--target-dir', meson.project_build_root() / 'delfin']
 rust_target = 'debug'
@@ -24,6 +30,11 @@ rust_target = 'debug'
 if get_option('profile') == 'release'
   cargo_options += ['--release']
   rust_target = 'release'
+endif
+
+if clang.found() and mold.found()
+  env.append('RUSTFLAGS', '-Clinker=' + clang.full_path(), separator: ' ')
+  env.append('RUSTFLAGS', '-Clink-arg=-fuse-ld=' + mold.full_path(), separator: ' ')
 endif
 
 custom_target(
@@ -38,8 +49,5 @@ custom_target(
   ],
   install: true,
   install_dir: bindir,
-  env: {
-    'MESON_BUILD_ROOT': meson.project_build_root(),
-    'FLATPAK': get_option('flatpak') ? 'true' : 'false',
-  },
+  env: env,
 )
