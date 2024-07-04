@@ -35,6 +35,8 @@ pub enum AddAccountInput {
     PasswordChanged(String),
     QuickConnectEnabled,
     SignIn,
+    ShowQuickConnectScreen,
+    ShowUsernamePasswordScreen,
 }
 
 #[derive(Debug)]
@@ -56,76 +58,86 @@ impl Component for AddAccountDialog {
     type CommandOutput = AddAccountCommandOutput;
 
     view! {
-        adw::Window {
-            set_application: Some(&relm4::main_application()),
-            set_title: Some(tr!("account-list-add-account-title")),
-            set_modal: true,
-            set_visible: true,
-
-            #[wrap(Some)]
-            set_content = &adw::ToolbarView {
-                add_top_bar = &adw::HeaderBar {},
+            adw::Window {
+                set_application: Some(&relm4::main_application()),
+                set_title: Some(tr!("account-list-add-account-title")),
+                set_modal: true,
+                set_visible: true,
 
                 #[wrap(Some)]
-                set_content = &adw::Clamp {
-                    set_margin_all: 20,
+                set_content = &adw::ToolbarView {
+                    add_top_bar = &adw::HeaderBar {},
 
-                    #[local_ref]
-                    toaster -> adw::ToastOverlay {
+                    #[wrap(Some)]
+                    set_content = &gtk::Stack {
+                        #[name = "username_password_screen"]
                         gtk::Box {
-                            set_orientation: gtk::Orientation::Vertical,
-                            set_spacing: 20,
 
-                            adw::PreferencesGroup {
-                                adw::ActionRow {
-                                    set_title: tr!("account-list-quick-connect.title"),
-                                    set_subtitle: tr!("account-list-quick-connect.subtitle"),
-                                    set_activatable: true,
-                                    connect_activated[sender] => move |_| {
-                                        sender.input(AddAccountInput::QuickConnectEnabled);
-                                    },
-                                    add_suffix = &gtk::Image {
-                                        set_icon_name: Some("go-next-symbolic")
-                                    }
-                                },
-                                adw::EntryRow {
-                                    set_title: tr!("account-list-add-account-username"),
-                                    set_activates_default: true,
-                                    connect_changed[sender] => move |entry| {
-                                        sender.input(AddAccountInput::UsernameChanged(entry.text().to_string()))
-                                    },
-                                },
-                                adw::PasswordEntryRow {
-                                    set_title: tr!("account-list-add-account-password"),
-                                    set_activates_default: true,
-                                    connect_changed[sender] => move |entry| {
-                                        sender.input(AddAccountInput::PasswordChanged(entry.text().to_string()))
-                                    },
-                                },
-                            },
+                        adw::Clamp {
+                        set_margin_all: 20,
 
-                            #[transition = "Crossfade"]
-                            append = if matches!(model.valid, ValidationState::Invalid) {
-                                #[name = "submit_btn"]
-                                gtk::Button {
-                                    set_halign: gtk::Align::Center,
-                                    set_label: tr!("account-list-add-account-submit-button"),
-                                    add_css_class: "pill",
-                                    add_css_class: "suggested-action",
-                                    #[watch]
-                                    set_sensitive: !model.username.is_empty(),
-                                    connect_clicked[sender] => move |_| {
-                                        sender.input(AddAccountInput::SignIn);
+                        #[local_ref]
+                        toaster -> adw::ToastOverlay {
+                            gtk::Box {
+                                set_orientation: gtk::Orientation::Vertical,
+                                set_spacing: 20,
+
+                                adw::PreferencesGroup {
+                                    adw::ActionRow {
+                                        set_title: tr!("account-list-quick-connect.title"),
+                                        set_subtitle: tr!("account-list-quick-connect.subtitle"),
+                                        set_activatable: true,
+                                        connect_activated[sender] => move |_| {
+                                            sender.input(AddAccountInput::QuickConnectEnabled);
+                                        },
+                                        add_suffix = &gtk::Image {
+                                            set_icon_name: Some("go-next-symbolic")
+                                        }
+                                    },
+                                    adw::EntryRow {
+                                        set_title: tr!("account-list-add-account-username"),
+                                        set_activates_default: true,
+                                        connect_changed[sender] => move |entry| {
+                                            sender.input(AddAccountInput::UsernameChanged(entry.text().to_string()))
+                                        },
+                                    },
+                                    adw::PasswordEntryRow {
+                                        set_title: tr!("account-list-add-account-password"),
+                                        set_activates_default: true,
+                                        connect_changed[sender] => move |entry| {
+                                            sender.input(AddAccountInput::PasswordChanged(entry.text().to_string()))
+                                        },
+                                    },
+                                },
+
+                                #[transition = "Crossfade"]
+                                append = if matches!(model.valid, ValidationState::Invalid) {
+                                    #[name = "submit_btn"]
+                                    gtk::Button {
+                                        set_halign: gtk::Align::Center,
+                                        set_label: tr!("account-list-add-account-submit-button"),
+                                        add_css_class: "pill",
+                                        add_css_class: "suggested-action",
+                                        #[watch]
+                                        set_sensitive: !model.username.is_empty(),
+                                        connect_clicked[sender] => move |_| {
+                                            sender.input(AddAccountInput::SignIn);
+                                        }
                                     }
-                                }
-                            } else {
-                                gtk::Spinner { set_spinning: true }
+                                } else {
+                                    gtk::Spinner { set_spinning: true }
+                                },
                             },
                         },
                     },
+                    #[name = "quick_connect_screen"]
+                    gtk::Box {
+
+                    }
                 },
-            },
+            }
         }
+    }
     }
 
     fn init(
@@ -143,12 +155,22 @@ impl Component for AddAccountDialog {
         };
         let toaster = &model.toaster;
         let widgets = view_output!();
+        let stack = &widgets.stack;
+        stack.set_visible_child(&widgets.username_password_screen);
         root.set_default_widget(Some(&widgets.submit_btn));
         ComponentParts { model, widgets }
     }
 
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match message {
+            AddAccountInput::ShowQuickConnectScreen => {
+                let stack = &self.widgets.stack;
+                stack.set_visible_child(&self.widgets.quick_connect_screen);
+            }
+            AddAccountInput::ShowUsernamePasswordScreen => {
+                let stack = &self.widgets.stack;
+                stack.set_visible_child(&self.widgets.quick_connect_page);
+            }
             AddAccountInput::QuickConnectEnabled => {
                 self.valid = ValidationState::Loading;
                 let url = self.server.url.clone();
