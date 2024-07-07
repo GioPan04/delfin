@@ -136,65 +136,70 @@ impl AsyncComponent for MediaDetailsHeader {
                             },
 
                             gtk::Box {
-                                set_orientation: gtk::Orientation::Horizontal,
+                                set_orientation: gtk::Orientation::Vertical,
                                 set_valign: gtk::Align::End,
-                                set_margin_start:  32,
-                                set_margin_end: 32,
+                                set_margin_start:  24,
+                                set_margin_end: 24,
                                 set_spacing: 16,
 
                                 gtk::Label {
                                     set_label: &title,
                                     // Show full title in tooltip in case label is ellipsized
                                     set_tooltip: &title,
-                                    set_valign: gtk::Align::Center,
+                                    set_valign: gtk::Align::End,
+                                    set_halign: gtk::Align::Start,
                                     set_ellipsize: gtk::pango::EllipsizeMode::End,
                                     add_css_class: "media-details-header-title",
                                 },
 
-                                gtk::ToggleButton {
-                                    set_icon_name: "eye-open-negative-filled",
-                                    set_css_classes: &["pill", "btn-watched"],
-                                    set_halign: gtk::Align::End,
-                                    set_valign: gtk::Align::Center,
-                                    set_hexpand: true,
-                                    #[watch]
-                                    set_tooltip: &watched_label(model.item.played()),
+                                gtk::Box {
+                                    set_halign: gtk::Align::Start,
+                                    set_spacing: 16,
 
-                                    #[watch]
-                                    #[block_signal(toggle_handler)]
-                                    set_active: model.item.played(),
-                                    connect_toggled[sender] => move |btn| {
-                                        sender.input(MediaDetailsHeaderInput::ToggleWatched(btn.is_active()));
-                                    } @toggle_handler,
-                                },
+                                    gtk::Button {
+                                        add_css_class: "pill",
+                                        add_css_class: "suggested-action",
+                                        set_valign: gtk::Align::Center,
+                                        set_hexpand: false,
+                                        set_vexpand: false,
+                                        #[watch]
+                                        set_visible: model.play_next_label.is_some() && model.play_next_media.is_some(),
 
-                                gtk::Button {
-                                    add_css_class: "pill",
-                                    add_css_class: "suggested-action",
-                                    set_halign: gtk::Align::End,
-                                    set_valign: gtk::Align::Center,
-                                    set_hexpand: false,
-                                    set_vexpand: false,
-                                    #[watch]
-                                    set_visible: model.play_next_label.is_some() && model.play_next_media.is_some(),
+                                        connect_clicked[sender] => move |_| {
+                                            sender.input(MediaDetailsHeaderInput::PlayNext);
+                                        },
 
-                                    connect_clicked[sender] => move |_| {
-                                        sender.input(MediaDetailsHeaderInput::PlayNext);
+                                        #[wrap(Some)]
+                                        set_child = &gtk::Box {
+                                            set_orientation: gtk::Orientation::Horizontal,
+                                            set_spacing: 8,
+
+                                            gtk::Image::from_icon_name("play-filled"),
+
+                                            if model.play_next_label.is_some() {
+                                                gtk::Label {
+                                                    #[watch]
+                                                    set_label: model.play_next_label.as_ref().unwrap(),
+                                                }
+                                            } else { gtk::Spinner { set_spinning: true } },
+                                        },
                                     },
 
-                                    #[wrap(Some)]
-                                    set_child = &gtk::Box {
-                                        set_orientation: gtk::Orientation::Horizontal,
-                                        set_spacing: 8,
+                                    gtk::ToggleButton {
+                                        set_icon_name: "eye-open-negative-filled",
+                                        set_css_classes: &["pill", "btn-watched"],
+                                        set_valign: gtk::Align::Center,
 
-                                        gtk::Image::from_icon_name("play-filled"),
+                                        set_hexpand: true,
+                                        #[watch]
+                                        set_tooltip: &watched_label(model.item.played()),
 
-                                        if model.play_next_label.is_some() {
-                                            gtk::Label {
-                                                #[watch]
-                                                set_label: model.play_next_label.as_ref().unwrap(),
-                                            }
-                                        } else { gtk::Spinner { set_spinning: true } },
+                                        #[watch]
+                                        #[block_signal(toggle_handler)]
+                                        set_active: model.item.played(),
+                                        connect_toggled[sender] => move |btn| {
+                                            sender.input(MediaDetailsHeaderInput::ToggleWatched(btn.is_active()));
+                                        } @toggle_handler,
                                     },
                                 },
                             },
