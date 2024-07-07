@@ -53,6 +53,8 @@ impl AsyncComponent for MediaDetailsContents {
             adw::Clamp {
                 set_maximum_size: 500,
                 set_margin_bottom: 32,
+                set_margin_start: 12,
+                set_margin_end: 12,
 
                 #[name = "container"]
                 gtk::Box {
@@ -64,6 +66,11 @@ impl AsyncComponent for MediaDetailsContents {
                         set_orientation: gtk::Orientation::Horizontal,
                         set_halign: gtk::Align::Center,
                         set_spacing: 8,
+                    },
+                    #[name = "genre_label"]
+                    gtk::Label {
+                        set_halign: gtk::Align::Start,
+                        set_wrap: true,
                     },
 
                     gtk::Label::new(model.item.overview.as_deref()) {
@@ -127,6 +134,7 @@ impl AsyncComponent for MediaDetailsContents {
         let widgets = view_output!();
         let container = &widgets.container;
         let info_box = &widgets.info_box;
+        let genre_label = &widgets.genre_label;
 
         let header = MediaDetailsHeader::builder()
             .launch(MediaDetailsHeaderInit {
@@ -138,7 +146,7 @@ impl AsyncComponent for MediaDetailsContents {
         root.prepend(header.widget());
         model.header.set(header).unwrap();
 
-        model.add_info(info_box);
+        model.add_info(info_box, genre_label);
 
         model.load_seasons(&sender, container);
 
@@ -188,7 +196,7 @@ impl MediaDetailsContents {
         }
     }
 
-    fn add_info(&self, info_box: &gtk::Box) {
+    fn add_info(&self, info_box: &gtk::Box, genre_label: &gtk::Label) {
         let item = &self.item;
 
         let mut first = true;
@@ -235,23 +243,22 @@ impl MediaDetailsContents {
         }
 
         if let Some(genres) = &item.genres.clone() {
-            add_separator(false);
-
-            // Only show first 2 genres to avoid overflow
+            // Only show first 10 genres to avoid overflow
             let mut genres_str: String = genres
                 .iter()
-                .take(2)
+                .take(10)
                 .cloned()
                 .collect::<Vec<String>>()
                 .join(", ");
-            if genres.len() > 2 {
+            if genres.len() > 10 {
                 genres_str += ", ...";
             }
+            genre_label.set_label(&genres_str);
 
-            let genres_label = &gtk::Label::new(Some(genres_str.as_ref()));
+            //let genres_label = &gtk::Label::new(Some(genres_str.as_ref()));
             // Show full list in tooltip in case any were truncated
-            genres_label.set_tooltip_text(Some(genres.clone().join(", ").as_str()));
-            info_box.append(genres_label);
+            //genres_label.set_tooltip_text(Some(genres.clone().join(", ").as_str()));
+            //info_box.append(genres_label);
         }
     }
 }
