@@ -20,3 +20,4 @@ sc-lib-search = Keresés a könyvtárban
 sc-lib = Könyvtár
 sc-lib-refresh = Frissítés
 sc-gen-menu = Menü megnyitása
+sc-vp-playback-speed = Lejátszási sebesség állítása
