@@ -67,16 +67,17 @@ struct CollectionsFetcher {
 
 impl Fetcher for CollectionsFetcher {
     async fn fetch(&self, start_index: usize, limit: usize) -> Result<(Vec<BaseItemDto>, usize)> {
-        let (collections, total) = self
+        let (collections, _) = self
             .api_client
             .get_user_views(Some(start_index), Some(limit))
             .await?;
-        let collections = collections
+        let collections: Vec<BaseItemDto> = collections
             .filter_supported()
             .into_iter()
             .map(|view| view.into())
             .collect();
         // TODO: numbering will be off
+        let total = collections.len();
         Ok((collections, total))
     }
 
