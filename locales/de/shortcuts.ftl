@@ -20,3 +20,4 @@ sc-gen-quit = Beenden
 sc-lib = Bibliothek
 sc-gen-menu = Menü öffnen
 sc-lib-refresh = Neu laden
+sc-vp-playback-speed = Abspielgeschwindigkeit anpassen
