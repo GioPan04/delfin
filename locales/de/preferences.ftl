@@ -39,6 +39,7 @@ prefs-vp-jellyscrub =
     .subtitle =
         Zeige Vorschaubilder wenn du mit dem Mauszeiger über die Wiedergabeleiste fährst.
         Hierfür muss das <a href="{ $jellyscrubUrl }">Jellyscrub</a>-Plugin auf deinem Server installiert sein.
+        Ansonsten wird Jellyfin’s natives Trickplay auf unterstützten Servern benutzt werden.
 prefs-vp-on-left-click =
     .title = Aktion bei Mausklick
     .subtitle = Was passiert bei einem Linksklick im Videoplayer
