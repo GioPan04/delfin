@@ -3,7 +3,7 @@ use std::{collections::VecDeque, matches, sync::Arc};
 use adw::{prelude::*, BreakpointCondition};
 use jellyfin_api::types::{BaseItemDto, BaseItemKind};
 use relm4::{
-    gtk::{gdk::Texture, gdk_pixbuf::Pixbuf},
+    gtk::{gdk::Texture, gdk_pixbuf::Pixbuf, glib},
     prelude::*,
 };
 
@@ -135,33 +135,60 @@ impl AsyncComponent for MediaDetailsHeader {
                                 classes
                             },
 
+                            #[name = "details"]
                             gtk::Box {
-                                set_orientation: gtk::Orientation::Vertical,
-                                set_valign: gtk::Align::End,
-                                set_margin_start:  24,
-                                set_margin_end: 24,
+                                set_orientation: gtk::Orientation::Horizontal,
+                                set_valign: gtk::Align::Center,
+                                set_margin_start:  56,
+                                set_margin_end: 56,
+                                set_height_request: 90,
                                 set_spacing: 16,
 
                                 gtk::Label {
                                     set_label: &title,
                                     // Show full title in tooltip in case label is ellipsized
                                     set_tooltip: &title,
-                                    set_valign: gtk::Align::End,
+                                    set_valign: gtk::Align::Center, //set to end w/ breakpoint
                                     set_halign: gtk::Align::Start,
                                     set_ellipsize: gtk::pango::EllipsizeMode::End,
                                     add_css_class: "media-details-header-title",
                                 },
 
+                                #[name = "header_buttons"]
                                 gtk::Box {
-                                    set_halign: gtk::Align::Start,
+                                    set_halign: gtk::Align::End,
+                                    add_css_class: "buttons-direction",
                                     set_spacing: 16,
 
+
+                                    #[name = "btn_watched"]
+                                    gtk::ToggleButton {
+                                        set_icon_name: "eye-open-negative-filled",
+                                        set_css_classes: &["pill", "btn-watched"],
+                                        set_valign: gtk::Align::Center,
+                                        set_halign: gtk::Align::Start,
+
+
+                                        set_hexpand: true,
+                                        #[watch]
+                                        set_tooltip: &watched_label(model.item.played()),
+
+                                        #[watch]
+                                        #[block_signal(toggle_handler)]
+                                        set_active: model.item.played(),
+                                        connect_toggled[sender] => move |btn| {
+                                            sender.input(MediaDetailsHeaderInput::ToggleWatched(btn.is_active()));
+                                        } @toggle_handler,
+                                    },
+
+                                    #[name = "btn_play_next"]
                                     gtk::Button {
                                         add_css_class: "pill",
                                         add_css_class: "suggested-action",
                                         set_valign: gtk::Align::Center,
                                         set_hexpand: false,
                                         set_vexpand: false,
+
                                         #[watch]
                                         set_visible: model.play_next_label.is_some() && model.play_next_media.is_some(),
 
@@ -184,23 +211,6 @@ impl AsyncComponent for MediaDetailsHeader {
                                             } else { gtk::Spinner { set_spinning: true } },
                                         },
                                     },
-
-                                    gtk::ToggleButton {
-                                        set_icon_name: "eye-open-negative-filled",
-                                        set_css_classes: &["pill", "btn-watched"],
-                                        set_valign: gtk::Align::Center,
-
-                                        set_hexpand: true,
-                                        #[watch]
-                                        set_tooltip: &watched_label(model.item.played()),
-
-                                        #[watch]
-                                        #[block_signal(toggle_handler)]
-                                        set_active: model.item.played(),
-                                        connect_toggled[sender] => move |btn| {
-                                            sender.input(MediaDetailsHeaderInput::ToggleWatched(btn.is_active()));
-                                        } @toggle_handler,
-                                    },
                                 },
                             },
                         },
@@ -214,8 +224,24 @@ impl AsyncComponent for MediaDetailsHeader {
                 MAX_LIBRARY_WIDTH as f64,
                 adw::LengthUnit::Px
             )) {
-                add_setter: (&fade_overlay, "visible", &true.into()),
+                add_setter: (&fade_overlay, "visible", &true.into())
             },
+            add_breakpoint = adw::Breakpoint::new(BreakpointCondition::new_length(
+                adw::BreakpointConditionLengthType::MaxWidth,
+                550.0,
+                adw::LengthUnit::Px
+            )) {
+                add_setter: (&details, "orientation", &gtk::Orientation::Vertical.into()),
+                add_setter: (&details, "margin_start", &24.0.into()),
+                add_setter: (&details, "margin_end", &24.0.into()),
+                add_setter: (&header_buttons, "halign", &gtk::Align::Start.into()),
+                connect_apply: glib::clone!(@weak header_buttons, @weak btn_play_next, @weak btn_watched => move |_| {
+                    header_buttons.reorder_child_after(&btn_watched, Some(&btn_play_next));
+                }),
+                connect_unapply: glib::clone!(@weak header_buttons, @weak btn_play_next, @weak btn_watched => move |_| {
+                    header_buttons.reorder_child_after(&btn_play_next, Some(&btn_watched));
+                })
+            }
 
         }
     }
