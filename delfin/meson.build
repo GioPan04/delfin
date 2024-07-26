@@ -13,7 +13,7 @@ run_command(
   'cp',
   meson.project_build_root() / 'delfin' / 'meson_config.rs',
   meson.project_source_root() / 'delfin' / 'src' / 'meson_config.rs',
-  check: true
+  check: true,
 )
 
 env = environment()
@@ -37,17 +37,32 @@ if clang.found() and mold.found()
   env.append('RUSTFLAGS', '-Clink-arg=-fuse-ld=' + mold.full_path(), separator: ' ')
 endif
 
-custom_target(
+cargo_build = custom_target(
   'cargo-build',
+  build_always_stale: true,
+  output: 'cargo-build',
+  console: true,
+  env: env,
+  command: [
+    cargo,
+    'build',
+    cargo_options,
+  ],
+)
+
+custom_target(
+  'build',
   build_by_default: true,
   build_always_stale: true,
+  depends: [cargo_build],
   output: meson.project_name(),
   console: true,
+  env: env,
   command: [
-    cargo, 'build', cargo_options,
-    '&&', 'cp', 'delfin' / rust_target / meson.project_name(), '@OUTPUT@',
+    'cp',
+    'delfin' / rust_target / meson.project_name(),
+    '@OUTPUT@',
   ],
   install: true,
   install_dir: bindir,
-  env: env,
 )
