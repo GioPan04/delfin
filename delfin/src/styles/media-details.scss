@@ -3,8 +3,6 @@
 .media-details {
   .media-details-header {
     .media-details-header-overlay {
-      padding: 0 32px;
-
       &.gradient {
         background: linear-gradient(
           to top,
@@ -72,7 +70,7 @@
 
     .media-details-header-title {
       font-size: 24px;
-      padding: 32px 0;
+      text-shadow: #000000f0 0 0 5px;
     }
   }
 

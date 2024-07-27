@@ -145,7 +145,7 @@ impl Component for MediaCarousel {
             adw::BreakpointBin {
                 #[watch]
                 set_size_request: (
-                    model.media_tile_display.width() * 2 + MIN_PADDING,
+                    model.media_tile_display.width() + MIN_PADDING,
                     model.media_tile_display.min_height(&model.pages),
                 ),
                 set_hexpand: true,
@@ -315,7 +315,7 @@ fn add_breakpoints(
     sender: &ComponentSender<MediaCarousel>,
     media_tile_display: MediaTileDisplay,
 ) {
-    for tiles_per_page in 2..=8 {
+    for tiles_per_page in 1..=8 {
         let required =
             (media_tile_display.width() * tiles_per_page) + (MIN_PADDING * (tiles_per_page - 1));
 
