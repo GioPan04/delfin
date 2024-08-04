@@ -60,6 +60,7 @@ pub struct GeneralConfig {
     pub theme: Theme,
     pub most_recent_login: Option<MostRecentLogin>,
     pub restore_most_recent_login: bool,
+    pub use_episode_image: bool,
 }
 
 impl Default for GeneralConfig {
@@ -69,6 +70,7 @@ impl Default for GeneralConfig {
             theme: Theme::default(),
             most_recent_login: Option::default(),
             restore_most_recent_login: true,
+            use_episode_image: false,
         }
     }
 }

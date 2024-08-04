@@ -20,6 +20,10 @@ prefs-general-restore-most-recent =
     .title = Sign in automatically when { app-name } starts
     .subtitle = On startup, you will be signed in to your most recently used account
 
+prefs-general-use-episode-image =
+    .title = Use episode images in Next Up and Continue Watching sections
+    .subtitle = Next Up and Continue Watching sections will use episode images as thumbnails instead of the primary thumbnail of the show.
+
 # Interface
 # =========
 
