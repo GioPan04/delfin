@@ -19,6 +19,7 @@ pub enum GeneralPreferencesInput {
     Language(Option<String>),
     ThemeChanged(u32),
     RestoreMostRecentLogin(bool),
+    UseEpisodeImage(bool),
 }
 
 #[relm4::component(pub)]
@@ -91,6 +92,15 @@ impl SimpleComponent for GeneralPreferences {
                         sender.input(GeneralPreferencesInput::RestoreMostRecentLogin(switch.is_active()));
                     },
                 },
+
+                add = &adw::SwitchRow {
+                    set_title: tr!("prefs-general-use-episode-image.title"),
+                    set_subtitle: tr!("prefs-general-use-episode-image.subtitle"),
+                    set_active: general_preferences.use_episode_image,
+                    connect_active_notify[sender] => move |switch| {
+                        sender.input(GeneralPreferencesInput::UseEpisodeImage(switch.is_active()));
+                    },
+                },
             },
         }
     }
@@ -121,6 +131,9 @@ impl SimpleComponent for GeneralPreferences {
             }
             GeneralPreferencesInput::RestoreMostRecentLogin(restore_most_recent_login) => {
                 config.general.restore_most_recent_login = restore_most_recent_login;
+            }
+            GeneralPreferencesInput::UseEpisodeImage(use_episode_image) => {
+                config.general.use_episode_image = use_episode_image;
             }
         }
 

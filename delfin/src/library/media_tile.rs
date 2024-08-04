@@ -11,6 +11,7 @@ use tracing::error;
 
 use crate::{
     app::{AppInput, APP_BROKER},
+    globals::CONFIG,
     jellyfin_api::api_client::ApiClient,
     tr,
     utils::{display_years::DisplayYears, item_name::ItemName, playable::get_next_playable_media},
@@ -319,14 +320,26 @@ async fn get_thumbnail(
     tile_display: &MediaTileDisplay,
 ) -> Option<gdk::Texture> {
     let img_url = match tile_display {
-        MediaTileDisplay::Wide => api_client.get_parent_or_item_backdrop_url(media),
+        MediaTileDisplay::Wide => {
+            let config = CONFIG.read();
+            let aspect_ration_good = media.primary_image_aspect_ratio.unwrap_or_default() > 1.5;
+
+            if config.general.use_episode_image && aspect_ration_good {
+                api_client.get_episode_primary_image_url(media)
+            } else if aspect_ration_good {
+                api_client.get_parent_or_item_thumbnail_url(media)
+            } else {
+                api_client.get_episode_thumbnail_or_backdrop_url(media)
+            }
+        }
         MediaTileDisplay::Cover | MediaTileDisplay::CoverLarge => {
-            api_client.get_parent_or_item_thumbnail_url(media)
+            api_client.get_parent_or_item_primary_image_url(media)
         }
         MediaTileDisplay::CollectionWide | MediaTileDisplay::Buttons => {
             api_client.get_collection_thumbnail_url(media)
         }
     };
+
     let img_url = match img_url {
         Ok(img_url) => img_url,
         _ => return None,
