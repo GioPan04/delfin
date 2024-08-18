@@ -38,6 +38,15 @@ Using the [mold](https://github.com/rui314/mold/) linker is recommended, as it
 can significantly speed up compile times. It will be used automatically when
 available.
 
+### nix-shell
+
+Alternatively, using [nix-shell](https://nixos.org/) to bring up a development environment is possible. Please note that there are some limitations currently, such as missing icons.
+
+- `nix-shell --pure`
+- `meson setup build && cd build`
+- `meson compile`
+- `./delfin/delfin`
+
 ## Translations
 
 Contributions to translations are welcome on [Weblate](https://translate.codeberg.org/projects/delfin/).
