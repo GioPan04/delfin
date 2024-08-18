@@ -1,5 +1,6 @@
 use adw::prelude::*;
 use relm4::{factory::FactoryVecDeque, prelude::*};
+use std::time::Duration;
 
 use crate::{
     borgar::borgar_menu::BorgarMenu, config, globals::CONFIG, tr, utils::constants::PAGE_MARGIN,
@@ -7,6 +8,7 @@ use crate::{
 
 use super::{
     add_server::{AddServerDialog, AddServerOutput},
+    server_discovery::lan_discovery,
     server_list_item::{ServerListItem, ServerListItemOutput},
 };
 
@@ -123,10 +125,23 @@ impl Component for ServerList {
     ) {
         match message {
             ServerListInput::ReloadServers => {
+                let mut server_addrs: Vec<String> = Vec::new();
                 let mut servers = self.servers.guard();
                 servers.clear();
                 for server in &CONFIG.read().servers {
+                    server_addrs.push(server.url.to_string());
                     servers.push_back(server.clone());
+                }
+
+                for server in lan_discovery(Duration::from_millis(50)) {
+                    // Check not already in config
+                    // TODO: if URL is same but id changed we should probably update config without manual intervention
+                    if !server_addrs.contains(&server.address) {
+                        servers.push_back(server.clone().into());
+                        let mut config = CONFIG.write();
+                        config.servers.push(server.into());
+                        config.save().unwrap();
+                    }
                 }
             }
             ServerListInput::AddServer => {
