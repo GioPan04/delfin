@@ -1,192 +1,108 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
 use jellyfin_api::types::BaseItemDto;
+use std::collections::VecDeque;
 
-use crate::jellyfin_api::api_client::ApiClient;
-
-// TODO: should actually fetch images, not just URL
+use crate::jellyfin_api::{
+    api_client::ApiClient,
+    image_cache::{ImageId, ImageKind, ImageParams, ImageUrl},
+};
 
 impl ApiClient {
-    pub fn get_episode_primary_image_url(&self, item: &BaseItemDto, height: i32) -> Result<String> {
-        let item_id = match item.id {
-            Some(item_id) => item_id,
-            None => bail!("Missing item ID"),
-        };
+    /// This method can be used with any [`ImageUrl`] returned by the helper methods.
+    ///
+    /// In general, the requested image should exist because it was promised by the Jellyfin API.
+    /// However, it is possible for the API to return an empty image (HTTP status 200 with 0 bytes).
+    ///
+    /// This method will either succeed or return an error, but will not return an empty image.
+    /// TODO: Should we also make sure the API returned *valid* image bytes before caching them?
+    pub async fn get_image(&self, image: &ImageUrl) -> Result<VecDeque<u8>> {
+        self.cache.get(self, image).await
+    }
 
-        let images_tags = match item.image_tags.as_ref() {
-            Some(tags) => tags,
-            None => bail!("Missing images tags"),
-        };
-
-        let image_tag = match images_tags.get("Primary") {
-            Some(tag) => tag,
-            None => bail!("Missing image tag"),
-        };
-
-        let mut url = self.root.join(&format!("Items/{item_id}/Images/Primary"))?;
-        url.query_pairs_mut().extend_pairs([
-            ("fillHeight", &height.to_string()),
-            ("quality", &"96".to_string()),
-            ("tag", image_tag),
-        ]);
-
-        Ok(url.to_string())
+    pub fn get_episode_primary_image_url(
+        &self,
+        item: &BaseItemDto,
+        height: u16,
+    ) -> Option<ImageUrl> {
+        Some(self.cache.image_url(
+            self,
+            &ImageId::from_item(item, ImageKind::Primary)?,
+            &ImageParams::fill_height(height),
+        ))
     }
 
     pub fn get_episode_thumbnail_or_backdrop_url(
         &self,
         item: &BaseItemDto,
-        height: i32,
-    ) -> Result<String> {
-        let item_id = match item.id {
-            Some(item_id) => item_id,
-            None => bail!("Missing item ID"),
-        };
-
-        let images_tags = match item.image_tags.as_ref() {
-            Some(tags) => tags,
-            None => bail!("Missing images tags"),
-        };
-
-        let (url_thumb_or_backdrop, image_tag) = match images_tags.get("Thumb") {
-            Some(image_tag) => ("Thumb", image_tag),
-            None => (
-                "Backdrop",
-                match item.backdrop_image_tags.as_ref().map(|b| b.first()) {
-                    Some(Some(image_tag)) => image_tag,
-                    _ => bail!("Missing image tag"),
-                },
-            ),
-        };
-
-        let mut url = self
-            .root
-            .join(&format!("Items/{item_id}/Images/{url_thumb_or_backdrop}"))?;
-
-        url.query_pairs_mut().extend_pairs([
-            ("fillHeight", &height.to_string()),
-            ("quality", &"96".to_string()),
-            ("tag", image_tag),
-        ]);
-
-        Ok(url.to_string())
+        height: u16,
+    ) -> Option<ImageUrl> {
+        Some(self.cache.image_url(
+            self,
+            &ImageId::from_item(item, ImageKind::Thumb).or(ImageId::from_item_backdrop(item))?,
+            &ImageParams::fill_height(height),
+        ))
     }
 
     pub fn get_parent_or_item_thumbnail_url(
         &self,
         item: &BaseItemDto,
-        height: i32,
-    ) -> Result<String> {
-        let item_id = match item
-            .parent_thumb_item_id
-            .or(item.parent_backdrop_item_id.or(item.id))
-        {
-            Some(item_id) => item_id,
-            None => bail!("Missing parent backdrop item ID"),
-        };
+        height: u16,
+    ) -> Option<ImageUrl> {
+        let id = ImageId::from_item_parent_thumb(item)
+            .or(ImageId::from_item_parent_backdrop(item))
+            .or(ImageId::from_item(item, ImageKind::Primary))?;
 
-        let (url_thumb_or_backdrop, image_tag) = match item.parent_thumb_image_tag.as_ref() {
-            Some(image_tag) => ("Thumb", image_tag),
-            None => (
-                "Backdrop",
-                match item.parent_backdrop_image_tags.as_ref().map(|v| v.first()) {
-                    Some(Some(image_tag)) => image_tag,
-                    _ => {
-                        if let Some(Some(primary_tag)) =
-                            item.image_tags.as_ref().map(|i| i.get("Primary"))
-                        {
-                            primary_tag
-                        } else {
-                            bail!("Missing parent thumbnail or backdrop tag")
-                        }
-                    }
-                },
-            ),
-        };
-
-        let mut url = self
-            .root
-            .join(&format!("Items/{item_id}/Images/{url_thumb_or_backdrop}"))?;
-
-        url.query_pairs_mut().extend_pairs([
-            ("fillHeight", &height.to_string()),
-            ("quality", &"96".to_string()),
-            ("tag", image_tag),
-        ]);
-
-        Ok(url.to_string())
+        Some(
+            self.cache
+                .image_url(self, &id, &ImageParams::fill_height(height)),
+        )
     }
 
-    pub fn get_parent_or_item_primary_image_url(&self, item: &BaseItemDto) -> Result<String> {
-        let item_id = match item.parent_backdrop_item_id.or(item.id) {
-            Some(item_id) => item_id,
-            None => bail!("Missing parent backdrop item ID"),
-        };
+    pub fn get_parent_or_item_primary_image_url(&self, item: &BaseItemDto) -> Option<ImageUrl> {
+        let id = ImageId::from_item_parent_backdrop(item)
+            .or(ImageId::from_item(item, ImageKind::Primary))?;
 
-        let mut url = self.root.join(&format!("Items/{item_id}/Images/Primary"))?;
-        url.query_pairs_mut()
-            .append_pair("fillWidth", "200")
-            .append_pair("quality", "96");
-
-        Ok(url.to_string())
+        Some(
+            self.cache
+                .image_url(self, &id, &ImageParams::fill_width(200)),
+        )
     }
 
-    pub fn get_collection_thumbnail_url(&self, item: &BaseItemDto) -> Result<String> {
-        let item_id = match item.parent_backdrop_item_id.or(item.id) {
-            Some(item_id) => item_id,
-            None => bail!("Missing parent backdrop item ID"),
-        };
+    pub fn get_collection_thumbnail_url(&self, item: &BaseItemDto) -> Option<ImageUrl> {
+        // TODO: is this the same logic as get_parent_or_item_primary_image_url? Just different size/quality?
+        // Then why if the fuinction named "thumbnail" ???
+        let id = ImageId::from_item_parent_backdrop(item)
+            .or(ImageId::from_item(item, ImageKind::Primary))?;
 
-        let mut url = self.root.join(&format!("Items/{item_id}/Images/Primary"))?;
-        url.query_pairs_mut()
-            .append_pair("fillWidth", "700")
-            .append_pair("quality", "100");
-
-        Ok(url.to_string())
+        Some(
+            self.cache
+                .image_url(self, &id, &ImageParams::fill_width(700).quality(100)),
+        )
     }
 
-    pub fn get_parent_or_item_backdrop_url(&self, item: &BaseItemDto) -> Result<String> {
-        let item_id = match item.parent_backdrop_item_id.or(item.id) {
-            Some(item_id) => item_id,
-            None => bail!("Missing parent backdrop item ID"),
-        };
+    pub fn get_parent_or_item_backdrop_url(&self, item: &BaseItemDto) -> Option<ImageUrl> {
+        let id = ImageId::from_item_parent_backdrop(item)
+            .or(ImageId::from_item(item, ImageKind::Backdrop))?;
 
-        let mut url = self
-            .root
-            .join(&format!("Items/{item_id}/Images/Backdrop"))?;
-        url.query_pairs_mut()
-            .append_pair("fillWidth", "350")
-            .append_pair("quality", "96");
-
-        Ok(url.to_string())
+        Some(
+            self.cache
+                .image_url(self, &id, &ImageParams::fill_width(350)),
+        )
     }
 
-    pub fn get_backdrop_url(&self, item: &BaseItemDto) -> Result<String> {
-        let item_id = match item.id {
-            Some(item_id) => item_id,
-            None => bail!("Missing parent backdrop item ID"),
-        };
-
-        let mut url = self
-            .root
-            .join(&format!("Items/{item_id}/Images/Backdrop"))?;
-        url.query_pairs_mut()
-            .append_pair("maxWidth", "1440")
-            .append_pair("quality", "80");
-
-        Ok(url.to_string())
+    pub fn get_backdrop_url(&self, item: &BaseItemDto) -> Option<ImageUrl> {
+        Some(self.cache.image_url(
+            self,
+            &ImageId::from_item(item, ImageKind::Backdrop)?,
+            &ImageParams::fill_width(1440).quality(80),
+        ))
     }
 
-    pub fn get_next_up_thumbnail_url(&self, item: &BaseItemDto) -> Result<String> {
-        let item_id = match item.id {
-            Some(item_id) => item_id,
-            None => bail!("Missing item ID"),
-        };
-
-        let mut url = self.root.join(&format!("Items/{item_id}/Images/Primary"))?;
-        url.query_pairs_mut()
-            .append_pair("fillHeight", "150")
-            .append_pair("quality", "96");
-
-        Ok(url.to_string())
+    pub fn get_next_up_thumbnail_url(&self, item: &BaseItemDto) -> Option<ImageUrl> {
+        Some(self.cache.image_url(
+            self,
+            &ImageId::from_item(item, ImageKind::Primary)?,
+            &ImageParams::fill_height(150),
+        ))
     }
 }

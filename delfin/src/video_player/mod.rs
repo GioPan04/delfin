@@ -75,7 +75,7 @@ pub struct VideoPlayer {
     last_mouse_position: (f64, f64),
 
     controls: Controller<VideoPlayerControls>,
-    next_up: Controller<NextUp>,
+    next_up: AsyncController<NextUp>,
     skip_intro: AsyncController<SkipIntro>,
 }
 

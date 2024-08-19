@@ -257,18 +257,12 @@ impl AsyncComponent for MediaDetailsHeader {
             item,
         } = init;
 
-        if let Ok(img_url) = api_client.get_backdrop_url(&item) {
-            sender.oneshot_command(async {
-                let img_bytes: VecDeque<u8> = reqwest::get(img_url)
-                    .await
-                    .expect("Error getting media tile image: {img_url}")
-                    .bytes()
-                    .await
-                    .expect("Error getting media tile image bytes: {img_url}")
-                    .into_iter()
-                    .collect();
-                MediaDetailsHeaderCommandOutput::BackdropLoaded(img_bytes)
-            });
+        if let Some(image_url) = api_client.get_backdrop_url(&item) {
+            if let Ok(image_bytes) = api_client.get_image(&image_url).await {
+                sender.oneshot_command(async {
+                    MediaDetailsHeaderCommandOutput::BackdropLoaded(image_bytes)
+                });
+            }
         }
 
         let model = MediaDetailsHeader {

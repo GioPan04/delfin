@@ -99,8 +99,8 @@ pub(crate) enum NextUpCommandOutput {
     SetThumbnail(VecDeque<u8>),
 }
 
-#[relm4::component(pub(crate))]
-impl Component for NextUp {
+#[relm4::component(pub(crate) async)]
+impl AsyncComponent for NextUp {
     type Init = Arc<RefCell<dyn VideoPlayerBackend>>;
     type Input = NextUpInput;
     type Output = ();
@@ -177,11 +177,11 @@ impl Component for NextUp {
         }
     }
 
-    fn init(
+    async fn init(
         video_player: Self::Init,
         root: Self::Root,
-        sender: ComponentSender<Self>,
-    ) -> ComponentParts<Self> {
+        sender: AsyncComponentSender<Self>,
+    ) -> AsyncComponentParts<Self> {
         let model = NextUp {
             state: NextUpState::Ready,
             next_up: MaybeNextUpItem(None),
@@ -205,10 +205,15 @@ impl Component for NextUp {
 
         let widgets = view_output!();
 
-        ComponentParts { model, widgets }
+        AsyncComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
+    async fn update(
+        &mut self,
+        message: Self::Input,
+        sender: AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         match message {
             NextUpInput::Reset => {
                 self.state = NextUpState::Ready;
@@ -218,7 +223,7 @@ impl Component for NextUp {
             }
             NextUpInput::SetNextUp((next, api_client)) => {
                 self.next_up.0 = next.map(NextUpItem::new);
-                self.fetch_next_up_thumbnail(&sender, &api_client);
+                self.fetch_next_up_thumbnail(&sender, &api_client).await;
             }
             NextUpInput::SetDuration(duration) => {
                 self.duration = Some(duration);
@@ -249,10 +254,10 @@ impl Component for NextUp {
         }
     }
 
-    fn update_cmd(
+    async fn update_cmd(
         &mut self,
         message: Self::CommandOutput,
-        _sender: ComponentSender<Self>,
+        _sender: AsyncComponentSender<Self>,
         _root: &Self::Root,
     ) {
         let NextUpCommandOutput::SetThumbnail(img_bytes) = message;
@@ -272,20 +277,16 @@ impl NextUp {
         *NEXT_UP_VISIBILE.write() = visible;
     }
 
-    fn fetch_next_up_thumbnail(&mut self, sender: &ComponentSender<Self>, api_client: &ApiClient) {
+    async fn fetch_next_up_thumbnail(
+        &mut self,
+        sender: &AsyncComponentSender<Self>,
+        api_client: &ApiClient,
+    ) {
         if let Some(next_up) = &self.next_up.0 {
-            if let Ok(img_url) = api_client.get_next_up_thumbnail_url(&next_up.item) {
-                sender.oneshot_command(async {
-                    let img_bytes: VecDeque<u8> = reqwest::get(img_url)
-                        .await
-                        .expect("Error getting media tile image: {img_url}")
-                        .bytes()
-                        .await
-                        .expect("Error getting media tile image bytes: {img_url}")
-                        .into_iter()
-                        .collect();
-                    NextUpCommandOutput::SetThumbnail(img_bytes)
-                });
+            if let Some(img_url) = api_client.get_next_up_thumbnail_url(&next_up.item) {
+                if let Ok(img_bytes) = api_client.get_image(&img_url).await {
+                    sender.oneshot_command(async { NextUpCommandOutput::SetThumbnail(img_bytes) });
+                }
             }
         }
     }

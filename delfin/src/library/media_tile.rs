@@ -1,4 +1,5 @@
-use std::{collections::VecDeque, sync::Arc};
+use std::collections::VecDeque;
+use std::sync::Arc;
 
 use gdk::Texture;
 use jellyfin_api::types::{BaseItemDto, BaseItemKind};
@@ -7,7 +8,7 @@ use relm4::{
     prelude::{AsyncComponent, AsyncComponentParts},
     AsyncComponentSender,
 };
-use tracing::error;
+use tracing::{debug, error};
 
 use crate::{
     app::{AppInput, APP_BROKER},
@@ -27,7 +28,7 @@ pub enum MediaTileDisplay {
 }
 
 impl MediaTileDisplay {
-    pub fn width(&self) -> i32 {
+    pub fn width(&self) -> u16 {
         match self {
             Self::Cover => 133,
             Self::CoverLarge => 175,
@@ -37,7 +38,7 @@ impl MediaTileDisplay {
         }
     }
 
-    pub fn height(&self) -> i32 {
+    pub fn height(&self) -> u16 {
         match self {
             Self::Cover => 200,
             Self::CoverLarge => 262,
@@ -131,8 +132,8 @@ impl AsyncComponent for MediaTile {
                     set_paintable: model.thumbnail.as_ref(),
 
                     set_content_fit: gtk::ContentFit::Cover,
-                    set_width_request: tile_display.width(),
-                    set_height_request: tile_display.height(),
+                    set_width_request: tile_display.width().into(),
+                    set_height_request: tile_display.height().into(),
                 },
 
                 add_overlay = &gtk::Spinner {
@@ -167,7 +168,7 @@ impl AsyncComponent for MediaTile {
                         .and_then(|user_data| user_data.played_percentage)
                         .map(|played_percentage| played_percentage / 100.0),
                     set_overflow: gtk::Overflow::Hidden,
-                    set_width_request: tile_display.width(),
+                    set_width_request: tile_display.width().into(),
                 },
             },
 
@@ -177,7 +178,7 @@ impl AsyncComponent for MediaTile {
                 set_cursor_from_name: Some("pointer"),
                 set_ellipsize: gtk::pango::EllipsizeMode::End,
                 set_max_width_chars: 1,
-                set_width_request: tile_display.width(),
+                set_width_request: tile_display.width().into(),
                 #[watch]
                 set_markup: &model.get_item_label(),
 
@@ -314,17 +315,24 @@ impl MediaTile {
     }
 }
 
-async fn get_thumbnail(
+/// Query the API for the best thumbnail image for a media item
+///
+/// This request can fail for a number of IO reasons, but we don't care why it fails. It will be logged properly,
+/// however we are only interested in whether we got an image at all. If not, whether it's because of an error or because
+/// the requested item has no image associated, we return None so [`get_thumbnail`] can use a fallback icon.
+///
+/// TODO: This function should in the future use a typed media item, so that it is guaranteed URL generation cannot fail
+/// due to misformed BaseItemDto.
+async fn get_thumbnail_image(
     api_client: Arc<ApiClient>,
     media: &BaseItemDto,
     tile_display: &MediaTileDisplay,
-) -> Option<gdk::Texture> {
+) -> Option<VecDeque<u8>> {
     let img_url = match tile_display {
         MediaTileDisplay::Wide => {
-            let config = CONFIG.read();
             let aspect_ratio_good = media.primary_image_aspect_ratio.unwrap_or_default() > 1.5;
 
-            if config.general.use_episode_image && aspect_ratio_good {
+            if aspect_ratio_good && CONFIG.read().general.use_episode_image {
                 api_client.get_episode_primary_image_url(media, tile_display.height())
             } else if aspect_ratio_good {
                 api_client.get_parent_or_item_thumbnail_url(media, tile_display.height())
@@ -340,24 +348,42 @@ async fn get_thumbnail(
         }
     };
 
-    let img_url = match img_url {
-        Ok(img_url) => img_url,
-        _ => return None,
-    };
+    if let Some(img_url) = img_url {
+        match api_client.get_image(&img_url).await {
+            Ok(bytes) => Some(bytes),
+            Err(e) => {
+                error!("Querying API for image failed due to error:\n{e}");
+                None
+            }
+        }
+    } else {
+        debug!("No image for ID {}", media.id.unwrap());
+        None
+    }
+}
 
-    let img_bytes: VecDeque<u8> = reqwest::get(img_url)
-        .await
-        .expect("Error getting media tile image: {img_url}")
-        .bytes()
-        .await
-        .expect("Error getting media tile image bytes: {img_url}")
-        .into_iter()
-        .collect();
+// Provide a fallback icon for video/music/book depending on media.collection_type()
+// async fn get_thumbnail_fallback(media: &BaseItemDto, tile_display: &MediaTileDisplay) -> Result<VecDeque<u8>>
+
+/// Query the API for the best thumbnail image, or use a fallback icon.
+///
+/// See [`get_thumbnail_image`] and [`get_thumbnail_fallback`] for more details on those two cases.
+/// TODO: This function should always return a gdk::Texture. For now it can return None when something fails
+async fn get_thumbnail(
+    api_client: Arc<ApiClient>,
+    media: &BaseItemDto,
+    tile_display: &MediaTileDisplay,
+) -> Option<gdk::Texture> {
+    let img_bytes = get_thumbnail_image(api_client, media, tile_display).await?;
 
     let pixbuf = match gdk_pixbuf::Pixbuf::from_read(img_bytes) {
         Ok(pixbuf) => pixbuf,
         _ => {
-            error!("Error creating media tile pixbuf: {:#?}", media.id);
+            error!(
+                "Error creating media tile pixbuf {} ({})",
+                media.id.unwrap(),
+                media.name.as_deref().unwrap_or("UNKNOWN")
+            );
             return None;
         }
     };
@@ -368,8 +394,8 @@ async fn get_thumbnail(
         gdk_pixbuf::Colorspace::Rgb,
         true,
         8,
-        tile_display.width(),
-        tile_display.height(),
+        tile_display.width().into(),
+        tile_display.height().into(),
     )?;
 
     let scale = tile_display.height() as f64 / pixbuf.height() as f64;
@@ -378,8 +404,8 @@ async fn get_thumbnail(
         &resized,
         0,
         0,
-        tile_display.width(),
-        tile_display.height(),
+        tile_display.width().into(),
+        tile_display.height().into(),
         0.0,
         0.0,
         scale,

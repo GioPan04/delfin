@@ -121,10 +121,13 @@ impl MprisPlaybackReporter {
 
         tokio::spawn({
             let controls = controls.clone();
+
             async move {
                 let title = item.episode_name_with_number();
                 let series_name = item.series_name.clone();
-                let cover_url = api_client.get_next_up_thumbnail_url(&item).ok();
+                let cover_url = api_client
+                    .get_next_up_thumbnail_url(&item)
+                    .map(|x| x.url.to_string());
                 let metadata = MediaMetadata {
                     title: title.as_deref(),
                     album: series_name.as_deref(),

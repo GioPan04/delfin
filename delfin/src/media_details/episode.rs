@@ -19,12 +19,12 @@ use crate::{
 
 use super::{watched_state::toggle_watched, MediaDetailsInput, MEDIA_DETAILS_BROKER};
 
-const EPISODE_THUMBNAIL_SIZE: i32 = 75;
+const EPISODE_THUMBNAIL_SIZE: u16 = 75;
 
 pub(crate) struct Episode {
     media: BaseItemDto,
     api_client: Arc<ApiClient>,
-    thumbnail: OnceCell<Controller<EpisodeThumbnail>>,
+    thumbnail: OnceCell<AsyncController<EpisodeThumbnail>>,
 }
 
 #[derive(Debug)]
@@ -149,8 +149,8 @@ enum EpisodeThumbnailCommandOutput {
     LoadThumbnail(VecDeque<u8>),
 }
 
-#[relm4::component]
-impl Component for EpisodeThumbnail {
+#[relm4::component(async)]
+impl AsyncComponent for EpisodeThumbnail {
     type Init = (BaseItemDto, Arc<ApiClient>);
     type Input = ();
     type Output = ();
@@ -169,8 +169,8 @@ impl Component for EpisodeThumbnail {
                     add_css_class: "episode-thumbnail",
                     set_halign: gtk::Align::Center,
                     set_valign: gtk::Align::Center,
-                    set_width_request: EPISODE_THUMBNAIL_SIZE,
-                    set_height_request: EPISODE_THUMBNAIL_SIZE,
+                    set_width_request: EPISODE_THUMBNAIL_SIZE.into(),
+                    set_height_request: EPISODE_THUMBNAIL_SIZE.into(),
                     set_content_fit: gtk::ContentFit::Cover,
                 },
 
@@ -200,27 +200,22 @@ impl Component for EpisodeThumbnail {
         }
     }
 
-    fn init(
+    async fn init(
         init: Self::Init,
         root: Self::Root,
-        sender: ComponentSender<Self>,
-    ) -> ComponentParts<Self> {
+        sender: AsyncComponentSender<Self>,
+    ) -> AsyncComponentParts<Self> {
         let (media, api_client) = init;
 
-        if let Ok(img_url) =
+        // TODO: convert to async component and remove this ugliness
+        if let Some(img_url) =
             api_client.get_episode_primary_image_url(&media, EPISODE_THUMBNAIL_SIZE)
         {
-            sender.oneshot_command(async {
-                let img_bytes: VecDeque<u8> = reqwest::get(img_url)
-                    .await
-                    .expect("Error getting media tile image: {img_url}")
-                    .bytes()
-                    .await
-                    .expect("Error getting media tile image bytes: {img_url}")
-                    .into_iter()
-                    .collect();
-                EpisodeThumbnailCommandOutput::LoadThumbnail(img_bytes)
-            });
+            if let Ok(img_bytes) = api_client.get_image(&img_url).await {
+                sender.oneshot_command(async {
+                    EpisodeThumbnailCommandOutput::LoadThumbnail(img_bytes)
+                });
+            }
         }
 
         let model = Self {
@@ -230,13 +225,13 @@ impl Component for EpisodeThumbnail {
 
         let widgets = view_output!();
 
-        ComponentParts { model, widgets }
+        AsyncComponentParts { model, widgets }
     }
 
-    fn update_cmd(
+    async fn update_cmd(
         &mut self,
         message: Self::CommandOutput,
-        _sender: ComponentSender<Self>,
+        _sender: AsyncComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match message {
@@ -250,19 +245,19 @@ impl Component for EpisodeThumbnail {
                     gdk_pixbuf::Colorspace::Rgb,
                     false,
                     8,
-                    EPISODE_THUMBNAIL_SIZE,
-                    EPISODE_THUMBNAIL_SIZE,
+                    EPISODE_THUMBNAIL_SIZE.into(),
+                    EPISODE_THUMBNAIL_SIZE.into(),
                 )
                 .unwrap();
 
-                let offset_x = ((pixbuf.width() - EPISODE_THUMBNAIL_SIZE) / 2).abs() as f64;
+                let offset_x = ((pixbuf.width() - EPISODE_THUMBNAIL_SIZE as i32) / 2).abs() as f64;
 
                 pixbuf.scale(
                     &resized,
                     0,
                     0,
-                    EPISODE_THUMBNAIL_SIZE,
-                    EPISODE_THUMBNAIL_SIZE,
+                    EPISODE_THUMBNAIL_SIZE.into(),
+                    EPISODE_THUMBNAIL_SIZE.into(),
                     -offset_x,
                     0.0,
                     1.0,

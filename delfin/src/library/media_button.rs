@@ -21,7 +21,7 @@ impl SimpleComponent for MediaButton {
     view! {
         gtk::Button {
             add_css_class: "pill",
-            set_width_request: display.width(),
+            set_width_request: display.width().into(),
             set_margin_bottom: 10,
 
             #[wrap(Some)]

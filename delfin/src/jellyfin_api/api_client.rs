@@ -4,6 +4,7 @@ use reqwest::{header::HeaderMap, Url};
 
 use crate::config::{Account, Config, Server};
 
+use super::image_cache::ImageCache;
 use super::util::{auth_header::get_auth_header, url::httpify};
 
 pub static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
@@ -17,6 +18,7 @@ pub struct ApiClient {
     pub account: Account,
     pub client: reqwest::Client,
     pub root: Url,
+    pub cache: ImageCache,
 }
 
 impl ApiClient {
@@ -51,6 +53,7 @@ impl ApiClient {
             account: account.clone(),
             client,
             root,
+            cache: ImageCache::new(&format!("{}-{}", server.name, server.id)),
         }
     }
 }

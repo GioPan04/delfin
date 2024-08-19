@@ -12,7 +12,7 @@ use super::{
     media_tile::{MediaTile, MediaTileDisplay},
 };
 
-const MIN_PADDING: i32 = 24;
+const MIN_PADDING: u16 = 24;
 
 pub(crate) enum MediaCarouselItem {
     Tile(AsyncController<MediaTile>),
@@ -66,6 +66,7 @@ impl MediaTileDisplay {
             1 => self.height() + 50,
             _ => self.height() + 80,
         }
+        .into()
     }
 }
 
@@ -145,7 +146,7 @@ impl Component for MediaCarousel {
             adw::BreakpointBin {
                 #[watch]
                 set_size_request: (
-                    model.media_tile_display.width() + MIN_PADDING,
+                    (model.media_tile_display.width() + MIN_PADDING).into(),
                     model.media_tile_display.min_height(&model.pages),
                 ),
                 set_hexpand: true,
@@ -267,7 +268,7 @@ impl Component for MediaCarousel {
                         .orientation(gtk::Orientation::Horizontal)
                         .homogeneous(true)
                         .hexpand(true)
-                        .spacing(MIN_PADDING)
+                        .spacing(MIN_PADDING.into())
                         .can_focus(i == 0)
                         .build();
 
@@ -327,7 +328,7 @@ fn add_breakpoints(
         breakpoint.connect_apply({
             let sender = sender.clone();
             move |_| {
-                sender.input(MediaCarouselInput::Resize(tiles_per_page));
+                sender.input(MediaCarouselInput::Resize(tiles_per_page.into()));
             }
         });
 
