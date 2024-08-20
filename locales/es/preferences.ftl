@@ -89,3 +89,6 @@ prefs-vp-intro-skipper =
 prefs-general-restore-most-recent =
     .title = Iniciar sesión automáticamente al iniciarse { app-name }
     .subtitle = Al iniciarse, iniciará sesión con la cuenta que haya utilizado más recientemente
+prefs-general-use-episode-image =
+    .title = Utilizar las imágenes de los episodios en las secciones "Próximamente" y "Seguir viendo
+    .subtitle = Las secciones Próximamente y Seguir viendo utilizarán imágenes de episodios como miniaturas en lugar de la miniatura principal del programa.
