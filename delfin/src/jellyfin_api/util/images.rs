@@ -1,12 +1,12 @@
 use anyhow::{bail, Result};
 use jellyfin_api::types::BaseItemDto;
 
-use crate::{jellyfin_api::api_client::ApiClient, media_details::episode::EPISODE_THUMBNAIL_SIZE};
+use crate::jellyfin_api::api_client::ApiClient;
 
 // TODO: should actually fetch images, not just URL
 
 impl ApiClient {
-    pub fn get_episode_primary_image_url(&self, item: &BaseItemDto) -> Result<String> {
+    pub fn get_episode_primary_image_url(&self, item: &BaseItemDto, height: i32) -> Result<String> {
         let item_id = match item.id {
             Some(item_id) => item_id,
             None => bail!("Missing item ID"),
@@ -24,7 +24,7 @@ impl ApiClient {
 
         let mut url = self.root.join(&format!("Items/{item_id}/Images/Primary"))?;
         url.query_pairs_mut().extend_pairs([
-            ("fillHeight", &EPISODE_THUMBNAIL_SIZE.to_string()),
+            ("fillHeight", &height.to_string()),
             ("quality", &"96".to_string()),
             ("tag", image_tag),
         ]);
@@ -32,7 +32,11 @@ impl ApiClient {
         Ok(url.to_string())
     }
 
-    pub fn get_episode_thumbnail_or_backdrop_url(&self, item: &BaseItemDto) -> Result<String> {
+    pub fn get_episode_thumbnail_or_backdrop_url(
+        &self,
+        item: &BaseItemDto,
+        height: i32,
+    ) -> Result<String> {
         let item_id = match item.id {
             Some(item_id) => item_id,
             None => bail!("Missing item ID"),
@@ -59,7 +63,7 @@ impl ApiClient {
             .join(&format!("Items/{item_id}/Images/{url_thumb_or_backdrop}"))?;
 
         url.query_pairs_mut().extend_pairs([
-            ("fillHeight", &EPISODE_THUMBNAIL_SIZE.to_string()),
+            ("fillHeight", &height.to_string()),
             ("quality", &"96".to_string()),
             ("tag", image_tag),
         ]);
@@ -67,7 +71,11 @@ impl ApiClient {
         Ok(url.to_string())
     }
 
-    pub fn get_parent_or_item_thumbnail_url(&self, item: &BaseItemDto) -> Result<String> {
+    pub fn get_parent_or_item_thumbnail_url(
+        &self,
+        item: &BaseItemDto,
+        height: i32,
+    ) -> Result<String> {
         let item_id = match item
             .parent_thumb_item_id
             .or(item.parent_backdrop_item_id.or(item.id))
@@ -100,7 +108,7 @@ impl ApiClient {
             .join(&format!("Items/{item_id}/Images/{url_thumb_or_backdrop}"))?;
 
         url.query_pairs_mut().extend_pairs([
-            ("fillHeight", &EPISODE_THUMBNAIL_SIZE.to_string()),
+            ("fillHeight", &height.to_string()),
             ("quality", &"96".to_string()),
             ("tag", image_tag),
         ]);
