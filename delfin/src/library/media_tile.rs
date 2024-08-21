@@ -322,14 +322,14 @@ async fn get_thumbnail(
     let img_url = match tile_display {
         MediaTileDisplay::Wide => {
             let config = CONFIG.read();
-            let aspect_ration_good = media.primary_image_aspect_ratio.unwrap_or_default() > 1.5;
+            let aspect_ratio_good = media.primary_image_aspect_ratio.unwrap_or_default() > 1.5;
 
-            if config.general.use_episode_image && aspect_ration_good {
-                api_client.get_episode_primary_image_url(media)
-            } else if aspect_ration_good {
-                api_client.get_parent_or_item_thumbnail_url(media)
+            if config.general.use_episode_image && aspect_ratio_good {
+                api_client.get_episode_primary_image_url(media, tile_display.height())
+            } else if aspect_ratio_good {
+                api_client.get_parent_or_item_thumbnail_url(media, tile_display.height())
             } else {
-                api_client.get_episode_thumbnail_or_backdrop_url(media)
+                api_client.get_episode_thumbnail_or_backdrop_url(media, tile_display.height())
             }
         }
         MediaTileDisplay::Cover | MediaTileDisplay::CoverLarge => {

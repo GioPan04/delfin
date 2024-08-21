@@ -19,7 +19,7 @@ use crate::{
 
 use super::{watched_state::toggle_watched, MediaDetailsInput, MEDIA_DETAILS_BROKER};
 
-pub const EPISODE_THUMBNAIL_SIZE: i32 = 200;
+const EPISODE_THUMBNAIL_SIZE: i32 = 75;
 
 pub(crate) struct Episode {
     media: BaseItemDto,
@@ -207,7 +207,9 @@ impl Component for EpisodeThumbnail {
     ) -> ComponentParts<Self> {
         let (media, api_client) = init;
 
-        if let Ok(img_url) = api_client.get_episode_primary_image_url(&media) {
+        if let Ok(img_url) =
+            api_client.get_episode_primary_image_url(&media, EPISODE_THUMBNAIL_SIZE)
+        {
             sender.oneshot_command(async {
                 let img_bytes: VecDeque<u8> = reqwest::get(img_url)
                     .await
