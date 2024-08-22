@@ -89,3 +89,6 @@ prefs-vp-intro-skipper =
 prefs-general-restore-most-recent =
     .title = Automaticky se přihlásit po spuštění aplikace { app-name }
     .subtitle = Po spuštění budete přihlášeni do vašeho naposledy použitého účtu
+prefs-general-use-episode-image =
+    .title = Použít obrázky epizod v sekcích Další díly a Pokračujte ve sledování
+    .subtitle = Sekce Další díly a Pokračujte ve sledování budou používat obrázky epizod jako náhledy namísto primárního náhledu seriálu.

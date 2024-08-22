@@ -7,3 +7,6 @@ server-list-add-server-title = Ajoutez un serveur
 server-list =
     .title = Sélectionnez un serveur
     .description = Le serveur que vous utiliserez
+server-list-add-server-url = L'url du serveur
+server-list-add-server-name = Nom du serveur
+server-list-add-server-submit-button = Ajouter un serveur

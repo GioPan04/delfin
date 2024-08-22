@@ -15,8 +15,9 @@ sc-gen-quit = Quitter
 # Library
 # =======
 sc-lib = Bibliothèque
-sc-vp-mute = Muet
+sc-vp-mute = Muet/Non Muet
 sc-lib-refresh = Rafraichir
 sc-vp-subtitles = Basculer sous-titres
 sc-vp-frame-step = Avancer image par image
 sc-gen-menu = Ouvrir le menu
+sc-vp-playback-speed = Régler la vitesse de lecture

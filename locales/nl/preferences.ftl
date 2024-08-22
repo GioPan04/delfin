@@ -88,3 +88,6 @@ prefs-vp-intro-skipper =
 prefs-general-restore-most-recent =
     .title = Automatisch inloggen na starten van { app-name }
     .subtitle = Log na het opstarten automatisch in op uw laatstgebruikte account
+prefs-general-use-episode-image =
+    .title = Afbeeldingsminiaturen gebruiken in wachtrij en verder kijken
+    .subtitle = Gebruik miniaturen van de afleveringen in kwestie in de wachtrij en verder kijken in plaats van de miniatuur van de serie.

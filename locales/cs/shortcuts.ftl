@@ -20,3 +20,4 @@ sc-gen-quit = Ukončit
 sc-lib = Knihovna
 sc-lib-refresh = Obnovit
 sc-gen-menu = Otevřít nabídku
+sc-vp-playback-speed = Upravit rychlost přehrávání

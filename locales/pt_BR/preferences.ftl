@@ -88,3 +88,6 @@ prefs-vp-intro-skipper =
 prefs-general-restore-most-recent =
     .title = Conectar-se automaticamente ao iniciar o { app-name }
     .subtitle = Ao iniciar, você se conectará com última conta utilizada
+prefs-general-use-episode-image =
+    .title = Usar imagens de episódio nas seções A Seguir e Continue Assistindo
+    .subtitle = A seções A Seguir e Continue Assistindo usarão imagens de episódio como miniaturas, em vez da miniatura principal da série..

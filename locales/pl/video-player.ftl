@@ -60,3 +60,4 @@ vp-skip-forwards-backwards-tooltip =
         [one] sekundę
        *[other] sekundy
     }
+vp-playback-speed-toast = Prędkość odtwarzania: { $speed }x

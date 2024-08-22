@@ -60,3 +60,4 @@ vp-next-up-action =
     .hide = Ausblenden
 vp-playback-speed-tooltip = Wiedergabegeschwindigkeit
 vp-playback-speed-normal = Normal
+vp-playback-speed-toast = Abspielgeschwindigkeit: { $speed }x

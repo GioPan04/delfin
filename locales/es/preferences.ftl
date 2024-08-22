@@ -35,10 +35,12 @@ prefs-vp-subs-style-ass-warning =
     Estos ajustes no se aplican a los subtítulos ASS/SSA.
     Para los subtítulos ASS/SSA, consulta "{ prefs-vp-subs-more }".
 prefs-vp-jellyscrub =
-    .title = Plugin Jellyscrub
-    .subtitle =
-        Mostrar miniaturas al pasar el ratón por encima de la barra de progreso del vídeo.
-        Esto requiere que el plugin <a href="{ $jellyscrubUrl }">Jellyscrub</a> esté instalado en tu servidor.
+    .title =
+        complemento Jellyscrub.subtitle =
+        Muestra vistas previas al pasar el cursor sobre la barra del reproductor de video.
+        Esta opción requiere un complemento instalado
+        <a href="{ $jellyscrubUrl }"> Jellyscrub </a> en su servidor.
+        En los servidores compatibles, se utilizará el truco nativo Jellyfin.
 prefs-vp-on-left-click =
     .title = Al hacer clic con el ratón
     .subtitle = Qué ocurre cuando haces clic con el botón izquierdo del ratón en el reproductor de vídeo
@@ -87,3 +89,6 @@ prefs-vp-intro-skipper =
 prefs-general-restore-most-recent =
     .title = Iniciar sesión automáticamente al iniciarse { app-name }
     .subtitle = Al iniciarse, iniciará sesión con la cuenta que haya utilizado más recientemente
+prefs-general-use-episode-image =
+    .title = Utilizar las imágenes de los episodios en las secciones "Próximamente" y "Seguir viendo
+    .subtitle = Las secciones Próximamente y Seguir viendo utilizarán imágenes de episodios como miniaturas en lugar de la miniatura principal del programa.
