@@ -18,6 +18,7 @@ library-section-title =
     .latest-shows = Latest Shows
     .latest-music = Latest Music
     .my-media = My Media
+    .latest-in = Latest { $name }
 library-episode-name-with-season-and-episode = S{ $seasonNumber }:E{ $episodeNumber } - { $episodeName }
 library-series-and-episode-name = { $seriesName } - { $episodeName }
 library-media-tile-unnamed-item = Unnamed Item

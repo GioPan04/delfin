@@ -6,17 +6,13 @@ use relm4::{
     gtk, Component, ComponentController, ComponentParts, ComponentSender, Controller,
     SimpleComponent,
 };
-use tracing::warn;
 use uuid::Uuid;
 
 use crate::{
     app::{AppInput, APP_BROKER},
     jellyfin_api::{
         api_client::ApiClient,
-        models::{
-            collection_type::CollectionType,
-            user_view::{FilterSupported, UserView},
-        },
+        models::user_view::{FilterSupported, UserView},
     },
     library::media_list::{
         MediaList, MediaListInit, MediaListOutput, MediaListType, MediaListTypeLatestParams,
@@ -127,21 +123,12 @@ impl SimpleComponent for LatestRow {
 
         let widgets = view_output!();
 
-        let title_text = match view.collection_type() {
-            CollectionType::Movies => tr!("library-section-title.latest-movies").to_string(),
-            CollectionType::TvShows => tr!("library-section-title.latest-shows").to_string(),
-            CollectionType::Music => tr!("library-section-title.latest-music").to_string(),
-            s => {
-                warn!("Unknown collection type: {s}");
-                s.to_string()
-            }
-        };
-
         let media_list = MediaList::builder()
             .launch(MediaListInit {
                 api_client,
                 list_type: MediaListType::Latest(MediaListTypeLatestParams { view_id: view.id() }),
-                label: title_text.to_string(),
+                label: tr!("library-section-title.latest-in", { "name" => view.name() })
+                    .to_string(),
                 label_clickable: true,
             })
             .forward(sender.input_sender(), |o| o.into());
