@@ -76,7 +76,6 @@ impl Fetcher for CollectionsFetcher {
             .into_iter()
             .map(|view| view.into())
             .collect();
-        // TODO: numbering will be off
         let total = collections.len();
         Ok((collections, total))
     }
